@@ -1,0 +1,55 @@
+{
+    "version": 1,
+    "name": "InputActions",
+    "maps": [
+        {
+            "name": "GameplayMap",
+            "id": "79c470e6-4c15-41ce-8dcc-3180c644ec64",
+            "actions": [
+                {
+                    "name": "SelectMovePosition",
+                    "type": "Button",
+                    "id": "64fe5571-3bd7-424f-bb71-d45010ecf36a",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "SelectGameEntity",
+                    "type": "Button",
+                    "id": "0e333b7e-f4c5-4d0d-a0c3-83dd1d8d30c7",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "d1c54922-9638-4c05-968e-e4713d469535",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SelectMovePosition",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "1c901d9d-aa19-4481-82d4-89839a0c0a6e",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SelectGameEntity",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
