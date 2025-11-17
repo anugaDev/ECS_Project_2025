@@ -1,30 +1,33 @@
 using System.Collections.Generic;
 
-public class ButtonTextFactory
+namespace ConnectionPanel
 {
-    private readonly List<string> _buttonTexts;
-    
-    private string _defaultText;
-
-    public ButtonTextFactory()
+    public class ButtonTextFactory
     {
-        _buttonTexts = new List<string>
-        {
-            "Start Host",
-            "Start Server",
-            "Start Client",
-        };
-
-        _defaultText = "<ERROR>";
-    }
+        private readonly List<string> _buttonTexts;
     
-    public string GetButtonText(int connectionValue)
-    {
-        if (_buttonTexts.Count <= connectionValue)
+        private string _defaultText;
+
+        public ButtonTextFactory()
         {
-            return _defaultText;
+            _buttonTexts = new List<string>
+            {
+                "Start Host",
+                "Start Server",
+                "Start Client",
+            };
+
+            _defaultText = "<ERROR>";
         }
+    
+        public string GetButtonText(int connectionValue)
+        {
+            if (_buttonTexts.Count <= connectionValue)
+            {
+                return _defaultText;
+            }
 
-        return _buttonTexts[connectionValue];
+            return _buttonTexts[connectionValue];
+        }
     }
 }

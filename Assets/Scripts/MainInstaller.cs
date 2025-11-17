@@ -1,7 +1,4 @@
-namespace DefaultNamespace
+public class MainInstaller
 {
-    public class MainInstaller
-    {
         
-    }
 }

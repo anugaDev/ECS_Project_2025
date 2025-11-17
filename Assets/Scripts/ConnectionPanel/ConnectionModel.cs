@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Client;
 using Unity.Entities;
 using Unity.NetCode;
 using Unity.Networking.Transport;
@@ -19,7 +20,11 @@ namespace ConnectionPanel
         
         private string _address;
         
+        private TeamType _team;
+        
         private ushort _port;
+        
+        private World _clientWorld;
 
         public ConnectionModel()
         {
@@ -52,7 +57,7 @@ namespace ConnectionPanel
             LoadNewGame();
         
             if (_connectionActions.Count <= connectionValue)
-            { 
+            {
                 ShowServerError();
             }
 
@@ -90,12 +95,12 @@ namespace ConnectionPanel
 
         private void StartClient()
         {
-            World clientWorld = ClientServerBootstrap.CreateClientWorld(CLIENT_WORLD_NAME);
+            _clientWorld = ClientServerBootstrap.CreateClientWorld(CLIENT_WORLD_NAME);
             var networkEndpoint = NetworkEndpoint.Parse(_address, _port);
             ComponentType requiredComponents = ComponentType.ReadWrite<NetworkStreamDriver>();
-            EntityQuery entityQuery = clientWorld.EntityManager.CreateEntityQuery(requiredComponents);
-            entityQuery.GetSingletonRW<NetworkStreamDriver>().ValueRW.Connect(clientWorld.EntityManager, networkEndpoint);
-            World.DefaultGameObjectInjectionWorld = clientWorld;
+            EntityQuery entityQuery = _clientWorld.EntityManager.CreateEntityQuery(requiredComponents);
+            entityQuery.GetSingletonRW<NetworkStreamDriver>().ValueRW.Connect(_clientWorld.EntityManager, networkEndpoint);
+            World.DefaultGameObjectInjectionWorld = _clientWorld;
         }
 
         private void StartServer()
@@ -106,6 +111,16 @@ namespace ConnectionPanel
             ComponentType requiredComponents = ComponentType.ReadWrite<NetworkStreamDriver>();
             EntityQuery entityQuery = serverWorld.EntityManager.CreateEntityQuery(requiredComponents);
             entityQuery.GetSingletonRW<NetworkStreamDriver>().ValueRW.Listen(serverEndPoint);
+        }
+
+        public void SetTeam(int team)
+        {
+            _team = (TeamType)team;
+            Entity teamRequestEntity = _clientWorld.EntityManager.CreateEntity();
+
+            ClientTeamRequest clientTeamRequest = new ClientTeamRequest();
+            clientTeamRequest.Team = _team;
+            _clientWorld.EntityManager.AddComponentData(teamRequestEntity, clientTeamRequest);
         }
     }
 }
