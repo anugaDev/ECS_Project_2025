@@ -25,14 +25,15 @@ namespace ConnectionPanel
         [SerializeField] 
         private Button _button;
 
-        private int _teamValue;
-    
         private ButtonTextFactory _buttonTextFactory;
+        
+        private int _teamValue;
 
         public event Action<int> OnConnection;
 
         private void OnEnable()
         {
+            _buttonTextFactory = new ButtonTextFactory();
             AddListeners();
             OnConnectionDropDownSelection(_connectionDropDown.value);
         }
@@ -68,7 +69,7 @@ namespace ConnectionPanel
     
         public ushort GetParsedPort()
         {
-            return Convert.ToUInt16(_portField.text);
+            return ushort.Parse(_portField.text);
         }
 
         public string GetAddress()

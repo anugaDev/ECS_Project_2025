@@ -10,21 +10,21 @@ namespace ConnectionPanel
 {
     public class ConnectionModel
     {
-        private const int GAME_SCENE_INDEX = 1;
-    
         private const string SERVER_WORLD_NAME = "SERVER_WORLD";
     
         private const string CLIENT_WORLD_NAME = "CLIENT_WORLD";
+
+        private const int GAME_SCENE_INDEX = 1;
     
         private List<Action> _connectionActions;
-        
-        private string _address;
-        
-        private TeamType _team;
-        
-        private ushort _port;
-        
+
         private World _clientWorld;
+
+        private string _address;
+
+        private TeamType _team;
+
+        private ushort _port;
 
         public ConnectionModel()
         {
@@ -77,8 +77,9 @@ namespace ConnectionPanel
 
         private void DestroyLocalSimulationWorld()
         {
-            foreach (World world in World.All)
+            for (int index = 0; index < World.All.Count; index++)
             {
+                World world = World.All[index];
                 DisposeWorld(world);
             }
         }
@@ -96,7 +97,7 @@ namespace ConnectionPanel
         private void StartClient()
         {
             _clientWorld = ClientServerBootstrap.CreateClientWorld(CLIENT_WORLD_NAME);
-            var networkEndpoint = NetworkEndpoint.Parse(_address, _port);
+            NetworkEndpoint networkEndpoint = NetworkEndpoint.Parse(_address, _port);
             ComponentType requiredComponents = ComponentType.ReadWrite<NetworkStreamDriver>();
             EntityQuery entityQuery = _clientWorld.EntityManager.CreateEntityQuery(requiredComponents);
             entityQuery.GetSingletonRW<NetworkStreamDriver>().ValueRW.Connect(_clientWorld.EntityManager, networkEndpoint);

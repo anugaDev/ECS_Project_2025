@@ -28,10 +28,10 @@ namespace ConnectionPanel
             ushort parsedPort = _view.GetParsedPort();
             _model.SetPort(parsedPort);
 
+            _model.StartConnection(connectionId);
+            
             int team = _view.GetTeamValue();
             _model.SetTeam(team);
-            
-            _model.StartConnection(connectionId);
         }
     }
 }
