@@ -1,0 +1,10 @@
+public static class GlobalParameters
+{
+    public const string SERVER_WORLD_NAME = "SERVER_WORLD";
+    
+    public const string CLIENT_WORLD_NAME = "CLIENT_WORLD";
+        
+    public const int CONNECTION_SCENE_INDEX = 0;
+
+    public const int GAME_SCENE_INDEX = 1;
+}

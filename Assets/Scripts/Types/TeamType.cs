@@ -1,6 +1,9 @@
-public enum TeamType : byte
+namespace Types
 {
-    None = 0,
-    Red = 1,
-    Blue = 2,
+    public enum TeamType : byte
+    {
+        None = 0,
+        Red = 1,
+        Blue = 2,
+    }
 }

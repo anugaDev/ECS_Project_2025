@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Client;
+using Types;
 using Unity.Entities;
 using Unity.NetCode;
 using Unity.Networking.Transport;
@@ -10,12 +11,6 @@ namespace ConnectionPanel
 {
     public class ConnectionModel
     {
-        private const string SERVER_WORLD_NAME = "SERVER_WORLD";
-    
-        private const string CLIENT_WORLD_NAME = "CLIENT_WORLD";
-
-        private const int GAME_SCENE_INDEX = 1;
-    
         private List<Action> _connectionActions;
 
         private World _clientWorld;
@@ -67,7 +62,7 @@ namespace ConnectionPanel
         private void LoadNewGame()
         {
             DestroyLocalSimulationWorld();
-            SceneManager.LoadScene(GAME_SCENE_INDEX);
+            SceneManager.LoadScene(GlobalParameters.GAME_SCENE_INDEX);
         }
 
         private void ShowServerError()
@@ -96,7 +91,7 @@ namespace ConnectionPanel
 
         private void StartClient()
         {
-            _clientWorld = ClientServerBootstrap.CreateClientWorld(CLIENT_WORLD_NAME);
+            _clientWorld = ClientServerBootstrap.CreateClientWorld(GlobalParameters.CLIENT_WORLD_NAME);
             NetworkEndpoint networkEndpoint = NetworkEndpoint.Parse(_address, _port);
             ComponentType requiredComponents = ComponentType.ReadWrite<NetworkStreamDriver>();
             EntityQuery entityQuery = _clientWorld.EntityManager.CreateEntityQuery(requiredComponents);
@@ -106,7 +101,7 @@ namespace ConnectionPanel
 
         private void StartServer()
         {
-            World serverWorld = ClientServerBootstrap.CreateServerWorld(SERVER_WORLD_NAME);
+            World serverWorld = ClientServerBootstrap.CreateServerWorld(GlobalParameters.SERVER_WORLD_NAME);
             ushort parsedPort = _port;
             NetworkEndpoint serverEndPoint = NetworkEndpoint.AnyIpv4.WithPort(parsedPort);
             ComponentType requiredComponents = ComponentType.ReadWrite<NetworkStreamDriver>();
