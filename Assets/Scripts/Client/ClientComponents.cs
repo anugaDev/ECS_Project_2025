@@ -1,3 +1,4 @@
+using Types;
 using Unity.Entities;
 
 namespace Client
