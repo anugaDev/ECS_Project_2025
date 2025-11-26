@@ -16,9 +16,9 @@ namespace Server
         public void OnUpdate(ref SystemState state)
         {
             _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            foreach ((RefRW<PhysicsMass> physicsMass, UnitComponents.UnitTeam unitTeam, Entity unitEntity) 
+            foreach ((RefRW<PhysicsMass> physicsMass, UnitTeamComponent unitTeam, Entity unitEntity) 
                      in SystemAPI.Query<RefRW<PhysicsMass>, 
-                         UnitComponents.UnitTeam>().WithAny<UnitComponents.NewUnitTagComponent>().WithEntityAccess())
+                         UnitTeamComponent>().WithAny<NewUnitTagComponent>().WithEntityAccess())
             {
                 SetPhysicsValues(physicsMass);
                 SetTeamColor(unitEntity, unitTeam);
@@ -27,11 +27,11 @@ namespace Server
             _entityCommandBuffer.Playback(state.EntityManager);
         }
 
-        private void SetTeamColor(Entity unitEntity, UnitComponents.UnitTeam unitTeam)
+        private void SetTeamColor(Entity unitEntity, UnitTeamComponent unitTeamComponent)
         {
             float4 teamColor = new float4(0,0,1,1);
 
-            if (unitTeam.Team is TeamType.Blue)
+            if (unitTeamComponent.Team is TeamType.Blue)
             {
                 teamColor = new float4(0,0,1,1);
             }
@@ -41,7 +41,7 @@ namespace Server
             _entityCommandBuffer.SetComponent(unitEntity, unitColor);
         }
 
-        private static void SetPhysicsValues(RefRW<PhysicsMass> physicsMass)
+        private void SetPhysicsValues(RefRW<PhysicsMass> physicsMass)
         {
             physicsMass.ValueRW.InverseInertia[0] = 0;
             physicsMass.ValueRW.InverseInertia[1] = 0;

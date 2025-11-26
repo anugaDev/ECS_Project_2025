@@ -60,12 +60,12 @@ namespace Server
             return newUnit;
         }
 
-        private static UnitComponents.UnitTeam GetTeamComponent(TeamType team)
+        private UnitTeamComponent GetTeamComponent(TeamType team)
         {
-            return new UnitComponents.UnitTeam{Team = team};
+            return new UnitTeamComponent{Team = team};
         }
 
-        private static GhostOwner GetGhostOwner(int clientId)
+        private GhostOwner GetGhostOwner(int clientId)
         {
             return new GhostOwner
             {

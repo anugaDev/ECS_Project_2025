@@ -6,15 +6,27 @@ namespace Units
 {
     public class UnitAuthoring : MonoBehaviour
     {
+        public float MoveSpeed;
+
         public class UnitBaker : Baker<UnitAuthoring>
         {
             public override void Bake(UnitAuthoring authoring)
             {
                 Entity unitEntity = GetEntity(TransformUsageFlags.Dynamic);
-                AddComponent<UnitComponents.UnitTagComponent>(unitEntity);
-                AddComponent<UnitComponents.NewUnitTagComponent>(unitEntity);
-                AddComponent<UnitComponents.UnitTeam>(unitEntity);
+                AddComponent<UnitTagComponent>(unitEntity);
+                AddComponent<NewUnitTagComponent>(unitEntity);
+                AddComponent<UnitTeamComponent>(unitEntity);
                 AddComponent<URPMaterialPropertyBaseColor>(unitEntity);
+                AddComponent<UnitTargetPositionComponent>(unitEntity);
+                AddComponent(unitEntity, GetMoveSpeedComponent(authoring));
+            }
+
+            private UnitMoveSpeedComponent GetMoveSpeedComponent(UnitAuthoring authoring)
+            {
+                return new UnitMoveSpeedComponent
+                {
+                    Speed = authoring.MoveSpeed
+                };
             }
         }
     }
