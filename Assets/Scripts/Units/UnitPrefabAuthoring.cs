@@ -4,8 +4,9 @@ using UnityEngine;
 namespace Units
 {
     public class UnitPrefabAuthoring : MonoBehaviour
-    {
-        [SerializeField] GameObject Unit;
+    { 
+        [SerializeField] 
+        GameObject Unit;
         
         public class UnitPrefabBaker : Baker<UnitPrefabAuthoring>
         {

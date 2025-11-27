@@ -1,3 +1,4 @@
+using PlayerInputs;
 using Unity.Entities;
 using Unity.Rendering;
 using UnityEngine;
@@ -6,7 +7,8 @@ namespace Units
 {
     public class UnitAuthoring : MonoBehaviour
     {
-        public float MoveSpeed;
+        [SerializeField]
+        private float MoveSpeed;
 
         public class UnitBaker : Baker<UnitAuthoring>
         {
@@ -18,6 +20,7 @@ namespace Units
                 AddComponent<UnitTeamComponent>(unitEntity);
                 AddComponent<URPMaterialPropertyBaseColor>(unitEntity);
                 AddComponent<UnitTargetPositionComponent>(unitEntity);
+                AddComponent<UnitSelectedComponent>(unitEntity);
                 AddComponent(unitEntity, GetMoveSpeedComponent(authoring));
             }
 

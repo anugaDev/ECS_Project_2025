@@ -1,10 +1,9 @@
 using Unity.Entities;
-using UnityEngine;
 
-namespace Client
+namespace PlayerCamera
 {
     public class MainCameraComponentData: IComponentData
     {
-        public Camera Camera;
+        public UnityEngine.Camera Camera;
     }
 }

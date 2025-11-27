@@ -1,7 +1,6 @@
 using Unity.Entities;
-using UnityEngine;
 
-namespace Client
+namespace PlayerCamera
 {
     [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
     public partial class InitializeMainCameraSystem : SystemBase
@@ -22,7 +21,7 @@ namespace Client
         {
             return new MainCameraComponentData
             {
-                Camera = Camera.main
+                Camera = UnityEngine.Camera.main
             };
         }
     }

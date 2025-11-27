@@ -109,6 +109,15 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SelectBaseShortcut"",
+                    ""type"": ""Button"",
+                    ""id"": ""0bc2c763-fb00-4423-8cbe-86738b151fcb"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -133,6 +142,17 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""action"": ""SelectGameEntity"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d4e5972e-285d-4921-8107-4e00250ecf96"",
+                    ""path"": ""<Keyboard>/r"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SelectBaseShortcut"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -143,6 +163,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         m_GameplayMap = asset.FindActionMap("GameplayMap", throwIfNotFound: true);
         m_GameplayMap_SelectMovePosition = m_GameplayMap.FindAction("SelectMovePosition", throwIfNotFound: true);
         m_GameplayMap_SelectGameEntity = m_GameplayMap.FindAction("SelectGameEntity", throwIfNotFound: true);
+        m_GameplayMap_SelectBaseShortcut = m_GameplayMap.FindAction("SelectBaseShortcut", throwIfNotFound: true);
     }
 
     ~@InputActions()
@@ -225,6 +246,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
     private List<IGameplayMapActions> m_GameplayMapActionsCallbackInterfaces = new List<IGameplayMapActions>();
     private readonly InputAction m_GameplayMap_SelectMovePosition;
     private readonly InputAction m_GameplayMap_SelectGameEntity;
+    private readonly InputAction m_GameplayMap_SelectBaseShortcut;
     /// <summary>
     /// Provides access to input actions defined in input action map "GameplayMap".
     /// </summary>
@@ -244,6 +266,10 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "GameplayMap/SelectGameEntity".
         /// </summary>
         public InputAction @SelectGameEntity => m_Wrapper.m_GameplayMap_SelectGameEntity;
+        /// <summary>
+        /// Provides access to the underlying input action "GameplayMap/SelectBaseShortcut".
+        /// </summary>
+        public InputAction @SelectBaseShortcut => m_Wrapper.m_GameplayMap_SelectBaseShortcut;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -276,6 +302,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @SelectGameEntity.started += instance.OnSelectGameEntity;
             @SelectGameEntity.performed += instance.OnSelectGameEntity;
             @SelectGameEntity.canceled += instance.OnSelectGameEntity;
+            @SelectBaseShortcut.started += instance.OnSelectBaseShortcut;
+            @SelectBaseShortcut.performed += instance.OnSelectBaseShortcut;
+            @SelectBaseShortcut.canceled += instance.OnSelectBaseShortcut;
         }
 
         /// <summary>
@@ -293,6 +322,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @SelectGameEntity.started -= instance.OnSelectGameEntity;
             @SelectGameEntity.performed -= instance.OnSelectGameEntity;
             @SelectGameEntity.canceled -= instance.OnSelectGameEntity;
+            @SelectBaseShortcut.started -= instance.OnSelectBaseShortcut;
+            @SelectBaseShortcut.performed -= instance.OnSelectBaseShortcut;
+            @SelectBaseShortcut.canceled -= instance.OnSelectBaseShortcut;
         }
 
         /// <summary>
@@ -347,5 +379,12 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnSelectGameEntity(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SelectBaseShortcut" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSelectBaseShortcut(InputAction.CallbackContext context);
     }
 }

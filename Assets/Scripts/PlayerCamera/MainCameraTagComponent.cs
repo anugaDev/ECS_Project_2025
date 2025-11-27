@@ -1,6 +1,6 @@
 using Unity.Entities;
 
-namespace Client
+namespace PlayerCamera
 {
     public struct MainCameraTagComponent : IComponentData
     {

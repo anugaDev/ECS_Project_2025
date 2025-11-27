@@ -1,3 +1,4 @@
+using PlayerInputs;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
@@ -23,7 +24,7 @@ namespace Units
                 entityCommandBuffer.SetComponent(entity, GetTargetPositionComponent(transform));
             }
             
-            entityCommandBuffer.Playback(state.EntityManager );
+            entityCommandBuffer.Playback(state.EntityManager);
         }
 
         private UnitTargetPositionComponent GetTargetPositionComponent(LocalTransform transform)

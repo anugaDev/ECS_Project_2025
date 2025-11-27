@@ -1,3 +1,5 @@
+using Client;
+using PlayerCamera;
 using Units;
 using Unity.Entities;
 using Unity.NetCode;
@@ -7,10 +9,10 @@ using UnityEngine.InputSystem;
 using Input = UnityEngine.Input;
 using RaycastHit = Unity.Physics.RaycastHit;
 
-namespace Client
+namespace PlayerInputs
 {
     [UpdateInGroup(typeof(GhostInputSystemGroup))]
-    public partial class UnitMoveInputSystem : SystemBase
+    public partial class UnitSelectInputSystem : SystemBase
     {
         private const uint GROUNDPLANE_GROUP = 1 << 0; 
         
@@ -37,40 +39,41 @@ namespace Client
         protected override void OnStartRunning()
         {
             _inputActionMap.Enable();
-            _inputActionMap.GameplayMap.SelectMovePosition.performed += OnSelectMovePosition;
+            _inputActionMap.GameplayMap.SelectGameEntity.performed += OnSelectUnit;
         }
         protected override void OnStopRunning()
         {
-            _inputActionMap.GameplayMap.SelectMovePosition.performed -= OnSelectMovePosition;
+            _inputActionMap.GameplayMap.SelectGameEntity.performed -= OnSelectUnit;
             _inputActionMap.Disable();
         }
 
-        private void OnSelectMovePosition(InputAction.CallbackContext obj)
+        private void OnSelectUnit(InputAction.CallbackContext obj)
         {
             CollisionWorld collisionWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld;
             Entity cameraEntity = SystemAPI.GetSingletonEntity<MainCameraTagComponent>();
-            Camera mainCamera = EntityManager.GetComponentObject<MainCameraComponentData>(cameraEntity).Camera;
+            UnityEngine.Camera mainCamera = EntityManager.GetComponentObject<MainCameraComponentData>(cameraEntity).Camera;
 
             Vector3 mousePosition = Input.mousePosition;
             mousePosition.z = DEFAULT_Z_POSITION;
             Vector3 worldPosition = mainCamera.ScreenToWorldPoint(mousePosition);
             RaycastInput selectionInput = GetRaycastInput(worldPosition);
-            SetUnitPosition(collisionWorld, selectionInput);
+            SetUnitSelection(collisionWorld, selectionInput);
         }
 
-        private void SetUnitPosition(CollisionWorld collisionWorld, RaycastInput selectionInput)
+        private void SetUnitSelection(CollisionWorld collisionWorld, RaycastInput selectionInput)
         {
             if (!collisionWorld.CastRay(selectionInput, out var closestHit))
             { 
                 return;
             }
+
             Entity unitEntity = SystemAPI.GetSingletonEntity<OwnerTagComponent>();
             EntityManager.SetComponentData(unitEntity, GetUnitPositionComponent(closestHit));
         }
 
-        private UnitTargetPositionComponent GetUnitPositionComponent(RaycastHit closestHit)
+        private SelectedPositionComponent GetUnitPositionComponent(RaycastHit closestHit)
         {
-            return new UnitTargetPositionComponent
+            return new SelectedPositionComponent
             {
                 Value = closestHit.Position 
             };
@@ -88,7 +91,6 @@ namespace Client
 
         protected override void OnUpdate()
         {
-            
         }
     }
 }

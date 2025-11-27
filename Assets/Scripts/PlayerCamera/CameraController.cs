@@ -1,10 +1,11 @@
 using Cinemachine;
+using Client;
 using Types;
 using Units;
 using Unity.Entities;
 using UnityEngine;
 
-namespace Client
+namespace PlayerCamera
 {
     public class CameraController : MonoBehaviour
     { 

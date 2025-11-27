@@ -1,3 +1,4 @@
+using PlayerInputs;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.NetCode;
@@ -12,22 +13,24 @@ namespace Units
         
         private float _currentDeltaTime;
 
+        private UnitSelectedComponent _selection;
+
         public void OnUpdate(ref SystemState state)
         {
             _currentDeltaTime = SystemAPI.Time.DeltaTime;
-            foreach ((RefRW<LocalTransform> transform, UnitTargetPositionComponent movePosition, UnitMoveSpeedComponent moveSpeed) 
-                     in SystemAPI.Query<RefRW<LocalTransform>, UnitTargetPositionComponent, UnitMoveSpeedComponent>().WithAll<Simulate>())
+            foreach ((RefRW<LocalTransform> transform, UnitTargetPositionComponent movePosition, UnitMoveSpeedComponent moveSpeed, UnitSelectedComponent selection) 
+                     in SystemAPI.Query<RefRW<LocalTransform>, UnitTargetPositionComponent, UnitMoveSpeedComponent, UnitSelectedComponent>().WithAll<Simulate>())
             {
                 float3 moveTarget = movePosition.Value;
                 moveTarget.y = transform.ValueRO.Position.y;
-
+                _selection = selection;
                 UpdateUnitTargetPosition(transform, moveTarget, moveSpeed);
             }
         }
 
         private void UpdateUnitTargetPosition(RefRW<LocalTransform> transform, float3 moveTarget, UnitMoveSpeedComponent moveSpeed)
         {
-            if (math.distancesq(transform.ValueRO.Position, moveTarget) < POSITION_THRESHOLD)
+            if (math.distancesq(transform.ValueRO.Position, moveTarget) < POSITION_THRESHOLD && _selection.Selected)
             {
                 return;
             }

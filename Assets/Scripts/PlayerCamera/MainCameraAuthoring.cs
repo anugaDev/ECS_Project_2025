@@ -1,7 +1,7 @@
 using Unity.Entities;
 using UnityEngine;
 
-namespace Client
+namespace PlayerCamera
 {
     public class MainCameraAuthoring : MonoBehaviour
     {

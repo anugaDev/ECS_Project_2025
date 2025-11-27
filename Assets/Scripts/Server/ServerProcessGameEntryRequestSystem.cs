@@ -33,7 +33,7 @@ namespace Server
 
                 SetTeam(teamRequest);
                 int clientId = SystemAPI.GetComponent<NetworkId>(requestSource.SourceConnection).Value;
-                Debug.Log($"team received {clientId} to the {teamRequest.Team} team");
+                DebugTeam(clientId, teamRequest);
                 
                 Entity unit = InstantiateUnit(unitEntity, clientId, teamRequest.Team,requestSource);
                 LinkedEntityGroup linkedEntityGroup = new LinkedEntityGroup();
@@ -41,6 +41,11 @@ namespace Server
                 _entityCommandBuffer.AppendToBuffer(requestSource.SourceConnection, linkedEntityGroup);
             }
             _entityCommandBuffer.Playback(state.EntityManager);
+        }
+
+        private static void DebugTeam(int clientId, ClientTeamRequest teamRequest)
+        {
+            Debug.Log($"team received {clientId} to the {teamRequest.Team} team");
         }
 
         private void SetTeam(ClientTeamRequest teamRequest)

@@ -1,6 +1,5 @@
 using Types;
 using Unity.Entities;
-using Unity.Mathematics;
 using Unity.NetCode;
 
 namespace Units
@@ -19,7 +18,8 @@ namespace Units
 
     public struct UnitTeamComponent : IComponentData
     {
-        [GhostField] public TeamType Team;
+        [GhostField] 
+        public TeamType Team;
     }
 
     public struct UnitMoveSpeedComponent : IComponentData
@@ -27,9 +27,9 @@ namespace Units
         public float Speed;
     }
 
-    [GhostComponent(PrefabType = GhostPrefabType.AllPredicted)]
-    public struct UnitTargetPositionComponent : IInputComponentData
+    public struct UnitSelectedComponent : IComponentData
     {
-        [GhostField(Quantization = 0)] public float3 Value;
+        [GhostField] 
+        public bool Selected;
     }
 }
