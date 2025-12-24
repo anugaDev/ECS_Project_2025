@@ -6,9 +6,9 @@ namespace Client
 {
     public class ClientAuthoring : MonoBehaviour
     {
-        public class ClientBaker: Baker<HitPointAuthoring>
+        public class ClientBaker: Baker<ClientAuthoring>
         {
-            public override void Bake(HitPointAuthoring authoring)
+            public override void Bake(ClientAuthoring authoring)
             {
                 Entity entity = GetEntity(TransformUsageFlags.Dynamic);
                 AddComponent<SelectedPositionComponent>(entity);

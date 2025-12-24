@@ -42,13 +42,13 @@ namespace PlayerCamera
         [Header("Camera Start Positions")] 
         
         [SerializeField]
-        private Vector3 _redTeamPosition = new(50f, 0f, 50f);
+        private Vector3 _redTeamPosition = new(50f, 50f, 50f);
 
         [SerializeField] 
-        private Vector3 _blueTeamPosition = new(-50f, 0f, -50f);
+        private Vector3 _blueTeamPosition = new(-50f, 50f, -50f);
 
         [SerializeField] 
-        private Vector3 _spectatorPosition = new(0f, 0f, 0f);
+        private Vector3 _spectatorPosition = new(0f, 50f, 0f);
 
         private Vector2 _normalScreenPercentage;
 
@@ -97,7 +97,7 @@ namespace PlayerCamera
 
         private void SetCameraTeamStartingPosition(ClientTeamRequest requestedTeam)
         {
-            TeamType team = requestedTeam.Team;
+            TeamType team = requestedTeam.Value;
             Vector3 cameraPosition = GetCameraPosition(team);
             transform.position = cameraPosition;
 

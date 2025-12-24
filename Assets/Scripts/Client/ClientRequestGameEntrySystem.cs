@@ -2,6 +2,7 @@ using Types;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
+using UnityEngine;
 
 namespace Client
 {
@@ -20,7 +21,8 @@ namespace Client
 
         public void OnUpdate(ref SystemState state)
         {
-            TeamType teamType = SystemAPI.GetSingleton<ClientTeamRequest>().Team;
+            Debug.Log("client request game entry");
+            TeamType teamType = SystemAPI.GetSingleton<ClientTeamRequest>().Value;
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
             NativeArray<Entity> pendingNetworkIds = _pendingNetworkIdQuery.ToEntityArray(Allocator.Temp);
 
@@ -28,7 +30,7 @@ namespace Client
             {
                 entityCommandBuffer.AddComponent<NetworkStreamInGame>(networkId);
                 Entity requestTeamEntity = entityCommandBuffer.CreateEntity();
-                ClientTeamRequest clientTeamRequest = new ClientTeamRequest();
+                TeamRequest clientTeamRequest = new TeamRequest();
                 clientTeamRequest.Team = teamType;
                 entityCommandBuffer.AddComponent(requestTeamEntity, clientTeamRequest);
                 SendRpcCommandRequest sendRpcCommandRequest = new SendRpcCommandRequest();

@@ -14,10 +14,11 @@ namespace Server
     public partial struct ServerProcessGameEntryRequestSystem : ISystem
     {
         private EntityCommandBuffer _entityCommandBuffer;
+
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<UnitPrefabComponent>();
-            EntityQueryBuilder builder = new EntityQueryBuilder(Allocator.Temp).WithAll<ClientTeamRequest, ReceiveRpcCommandRequest>();
+            EntityQueryBuilder builder = new EntityQueryBuilder(Allocator.Temp).WithAll<TeamRequest, ReceiveRpcCommandRequest>();
             state.RequireForUpdate(state.GetEntityQuery(builder));
         }
 
@@ -25,8 +26,8 @@ namespace Server
         {
             _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
             Entity unitEntity = SystemAPI.GetSingleton<UnitPrefabComponent>().Unit;
-            foreach ((ClientTeamRequest teamRequest, ReceiveRpcCommandRequest requestSource, Entity requestEntity) 
-                     in SystemAPI.Query<ClientTeamRequest, ReceiveRpcCommandRequest>().WithEntityAccess())
+            foreach ((TeamRequest teamRequest, ReceiveRpcCommandRequest requestSource, Entity requestEntity) 
+                     in SystemAPI.Query<TeamRequest, ReceiveRpcCommandRequest>().WithEntityAccess())
             {
                 _entityCommandBuffer.DestroyEntity(requestEntity);
                 _entityCommandBuffer.AddComponent<NetworkStreamInGame>(requestSource.SourceConnection);
@@ -43,12 +44,12 @@ namespace Server
             _entityCommandBuffer.Playback(state.EntityManager);
         }
 
-        private static void DebugTeam(int clientId, ClientTeamRequest teamRequest)
+        private void DebugTeam(int clientId, TeamRequest teamRequest)
         {
             Debug.Log($"team received {clientId} to the {teamRequest.Team} team");
         }
 
-        private void SetTeam(ClientTeamRequest teamRequest)
+        private void SetTeam(TeamRequest teamRequest)
         {
             TeamType teamRequestTeam = teamRequest.Team;
             //Assign other team on full
@@ -82,12 +83,12 @@ namespace Server
         {
             float3 unitPosition;
             if (team is TeamType.Red)
-            { 
-                unitPosition = new float3(-50f, 1f, 0);
+            {
+                unitPosition = new float3(50f, 1f, 0);
             }
             else
             {
-                unitPosition = new float3(50f, 1f, 0);
+                unitPosition = new float3(-50f, 1f, 0);
             }
             return LocalTransform.FromPosition(unitPosition);
         }

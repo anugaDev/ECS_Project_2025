@@ -72,51 +72,53 @@ namespace ConnectionPanel
 
         private void DestroyLocalSimulationWorld()
         {
-            for (int index = 0; index < World.All.Count; index++)
+            foreach (var world in World.All)
             {
-                World world = World.All[index];
-                DisposeWorld(world);
+                if (world.Flags == WorldFlags.Game)
+                {
+                    world.Dispose();
+                    break;
+                }
             }
         }
 
-        private void DisposeWorld(World world)
+        private void StartServer()
         {
-            if (world.Flags != WorldFlags.Game)
-            {
-                return;
+            World serverWorld = ClientServerBootstrap.CreateServerWorld(GlobalParameters.SERVER_WORLD_NAME);
+            NetworkEndpoint serverEndPoint = NetworkEndpoint.AnyIpv4.WithPort(_port);
+            { 
+                EntityQuery entityQuery = serverWorld.EntityManager.CreateEntityQuery
+                    (ComponentType.ReadWrite<NetworkStreamDriver>()); 
+                entityQuery.GetSingletonRW<NetworkStreamDriver>().ValueRW.Listen(serverEndPoint);
             }
-
-            world.Dispose();
         }
 
         private void StartClient()
         {
             _clientWorld = ClientServerBootstrap.CreateClientWorld(GlobalParameters.CLIENT_WORLD_NAME);
             NetworkEndpoint networkEndpoint = NetworkEndpoint.Parse(_address, _port);
-            ComponentType requiredComponents = ComponentType.ReadWrite<NetworkStreamDriver>();
-            EntityQuery entityQuery = _clientWorld.EntityManager.CreateEntityQuery(requiredComponents);
-            entityQuery.GetSingletonRW<NetworkStreamDriver>().ValueRW.Connect(_clientWorld.EntityManager, networkEndpoint);
+            {
+                EntityQuery entityQuery = _clientWorld.EntityManager.CreateEntityQuery
+                    (ComponentType.ReadWrite<NetworkStreamDriver>());
+                entityQuery.GetSingletonRW<NetworkStreamDriver>().ValueRW.Connect(_clientWorld.EntityManager, networkEndpoint);
+            }
+            
             World.DefaultGameObjectInjectionWorld = _clientWorld;
-        }
-
-        private void StartServer()
-        {
-            World serverWorld = ClientServerBootstrap.CreateServerWorld(GlobalParameters.SERVER_WORLD_NAME);
-            ushort parsedPort = _port;
-            NetworkEndpoint serverEndPoint = NetworkEndpoint.AnyIpv4.WithPort(parsedPort);
-            ComponentType requiredComponents = ComponentType.ReadWrite<NetworkStreamDriver>();
-            EntityQuery entityQuery = serverWorld.EntityManager.CreateEntityQuery(requiredComponents);
-            entityQuery.GetSingletonRW<NetworkStreamDriver>().ValueRW.Listen(serverEndPoint);
         }
 
         public void SetTeam(int team)
         {
             _team = (TeamType)team;
             Entity teamRequestEntity = _clientWorld.EntityManager.CreateEntity();
+            _clientWorld.EntityManager.AddComponentData(teamRequestEntity, GetClientRequest());
+        }
 
-            ClientTeamRequest clientTeamRequest = new ClientTeamRequest();
-            clientTeamRequest.Team = _team;
-            _clientWorld.EntityManager.AddComponentData(teamRequestEntity, clientTeamRequest);
+        private ClientTeamRequest GetClientRequest()
+        {
+            return new ClientTeamRequest
+            {
+                Value = _team,
+            };
         }
     }
 }

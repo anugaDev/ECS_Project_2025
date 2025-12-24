@@ -6,7 +6,7 @@ namespace Client
 {
     public struct ClientTeamRequest : IComponentData
     {
-        public TeamType Team;
+        public TeamType Value;
     }
 
     public struct SelectedPositionComponent : IComponentData

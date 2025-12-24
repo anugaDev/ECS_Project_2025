@@ -11,7 +11,7 @@ namespace Units
         public class UnitPrefabBaker : Baker<UnitPrefabAuthoring>
         {
             public override void Bake(UnitPrefabAuthoring prefabAuthoring)
-            {
+            { 
                 Entity unitContainer = GetEntity(TransformUsageFlags.None);
                 UnitPrefabComponent unitComponent = GetUnitComponent(prefabAuthoring);
                 AddComponent(unitContainer, unitComponent);
@@ -21,7 +21,7 @@ namespace Units
             {
                 return new UnitPrefabComponent
                 {
-                    Unit = GetEntity(prefabAuthoring.Unit, TransformUsageFlags.None)
+                    Unit = GetEntity(prefabAuthoring.Unit, TransformUsageFlags.Dynamic)
                 };
             }
         }
