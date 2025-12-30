@@ -71,7 +71,8 @@ namespace PlayerInputs
         {
             return new SelectedPositionComponent
             {
-                Value = closestHit.Position
+                Value = closestHit.Position,
+                MustUpdate = true
             };
         }
 

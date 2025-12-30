@@ -69,10 +69,12 @@ namespace PlayerInputs
         {
             Entity unitEntity = SystemAPI.GetSingletonEntity<OwnerTagComponent>();
             UnitSelectionComponent selectedPositionComponent = EntityManager.GetComponentData<UnitSelectionComponent>(unitEntity);
+
             if (!selectedPositionComponent.IsSelected)
             {
                 return;
             }
+
             EntityManager.SetComponentData(unitEntity, GetUnitPositionComponent(closestHit));
         }
 

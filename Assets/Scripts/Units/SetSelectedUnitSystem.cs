@@ -27,16 +27,30 @@ namespace Units
                 float3 selectPositionValue = selectPosition.Value;
                 selectPositionValue.y = transform.ValueRO.Position.y;
                 _selection = selection;
-                UpdateUnitSelection(transform, selectPositionValue);
-                entityCommandBuffer.SetComponent(unitEntity, _selection);
+                UpdateSelection(selectPosition, transform, selectPositionValue, entityCommandBuffer, unitEntity);
             }
             
             entityCommandBuffer.Playback(state.EntityManager);
         }
 
+        private void UpdateSelection(SelectedPositionComponent selectPosition, RefRW<LocalTransform> transform, float3 selectPositionValue,
+            EntityCommandBuffer entityCommandBuffer, Entity unitEntity)
+        {
+            SelectedPositionComponent newSelectPosition = selectPosition;
+
+            if (!newSelectPosition.MustUpdate)
+            {
+                return;
+            }
+
+            UpdateUnitSelection(transform, selectPositionValue);
+            newSelectPosition.MustUpdate = false;
+            entityCommandBuffer.SetComponent(unitEntity, _selection);
+            entityCommandBuffer.SetComponent(unitEntity, newSelectPosition);
+        }
+
         private void UpdateUnitSelection(RefRW<LocalTransform> transform, float3 selectPositionValue)
         {
-            Debug.Log(selectPositionValue);
             if (math.distancesq(transform.ValueRO.Position, selectPositionValue) > POSITION_THRESHOLD)
             {
                 if(_selection.IsSelected) {Debug.Log("Set Unit Not Selected");} //TEST

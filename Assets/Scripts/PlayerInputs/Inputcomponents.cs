@@ -16,6 +16,9 @@ namespace PlayerInputs
     {
         [GhostField(Quantization = 0)] 
         public float3 Value;
+        
+        [GhostField]
+        public bool MustUpdate;
     }
 
     [GhostComponent(PrefabType = GhostPrefabType.AllPredicted)]

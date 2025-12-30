@@ -36,7 +36,7 @@ namespace Server
                 SetTeam(teamRequest);
                 int clientId = SystemAPI.GetComponent<NetworkId>(requestSource.SourceConnection).Value;
                 DebugTeam(clientId, teamRequest);
-                
+
                 Entity unit = InstantiateUnit(unitEntity, clientId, teamRequest.Team,requestSource);
                 LinkedEntityGroup linkedEntityGroup = new LinkedEntityGroup();
                 linkedEntityGroup.Value = unit;
