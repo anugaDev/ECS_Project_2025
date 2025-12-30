@@ -1,5 +1,7 @@
+using Client;
 using PlayerInputs;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Rendering;
 using UnityEngine;
 
@@ -20,6 +22,7 @@ namespace Units
                 AddComponent<UnitTeamComponent>(unitEntity);
                 AddComponent<URPMaterialPropertyBaseColor>(unitEntity);
                 AddComponent<UnitTargetPositionComponent>(unitEntity);
+                AddComponent<SelectedPositionComponent>(unitEntity);
                 AddComponent<UnitSelectionComponent>(unitEntity);
                 AddComponent(unitEntity, GetMoveSpeedComponent(authoring));
             }

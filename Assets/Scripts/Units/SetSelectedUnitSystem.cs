@@ -1,4 +1,5 @@
 using Client;
+using PlayerInputs;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -11,7 +12,7 @@ namespace Units
     [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
     public partial struct SetSelectedUnitSystem : ISystem
     {
-        private const float POSITION_THRESHOLD = 5f;
+        private const float POSITION_THRESHOLD = 1f;
 
         private UnitSelectionComponent _selection;
 

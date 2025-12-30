@@ -50,12 +50,8 @@ namespace PlayerInputs
         {
             CollisionWorld collisionWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld;
             Entity cameraEntity = SystemAPI.GetSingletonEntity<MainCameraTagComponent>();
-            UnityEngine.Camera mainCamera = EntityManager.GetComponentObject<MainCameraComponentData>(cameraEntity).Camera;
-
-            Vector3 mousePosition = Input.mousePosition;
-            mousePosition.z = DEFAULT_Z_POSITION;
-            Vector3 worldPosition = mainCamera.ScreenToWorldPoint(mousePosition);
-            RaycastInput selectionInput = GetRaycastInput(worldPosition);
+            Camera mainCamera = EntityManager.GetComponentObject<MainCameraComponentData>(cameraEntity).Camera;
+            RaycastInput selectionInput = GetRaycastInput(mainCamera);
             SetUnitPosition(collisionWorld, selectionInput);
         }
 
@@ -66,7 +62,17 @@ namespace PlayerInputs
                 return;
             }
 
+            SetSelectedUnitPosition(closestHit);
+        }
+
+        private void SetSelectedUnitPosition(RaycastHit closestHit)
+        {
             Entity unitEntity = SystemAPI.GetSingletonEntity<OwnerTagComponent>();
+            UnitSelectionComponent selectedPositionComponent = EntityManager.GetComponentData<UnitSelectionComponent>(unitEntity);
+            if (!selectedPositionComponent.IsSelected)
+            {
+                return;
+            }
             EntityManager.SetComponentData(unitEntity, GetUnitPositionComponent(closestHit));
         }
 
@@ -79,11 +85,15 @@ namespace PlayerInputs
             };
         }
 
-        private RaycastInput GetRaycastInput(Vector3 worldPosition)
+        private RaycastInput GetRaycastInput(Camera mainCamera)
         {
+            Vector3 mousePosition = Input.mousePosition;
+            mousePosition.z = DEFAULT_Z_POSITION;
+            Vector3 worldPosition = mainCamera.ScreenToWorldPoint(mousePosition);
+
             return new RaycastInput
             {
-                Start = worldPosition,
+                Start = mainCamera.transform.position,
                 End = worldPosition,
                 Filter = _selectionFilter,
             };

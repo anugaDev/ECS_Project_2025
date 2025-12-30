@@ -12,18 +12,18 @@ using RaycastHit = Unity.Physics.RaycastHit;
 namespace PlayerInputs
 {
     [UpdateInGroup(typeof(GhostInputSystemGroup))]
-    public partial class UnitSelectInputSystem : SystemBase
+    public partial class UnitSelectionInputSystem : SystemBase
     {
         private const uint GROUNDPLANE_GROUP = 1 << 0; 
-        
+
         private const uint RAYCAST_GROUP = 1 << 5; 
-        
+
         private const float DEFAULT_Z_POSITION = 100f; 
-        
+
         private CollisionFilter _selectionFilter;
-        
+
         private InputActions _inputActionMap;
-        
+
         protected override void OnCreate()
         {
             _inputActionMap = new InputActions();
@@ -52,18 +52,14 @@ namespace PlayerInputs
             CollisionWorld collisionWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld;
             Entity cameraEntity = SystemAPI.GetSingletonEntity<MainCameraTagComponent>();
             Camera mainCamera = EntityManager.GetComponentObject<MainCameraComponentData>(cameraEntity).Camera;
-
-            Vector3 mousePosition = Input.mousePosition;
-            mousePosition.z = DEFAULT_Z_POSITION;
-            Vector3 worldPosition = mainCamera.ScreenToWorldPoint(mousePosition);
-            RaycastInput selectionInput = GetRaycastInput(worldPosition);
+            RaycastInput selectionInput = GetRaycastInput(mainCamera);
             SetUnitSelection(collisionWorld, selectionInput);
         }
 
         private void SetUnitSelection(CollisionWorld collisionWorld, RaycastInput selectionInput)
         {
             if (!collisionWorld.CastRay(selectionInput, out var closestHit))
-            { 
+            {
                 return;
             }
 
@@ -79,11 +75,15 @@ namespace PlayerInputs
             };
         }
 
-        private RaycastInput GetRaycastInput(Vector3 worldPosition)
+        private RaycastInput GetRaycastInput(Camera mainCamera)
         {
+            Vector3 mousePosition = Input.mousePosition;
+            mousePosition.z = DEFAULT_Z_POSITION;
+            Vector3 worldPosition = mainCamera.ScreenToWorldPoint(mousePosition);
+
             return new RaycastInput
             {
-                Start = worldPosition,
+                Start = mainCamera.transform.position,
                 End = worldPosition,
                 Filter = _selectionFilter,
             };

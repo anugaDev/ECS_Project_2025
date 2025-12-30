@@ -1,4 +1,6 @@
+using Client;
 using Unity.Entities;
+using Unity.Mathematics;
 
 namespace PlayerCamera
 {
