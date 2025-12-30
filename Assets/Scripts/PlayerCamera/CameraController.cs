@@ -50,16 +50,6 @@ namespace PlayerCamera
         [SerializeField] 
         private Vector3 _spectatorPosition = new(0f, 50f, 0f);
 
-        private Vector2 _normalScreenPercentage;
-
-        private Vector2 NormalMousePos =>
-            new(Input.mousePosition.x / Screen.width, Input.mousePosition.y / Screen.height);
-
-        private bool InScreenLeft => NormalMousePos.x < _normalScreenPercentage.x && Application.isFocused;
-        private bool InScreenRight => NormalMousePos.x > 1 - _normalScreenPercentage.x && Application.isFocused;
-        private bool InScreenTop => NormalMousePos.y < _normalScreenPercentage.y && Application.isFocused;
-        private bool InScreenBottom => NormalMousePos.y > 1 - _normalScreenPercentage.y && Application.isFocused;
-
         private CinemachineFramingTransposer _transposer;
 
         private EntityManager _entityManager;
@@ -72,7 +62,6 @@ namespace PlayerCamera
 
         private void Awake()
         {
-            _normalScreenPercentage = _screenPercentageDetection * 0.01f;
             _transposer = _cinemachineVirtualCamera.GetCinemachineComponent<CinemachineFramingTransposer>();
         }
 
@@ -117,11 +106,6 @@ namespace PlayerCamera
             };
         }
 
-        private void OnValidate()
-        {
-            _normalScreenPercentage = _screenPercentageDetection * PERCENTAGE_THRESHOLD;
-        }
-
         private void Update()
         {
             SetCameraForAutoAssignTeam();
@@ -131,22 +115,22 @@ namespace PlayerCamera
 
         private void MoveCamera()
         {
-            if (InScreenLeft)
+            if (Input.GetKey(KeyCode.A))
             {
                 transform.position += Vector3.left * (_camSpeed * Time.deltaTime);
             }
 
-            if (InScreenRight)
+            if (Input.GetKey(KeyCode.D))
             {
                 transform.position += Vector3.right * (_camSpeed * Time.deltaTime);
             }
 
-            if (InScreenTop)
+            if (Input.GetKey(KeyCode.S))
             {
                 transform.position += Vector3.back * (_camSpeed * Time.deltaTime);
             }
 
-            if (InScreenBottom)
+            if (Input.GetKey(KeyCode.W))
             {
                 transform.position += Vector3.forward * (_camSpeed * Time.deltaTime);
             }
