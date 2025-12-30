@@ -23,11 +23,11 @@ namespace PlayerInputs
 
         protected override void OnUpdate()
         {
-            ShortcutInputComponent shortcutInputComponent = new ShortcutInputComponent();
+            KeyShortcutInputComponent keyShortcutInputComponent = new KeyShortcutInputComponent();
 
             if (_inputActions.GameplayMap.SelectBaseShortcut.WasPressedThisFrame())
             {
-                shortcutInputComponent.SelectBaseInput.Set();
+                keyShortcutInputComponent.SelectBaseInput.Set();
             }
         }
     }

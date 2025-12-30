@@ -8,10 +8,13 @@ namespace PlayerInputs
     {
         [GhostField(Quantization = 0)] 
         public float3 Value;
+        
+        [GhostField(Quantization = 0)] 
+        public bool MustMove;
     }
 
     [GhostComponent(PrefabType = GhostPrefabType.AllPredicted)]
-    public struct ShortcutInputComponent : IInputComponentData
+    public struct KeyShortcutInputComponent : IInputComponentData
     {
         [GhostField]
         public InputEvent SelectBaseInput;

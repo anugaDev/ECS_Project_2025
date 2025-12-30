@@ -51,7 +51,7 @@ namespace PlayerInputs
         {
             CollisionWorld collisionWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld;
             Entity cameraEntity = SystemAPI.GetSingletonEntity<MainCameraTagComponent>();
-            UnityEngine.Camera mainCamera = EntityManager.GetComponentObject<MainCameraComponentData>(cameraEntity).Camera;
+            Camera mainCamera = EntityManager.GetComponentObject<MainCameraComponentData>(cameraEntity).Camera;
 
             Vector3 mousePosition = Input.mousePosition;
             mousePosition.z = DEFAULT_Z_POSITION;
@@ -75,7 +75,7 @@ namespace PlayerInputs
         {
             return new SelectedPositionComponent
             {
-                Value = closestHit.Position 
+                Value = closestHit.Position
             };
         }
 

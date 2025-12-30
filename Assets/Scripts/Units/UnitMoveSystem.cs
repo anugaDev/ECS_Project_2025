@@ -9,36 +9,41 @@ namespace Units
     [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
     public partial struct UnitMoveSystem :ISystem
     {
-        private const float POSITION_THRESHOLD = 0.001f;
+        private const float POSITION_THRESHOLD = 0.01f;
         
         private float _currentDeltaTime;
-
-        private UnitSelectedComponent _selection;
 
         public void OnUpdate(ref SystemState state)
         {
             _currentDeltaTime = SystemAPI.Time.DeltaTime;
-            foreach ((RefRW<LocalTransform> transform, UnitTargetPositionComponent movePosition, UnitMoveSpeedComponent moveSpeed, UnitSelectedComponent selection) 
-                     in SystemAPI.Query<RefRW<LocalTransform>, UnitTargetPositionComponent, UnitMoveSpeedComponent, UnitSelectedComponent>().WithAll<Simulate>())
-            {
-                float3 moveTarget = movePosition.Value;
-                moveTarget.y = transform.ValueRO.Position.y;
-                _selection = selection;
-                UpdateUnitTargetPosition(transform, moveTarget, moveSpeed);
+            foreach ((RefRW<LocalTransform> transform, UnitTargetPositionComponent movePosition, UnitMoveSpeedComponent moveSpeed, UnitSelectionComponent selection) 
+                     in SystemAPI.Query<RefRW<LocalTransform>, UnitTargetPositionComponent, UnitMoveSpeedComponent, UnitSelectionComponent>().WithAll<Simulate>())
+            { 
+                if (!movePosition.MustMove)
+                {
+                    continue;
+                }
+
+                UpdateUnitTargetPosition(transform, movePosition, moveSpeed);
             }
         }
 
-        private void UpdateUnitTargetPosition(RefRW<LocalTransform> transform, float3 moveTarget, UnitMoveSpeedComponent moveSpeed)
+        private void UpdateUnitTargetPosition(RefRW<LocalTransform> transform, UnitTargetPositionComponent targetPosition, UnitMoveSpeedComponent moveSpeed)
         {
-            if (math.distancesq(transform.ValueRO.Position, moveTarget) < POSITION_THRESHOLD && _selection.Selected)
+            float3 moveTarget = targetPosition.Value;
+            moveTarget.y = transform.ValueRO.Position.y;
+            var distancesq = math.distancesq(transform.ValueRO.Position, moveTarget);
+
+            if (distancesq < POSITION_THRESHOLD)
             {
+                targetPosition.MustMove = false;
                 return;
             }
 
-            SetUnitTargetPosition(transform, moveTarget, moveSpeed);
+            MoveUnitTowardsTargetPosition(transform, moveTarget, moveSpeed);
         }
 
-        private void SetUnitTargetPosition(RefRW<LocalTransform> transform, float3 moveTarget, UnitMoveSpeedComponent moveSpeed)
+        private void MoveUnitTowardsTargetPosition(RefRW<LocalTransform> transform, float3 moveTarget, UnitMoveSpeedComponent moveSpeed)
         {
             float3 moveDirection = math.normalize(moveTarget - transform.ValueRO.Position);
             float3 moveVector = moveDirection * moveSpeed.Speed * _currentDeltaTime;

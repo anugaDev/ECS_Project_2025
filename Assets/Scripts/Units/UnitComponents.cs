@@ -27,9 +27,9 @@ namespace Units
         public float Speed;
     }
 
-    public struct UnitSelectedComponent : IComponentData
+    public struct UnitSelectionComponent : IComponentData
     {
         [GhostField] 
-        public bool Selected;
+        public bool IsSelected;
     }
 }

@@ -4,22 +4,23 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.NetCode;
 using Unity.Transforms;
+using UnityEngine;
 
 namespace Units
 {
     [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
-    public partial struct UnitSelectSystem : ISystem
+    public partial struct SetSelectedUnitSystem : ISystem
     {
         private const float POSITION_THRESHOLD = 5f;
 
-        private UnitSelectedComponent _selection;
+        private UnitSelectionComponent _selection;
 
         public void OnUpdate(ref SystemState state)
         {
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
             foreach ((RefRW<LocalTransform> transform, SelectedPositionComponent selectPosition,
-                         UnitSelectedComponent selection,Entity unitEntity)
-                     in SystemAPI.Query<RefRW<LocalTransform>, SelectedPositionComponent, UnitSelectedComponent>().WithEntityAccess()
+                         UnitSelectionComponent selection,Entity unitEntity)
+                     in SystemAPI.Query<RefRW<LocalTransform>, SelectedPositionComponent, UnitSelectionComponent>().WithEntityAccess()
                          .WithAll<Simulate>())
             {
                 float3 selectPositionValue = selectPosition.Value;
@@ -34,12 +35,16 @@ namespace Units
 
         private void UpdateUnitSelection(RefRW<LocalTransform> transform, float3 selectPositionValue)
         {
+            Debug.Log(selectPositionValue);
             if (math.distancesq(transform.ValueRO.Position, selectPositionValue) > POSITION_THRESHOLD)
             {
-                _selection.Selected = false;
+                if(_selection.IsSelected) {Debug.Log("Set Unit Not Selected");} //TEST
+                _selection.IsSelected = false;
+                return;
             }
 
-            _selection.Selected = true;
+            _selection.IsSelected = true;
+            Debug.Log("Set Unit selected");//TEST
         }
     }
 }

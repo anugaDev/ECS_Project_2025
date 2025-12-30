@@ -13,8 +13,8 @@ namespace Units
         {
             state.RequireForUpdate<NetworkId>();
         }
-
-        public void Onupdate(ref SystemState state)
+        
+        public void OnUpdate(ref SystemState state)
         {
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
             foreach ((LocalTransform transform, Entity entity) 

@@ -74,7 +74,8 @@ namespace PlayerInputs
         {
             return new UnitTargetPositionComponent
             {
-                Value = closestHit.Position 
+                Value = closestHit.Position,
+                MustMove =  true
             };
         }
 

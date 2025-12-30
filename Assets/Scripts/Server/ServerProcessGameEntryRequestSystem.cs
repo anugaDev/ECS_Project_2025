@@ -1,4 +1,5 @@
 using Client;
+using PlayerInputs;
 using Units;
 using Types;
 using Unity.Collections;
@@ -59,11 +60,22 @@ namespace Server
             ReceiveRpcCommandRequest requestSource)
         {
             Entity newUnit = _entityCommandBuffer.Instantiate(unitEntity);
+            
             _entityCommandBuffer.SetName(newUnit,"BaseUnit");
-            _entityCommandBuffer.SetComponent(newUnit, GetUnitPosition(team));
+            LocalTransform localTransform = GetUnitPosition(team);
+            _entityCommandBuffer.SetComponent(newUnit, localTransform);
             _entityCommandBuffer.SetComponent(newUnit, GetGhostOwner(clientId));
+            _entityCommandBuffer.SetComponent(newUnit, GetTargetPosition(localTransform));
             _entityCommandBuffer.SetComponent(newUnit, GetTeamComponent(team));
             return newUnit;
+        }
+
+        private UnitTargetPositionComponent GetTargetPosition(LocalTransform localTransform)
+        {
+            return new UnitTargetPositionComponent
+            {
+                Value = localTransform.Position
+            };
         }
 
         private UnitTeamComponent GetTeamComponent(TeamType team)
@@ -84,11 +96,11 @@ namespace Server
             float3 unitPosition;
             if (team is TeamType.Red)
             {
-                unitPosition = new float3(50f, 1f, 0);
+                unitPosition = new float3(50f, 1f, 50);
             }
             else
             {
-                unitPosition = new float3(-50f, 1f, 0);
+                unitPosition = new float3(-50f, 1f, -50);
             }
             return LocalTransform.FromPosition(unitPosition);
         }
