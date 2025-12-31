@@ -1,13 +1,11 @@
 ﻿using Combat;
-using UI;
 using Units;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
-using UnityEngine.UI;
 
-namespace TMG.NFE_Tutorial
+namespace UI
 {
     [UpdateAfter(typeof(TransformSystemGroup))]
     [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]

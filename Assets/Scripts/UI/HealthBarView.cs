@@ -9,7 +9,7 @@ namespace UI
         private Slider _healthBarSlider;
         
         [SerializeField]
-        private Canvas _gameobject; 
+        private Canvas _canvas; 
 
         public void UpdateHealthBar(int curHitPoints, int maxHitPoints)
         {
@@ -20,13 +20,12 @@ namespace UI
 
         public void Enable()
         {
-            _gameobject.enabled = true;
+            _canvas.enabled = true;
         }
 
         public void Disable()
         {
-            _gameobject.enabled = false;;
+            _canvas.enabled = false;;
         }
-
     }
 }
