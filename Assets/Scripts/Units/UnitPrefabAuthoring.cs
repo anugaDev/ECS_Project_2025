@@ -22,7 +22,7 @@ namespace Units
                 AddComponentObject(prefabContainerEntity, GetUIPrefabs(prefabAuthoring));
             }
 
-            private static UIPrefabs GetUIPrefabs(UnitPrefabAuthoring prefabAuthoring)
+            private UIPrefabs GetUIPrefabs(UnitPrefabAuthoring prefabAuthoring)
             {
                 return new UIPrefabs
                 {

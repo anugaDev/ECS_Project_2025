@@ -1,3 +1,4 @@
+using UI;
 using Unity.Entities;
 using UnityEngine;
 
@@ -8,6 +9,9 @@ namespace Combat
         [SerializeField]
         private int MaxHitPoints;
         
+        [SerializeField]
+        public Vector3 HealthBarOffset;
+
         public class HitPointsBaker: Baker<HitPointAuthoring>
         {
             public override void Bake(HitPointAuthoring authoring)
@@ -17,6 +21,12 @@ namespace Combat
                 AddComponent(entity, GetMaxHitPointsComponent(authoring));
                 AddBuffer<DamageBufferElement>(entity);
                 AddBuffer<CurrentTickDamageCommand>(entity);
+                AddComponent(entity, GetHealthBarOffsetComponent(authoring));
+            }
+
+            private HealthBarOffsetComponent GetHealthBarOffsetComponent(HitPointAuthoring authoring)
+            {
+                return new HealthBarOffsetComponent { Value = authoring.HealthBarOffset };
             }
 
             private MaxHitPointsComponent GetMaxHitPointsComponent(HitPointAuthoring authoring)

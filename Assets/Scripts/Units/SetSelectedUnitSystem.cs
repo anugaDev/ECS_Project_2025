@@ -53,13 +53,11 @@ namespace Units
         {
             if (math.distancesq(transform.ValueRO.Position, selectPositionValue) > POSITION_THRESHOLD)
             {
-                if(_selection.IsSelected) {Debug.Log("Set Unit Not Selected");} //TEST
                 _selection.IsSelected = false;
                 return;
             }
 
             _selection.IsSelected = true;
-            Debug.Log("Set Unit selected");//TEST
         }
     }
 }

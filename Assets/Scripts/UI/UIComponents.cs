@@ -13,4 +13,7 @@ namespace UI
     {
         public float3 Value;
     }
+    public struct HealthBarSpawnedTagComponent : IComponentData
+    {
+    }
 }

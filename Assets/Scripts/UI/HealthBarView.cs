@@ -7,12 +7,26 @@ namespace UI
     {
         [SerializeField]
         private Slider _healthBarSlider;
+        
+        [SerializeField]
+        private Canvas _gameobject; 
 
-        public void SetHealthBar(int curHitPoints, int maxHitPoints)
+        public void UpdateHealthBar(int curHitPoints, int maxHitPoints)
         {
             _healthBarSlider.minValue = 0;
             _healthBarSlider.maxValue = maxHitPoints;
             _healthBarSlider.value = curHitPoints;
-        }    
+        }
+
+        public void Enable()
+        {
+            _gameobject.enabled = true;
+        }
+
+        public void Disable()
+        {
+            _gameobject.enabled = false;;
+        }
+
     }
 }
