@@ -37,7 +37,7 @@ namespace Server
                 int clientId = SystemAPI.GetComponent<NetworkId>(requestSource.SourceConnection).Value;
                 DebugTeam(clientId, teamRequest);
 
-                Entity unit = InstantiateUnit(unitEntity, clientId, teamRequest.Team,requestSource);
+                Entity unit = InstantiateUnit(unitEntity, clientId, teamRequest.Team);
                 LinkedEntityGroup linkedEntityGroup = new LinkedEntityGroup();
                 linkedEntityGroup.Value = unit;
                 _entityCommandBuffer.AppendToBuffer(requestSource.SourceConnection, linkedEntityGroup);
@@ -56,11 +56,9 @@ namespace Server
             //Assign other team on full
         }
 
-        private Entity InstantiateUnit(Entity unitEntity, int clientId, TeamType team,
-            ReceiveRpcCommandRequest requestSource)
+        private Entity InstantiateUnit(Entity unitEntity, int clientId, TeamType team)
         {
             Entity newUnit = _entityCommandBuffer.Instantiate(unitEntity);
-            
             _entityCommandBuffer.SetName(newUnit,"BaseUnit");
             LocalTransform localTransform = GetUnitPosition(team);
             _entityCommandBuffer.SetComponent(newUnit, localTransform);

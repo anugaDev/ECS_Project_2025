@@ -73,9 +73,9 @@ namespace UI
         private void SpawnHealthBar(LocalTransform transform, HealthBarOffsetComponent healthBarOffset,
             MaxHitPointsComponent maxHitPoints, EntityCommandBuffer ecb, Entity entity)
         {
-            HealthBarView healthBarPrefab = SystemAPI.ManagedAPI.GetSingleton<UIPrefabs>().HealthBar;
+            HealthBarController healthBarPrefab = SystemAPI.ManagedAPI.GetSingleton<UIPrefabs>().HealthBar;
             float3 spawnPosition = transform.Position + healthBarOffset.Value;
-            HealthBarView newHealthBar = Object.Instantiate(healthBarPrefab, spawnPosition, Quaternion.identity);
+            HealthBarController newHealthBar = Object.Instantiate(healthBarPrefab, spawnPosition, Quaternion.identity);
             newHealthBar.UpdateHealthBar(maxHitPoints.Value, maxHitPoints.Value);
             ecb.AddComponent(entity, new HealthBarUIReferenceComponent() { Value = newHealthBar });
         }
@@ -83,14 +83,14 @@ namespace UI
         private void EnableHealthBar(UnitSelectionComponent unitSelectionComponent,
             HealthBarUIReferenceComponent healthBar)
         {
-            HealthBarView barView = healthBar.Value;
+            HealthBarController barController = healthBar.Value;
             if (unitSelectionComponent.IsSelected)
             {
-                barView.Enable();
+                barController.Enable();
             }
             else
             {
-                barView.Disable();
+                barController.Disable();
             }
         }
     }

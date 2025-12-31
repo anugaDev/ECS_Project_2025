@@ -107,8 +107,17 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""id"": ""0e333b7e-f4c5-4d0d-a0c3-83dd1d8d30c7"",
                     ""expectedControlType"": """",
                     ""processors"": """",
+                    ""interactions"": ""Press"",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""PointerPosition"",
+                    ""type"": ""Value"",
+                    ""id"": ""e289ea0f-fd87-4298-9cbd-b548c8ec039d"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
                     ""interactions"": """",
-                    ""initialStateCheck"": false
+                    ""initialStateCheck"": true
                 },
                 {
                     ""name"": ""SelectBaseShortcut"",
@@ -134,7 +143,18 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""1c901d9d-aa19-4481-82d4-89839a0c0a6e"",
+                    ""id"": ""d4e5972e-285d-4921-8107-4e00250ecf96"",
+                    ""path"": ""<Keyboard>/b"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SelectBaseShortcut"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fa283d60-1cce-4257-95e5-e4d7b30d2bac"",
                     ""path"": ""<Mouse>/leftButton"",
                     ""interactions"": """",
                     ""processors"": """",
@@ -145,12 +165,12 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""d4e5972e-285d-4921-8107-4e00250ecf96"",
-                    ""path"": ""<Keyboard>/b"",
+                    ""id"": ""78910db7-e3bd-45c3-8d71-f13afc1fa426"",
+                    ""path"": ""<Mouse>/position"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""SelectBaseShortcut"",
+                    ""action"": ""PointerPosition"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -163,6 +183,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         m_GameplayMap = asset.FindActionMap("GameplayMap", throwIfNotFound: true);
         m_GameplayMap_SelectMovePosition = m_GameplayMap.FindAction("SelectMovePosition", throwIfNotFound: true);
         m_GameplayMap_SelectGameEntity = m_GameplayMap.FindAction("SelectGameEntity", throwIfNotFound: true);
+        m_GameplayMap_PointerPosition = m_GameplayMap.FindAction("PointerPosition", throwIfNotFound: true);
         m_GameplayMap_SelectBaseShortcut = m_GameplayMap.FindAction("SelectBaseShortcut", throwIfNotFound: true);
     }
 
@@ -246,6 +267,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
     private List<IGameplayMapActions> m_GameplayMapActionsCallbackInterfaces = new List<IGameplayMapActions>();
     private readonly InputAction m_GameplayMap_SelectMovePosition;
     private readonly InputAction m_GameplayMap_SelectGameEntity;
+    private readonly InputAction m_GameplayMap_PointerPosition;
     private readonly InputAction m_GameplayMap_SelectBaseShortcut;
     /// <summary>
     /// Provides access to input actions defined in input action map "GameplayMap".
@@ -266,6 +288,10 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "GameplayMap/SelectGameEntity".
         /// </summary>
         public InputAction @SelectGameEntity => m_Wrapper.m_GameplayMap_SelectGameEntity;
+        /// <summary>
+        /// Provides access to the underlying input action "GameplayMap/PointerPosition".
+        /// </summary>
+        public InputAction @PointerPosition => m_Wrapper.m_GameplayMap_PointerPosition;
         /// <summary>
         /// Provides access to the underlying input action "GameplayMap/SelectBaseShortcut".
         /// </summary>
@@ -302,6 +328,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @SelectGameEntity.started += instance.OnSelectGameEntity;
             @SelectGameEntity.performed += instance.OnSelectGameEntity;
             @SelectGameEntity.canceled += instance.OnSelectGameEntity;
+            @PointerPosition.started += instance.OnPointerPosition;
+            @PointerPosition.performed += instance.OnPointerPosition;
+            @PointerPosition.canceled += instance.OnPointerPosition;
             @SelectBaseShortcut.started += instance.OnSelectBaseShortcut;
             @SelectBaseShortcut.performed += instance.OnSelectBaseShortcut;
             @SelectBaseShortcut.canceled += instance.OnSelectBaseShortcut;
@@ -322,6 +351,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @SelectGameEntity.started -= instance.OnSelectGameEntity;
             @SelectGameEntity.performed -= instance.OnSelectGameEntity;
             @SelectGameEntity.canceled -= instance.OnSelectGameEntity;
+            @PointerPosition.started -= instance.OnPointerPosition;
+            @PointerPosition.performed -= instance.OnPointerPosition;
+            @PointerPosition.canceled -= instance.OnPointerPosition;
             @SelectBaseShortcut.started -= instance.OnSelectBaseShortcut;
             @SelectBaseShortcut.performed -= instance.OnSelectBaseShortcut;
             @SelectBaseShortcut.canceled -= instance.OnSelectBaseShortcut;
@@ -379,6 +411,13 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnSelectGameEntity(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "PointerPosition" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnPointerPosition(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "SelectBaseShortcut" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>

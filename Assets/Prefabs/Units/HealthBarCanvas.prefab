@@ -318,7 +318,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _healthBarSlider: {fileID: 8986874467296708868}
-  _gameobject: {fileID: 7587403821176963594}
+  _canvas: {fileID: 7587403821176963594}
 --- !u!1 &8316567548703684641
 GameObject:
   m_ObjectHideFlags: 0

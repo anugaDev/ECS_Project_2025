@@ -1,8 +1,8 @@
 using Client;
+using PlayerCamera;
 using PlayerInputs;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Mathematics;
 using Unity.NetCode;
 using Unity.Transforms;
 using UnityEngine;
@@ -12,52 +12,57 @@ namespace Units
     [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
     public partial struct SetSelectedUnitSystem : ISystem
     {
-        private const float POSITION_THRESHOLD = 1f;
-
         private UnitSelectionComponent _selection;
+
+        public void OnCreate(ref SystemState state)
+        {
+            state.RequireForUpdate<MainCameraTagComponent>();
+        }
 
         public void OnUpdate(ref SystemState state)
         {
+            Entity cameraEntity = SystemAPI.GetSingletonEntity<MainCameraTagComponent>();
+            Camera camera = state.EntityManager
+                .GetComponentObject<MainCameraComponentData>(cameraEntity) .Camera;
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            foreach ((RefRW<LocalTransform> transform, SelectedPositionComponent selectPosition,
+            foreach ((RefRW<LocalTransform> transform, SelectionBoxPositionComponent selectPosition,
                          UnitSelectionComponent selection,Entity unitEntity)
-                     in SystemAPI.Query<RefRW<LocalTransform>, SelectedPositionComponent, UnitSelectionComponent>().WithEntityAccess()
+                     in SystemAPI.Query<RefRW<LocalTransform>, SelectionBoxPositionComponent, UnitSelectionComponent>().WithEntityAccess()
                          .WithAll<Simulate>())
             {
-                float3 selectPositionValue = selectPosition.Value;
+                Rect selectPositionValue = selectPosition.Value;
                 selectPositionValue.y = transform.ValueRO.Position.y;
                 _selection = selection;
-                UpdateSelection(selectPosition, transform, selectPositionValue, entityCommandBuffer, unitEntity);
+                UpdateSelection(selectPosition, transform, selectPositionValue, entityCommandBuffer, unitEntity,camera);
+                entityCommandBuffer.RemoveComponent<SelectionBoxPositionComponent>(unitEntity);
             }
             
             entityCommandBuffer.Playback(state.EntityManager);
         }
 
-        private void UpdateSelection(SelectedPositionComponent selectPosition, RefRW<LocalTransform> transform, float3 selectPositionValue,
-            EntityCommandBuffer entityCommandBuffer, Entity unitEntity)
+        private void UpdateSelection(SelectionBoxPositionComponent selectPosition, RefRW<LocalTransform> transform,
+            Rect selectPositionValue,
+            EntityCommandBuffer entityCommandBuffer, Entity unitEntity, Camera camera)
         {
-            SelectedPositionComponent newSelectPosition = selectPosition;
-
-            if (!newSelectPosition.MustUpdate)
-            {
-                return;
-            }
-
-            UpdateUnitSelection(transform, selectPositionValue);
-            newSelectPosition.MustUpdate = false;
+            SelectionBoxPositionComponent newSelectPosition = selectPosition;
+            UpdateUnitSelection(transform, selectPositionValue, camera);
             entityCommandBuffer.SetComponent(unitEntity, _selection);
             entityCommandBuffer.SetComponent(unitEntity, newSelectPosition);
         }
 
-        private void UpdateUnitSelection(RefRW<LocalTransform> transform, float3 selectPositionValue)
+        private void UpdateUnitSelection(RefRW<LocalTransform> transform, Rect selectPositionValue, Camera camera)
         {
-            if (math.distancesq(transform.ValueRO.Position, selectPositionValue) > POSITION_THRESHOLD)
+            Vector3 screenPos = camera.WorldToScreenPoint(transform.ValueRO.Position);
+
+            if (selectPositionValue.Contains(screenPos))
             {
-                _selection.IsSelected = false;
+                Debug.Log("isSelected");
+                _selection.IsSelected = true;
                 return;
             }
-
-            _selection.IsSelected = true;
+            
+            Debug.Log("notSelected");
+            _selection.IsSelected = false;
         }
     }
 }

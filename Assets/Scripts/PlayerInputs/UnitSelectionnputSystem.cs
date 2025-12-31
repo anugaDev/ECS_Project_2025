@@ -1,97 +1,111 @@
-using Client;
-using PlayerCamera;
+using PlayerInputs.SelectionBox;
 using Units;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
-using Unity.Physics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Input = UnityEngine.Input;
-using RaycastHit = Unity.Physics.RaycastHit;
 
 namespace PlayerInputs
 {
     [UpdateInGroup(typeof(GhostInputSystemGroup))]
     public partial class UnitSelectionInputSystem : SystemBase
     {
-        private const uint GROUNDPLANE_GROUP = 1 << 0; 
-
-        private const uint RAYCAST_GROUP = 1 << 5; 
-
-        private const float DEFAULT_Z_POSITION = 100f; 
-
-        private CollisionFilter _selectionFilter;
-
         private InputActions _inputActionMap;
+
+        private Vector2 _startingPosition;
+
+        private Vector2 _lastPosition;
+
+        private bool _isDragging;
 
         protected override void OnCreate()
         {
             _inputActionMap = new InputActions();
-            _selectionFilter = new CollisionFilter
-            {
-                BelongsTo = RAYCAST_GROUP,
-                CollidesWith = GROUNDPLANE_GROUP
-            };
-            
             RequireForUpdate<OwnerTagComponent>();
+            RequireForUpdate<NetworkTime>();
         }
 
         protected override void OnStartRunning()
         {
             _inputActionMap.Enable();
-            _inputActionMap.GameplayMap.SelectGameEntity.performed += OnSelectUnit;
+            _inputActionMap.GameplayMap.SelectGameEntity.started += StartBoxSelection;
+            _inputActionMap.GameplayMap.SelectGameEntity.canceled += EndSelectionBox;
         }
+        
         protected override void OnStopRunning()
         {
-            _inputActionMap.GameplayMap.SelectGameEntity.performed -= OnSelectUnit;
+            _inputActionMap.GameplayMap.SelectGameEntity.started -= StartBoxSelection;
+            _inputActionMap.GameplayMap.SelectGameEntity.canceled -= EndSelectionBox;
             _inputActionMap.Disable();
         }
 
-        private void OnSelectUnit(InputAction.CallbackContext obj)
+        private void StartBoxSelection(InputAction.CallbackContext _)
         {
-            CollisionWorld collisionWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld;
-            Entity cameraEntity = SystemAPI.GetSingletonEntity<MainCameraTagComponent>();
-            Camera mainCamera = EntityManager.GetComponentObject<MainCameraComponentData>(cameraEntity).Camera;
-            RaycastInput selectionInput = GetRaycastInput(mainCamera);
-            SetUnitSelection(collisionWorld, selectionInput);
+            _isDragging = true;
+            SelectionBoxController.Instance.Enable();
+            _startingPosition = GetPointerPosition();
         }
 
-        private void SetUnitSelection(CollisionWorld collisionWorld, RaycastInput selectionInput)
+        private void UpdateBoxSelection()
         {
-            if (!collisionWorld.CastRay(selectionInput, out var closestHit))
+            if (!_isDragging)
             {
                 return;
             }
 
-            Entity unitEntity = SystemAPI.GetSingletonEntity<OwnerTagComponent>();
-            EntityManager.SetComponentData(unitEntity, GetUnitPositionComponent(closestHit));
+            _lastPosition = GetPointerPosition();
+            SelectionBoxController.Instance.UpdateBoxSize(_startingPosition, _lastPosition);
+        }
+        
+        private void EndSelectionBox(InputAction.CallbackContext _)
+        {
+            _isDragging = false;
+            SelectionBoxController.Instance.Disable();
+            SelectUnits();
+        }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+        private Vector2 GetPointerPosition()
+        {
+            return _inputActionMap.GameplayMap.PointerPosition.ReadValue<Vector2>();
         }
 
-        private SelectedPositionComponent GetUnitPositionComponent(RaycastHit closestHit)
+        private void SelectUnits()
         {
-            return new SelectedPositionComponent
+            EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
+
+            foreach ((RefRO<OwnerTagComponent> _, Entity entity) in 
+                     SystemAPI.Query<RefRO<OwnerTagComponent>>().WithEntityAccess())
+            { 
+                ecb.AddComponent(entity, GetUnitPositionComponent());
+            }
+
+            ecb.Playback(EntityManager);
+            ecb.Dispose();
+        }
+
+        private SelectionBoxPositionComponent GetUnitPositionComponent()
+        {
+            Vector2 convertedStartingPosition = SelectionBoxController.Instance.ScreenToCanvas(_startingPosition);
+            Vector2 convertedLastPosition = SelectionBoxController.Instance.ScreenToCanvas(_lastPosition);
+
+            return new SelectionBoxPositionComponent
             {
-                Value = closestHit.Position,
-                MustUpdate = true
+                Value = GetBoxScreenRect(convertedStartingPosition, convertedLastPosition),
             };
         }
 
-        private RaycastInput GetRaycastInput(Camera mainCamera)
+        private Rect GetBoxScreenRect(Vector2 startingPosition, Vector2 endingPosition)
         {
-            Vector3 mousePosition = Input.mousePosition;
-            mousePosition.z = DEFAULT_Z_POSITION;
-            Vector3 worldPosition = mainCamera.ScreenToWorldPoint(mousePosition);
-
-            return new RaycastInput
-            {
-                Start = mainCamera.transform.position,
-                End = worldPosition,
-                Filter = _selectionFilter,
-            };
+            Vector2 min = Vector2.Min(startingPosition, endingPosition);
+            Vector2 max = Vector2.Max(startingPosition, endingPosition);
+            return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
         }
 
         protected override void OnUpdate()
         {
+            UpdateBoxSelection();
         }
     }
 }

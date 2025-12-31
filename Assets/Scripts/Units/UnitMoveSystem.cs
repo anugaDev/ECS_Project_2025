@@ -7,7 +7,7 @@ using Unity.Transforms;
 namespace Units
 {
     [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
-    public partial struct UnitMoveSystem :ISystem
+    public partial struct UnitMoveSystem : ISystem
     {
         private const float POSITION_THRESHOLD = 0.01f;
         

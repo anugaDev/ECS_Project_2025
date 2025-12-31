@@ -6,7 +6,7 @@ namespace UI
 {
     public class HealthBarUIReferenceComponent : ICleanupComponentData
     {
-        public HealthBarView Value;
+        public HealthBarController Value;
     }
 
     public struct HealthBarOffsetComponent : IComponentData

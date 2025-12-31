@@ -1,5 +1,6 @@
 using Unity.Mathematics;
 using Unity.NetCode;
+using UnityEngine;
 
 namespace PlayerInputs
 {
@@ -12,13 +13,10 @@ namespace PlayerInputs
         [GhostField(Quantization = 0)] 
         public bool MustMove;
     }
-    public struct SelectedPositionComponent : IInputComponentData
+    public struct SelectionBoxPositionComponent : IInputComponentData
     {
         [GhostField(Quantization = 0)] 
-        public float3 Value;
-        
-        [GhostField]
-        public bool MustUpdate;
+        public Rect Value;
     }
 
     [GhostComponent(PrefabType = GhostPrefabType.AllPredicted)]

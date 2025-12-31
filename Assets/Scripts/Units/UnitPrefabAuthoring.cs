@@ -7,11 +7,15 @@ namespace Units
     public class UnitPrefabAuthoring : MonoBehaviour
     { 
         [SerializeField] 
-        GameObject Unit;
+        private GameObject _baseUnit;
         
         [SerializeField] 
-        public HealthBarView HealthBarPrefab;
-        
+        private HealthBarController _healthBarPrefab;
+
+        public GameObject BaseUnit => _baseUnit;
+
+        public HealthBarController HealthBarPrefab => _healthBarPrefab;
+
         public class UnitPrefabBaker : Baker<UnitPrefabAuthoring>
         {
             public override void Bake(UnitPrefabAuthoring prefabAuthoring)
@@ -34,7 +38,7 @@ namespace Units
             {
                 return new UnitPrefabComponent
                 {
-                    Unit = GetEntity(prefabAuthoring.Unit, TransformUsageFlags.Dynamic)
+                    Unit = GetEntity(prefabAuthoring.BaseUnit, TransformUsageFlags.Dynamic)
                 };
             }
         }
