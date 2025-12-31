@@ -1,3 +1,4 @@
+using UI;
 using Unity.Entities;
 using UnityEngine;
 
@@ -8,13 +9,25 @@ namespace Units
         [SerializeField] 
         GameObject Unit;
         
+        [SerializeField] 
+        public HealthBarView HealthBarPrefab;
+        
         public class UnitPrefabBaker : Baker<UnitPrefabAuthoring>
         {
             public override void Bake(UnitPrefabAuthoring prefabAuthoring)
-            { 
+            {
+                Entity prefabContainerEntity = GetEntity(TransformUsageFlags.None);
                 Entity unitContainer = GetEntity(TransformUsageFlags.None);
-                UnitPrefabComponent unitComponent = GetUnitComponent(prefabAuthoring);
-                AddComponent(unitContainer, unitComponent);
+                AddComponent(unitContainer, GetUnitComponent(prefabAuthoring));
+                AddComponentObject(prefabContainerEntity, GetUIPrefabs(prefabAuthoring));
+            }
+
+            private static UIPrefabs GetUIPrefabs(UnitPrefabAuthoring prefabAuthoring)
+            {
+                return new UIPrefabs
+                {
+                    HealthBar =  prefabAuthoring.HealthBarPrefab
+                };
             }
 
             private UnitPrefabComponent GetUnitComponent(UnitPrefabAuthoring prefabAuthoring)
