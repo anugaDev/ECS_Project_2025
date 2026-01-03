@@ -62,20 +62,23 @@ namespace PlayerInputs
                 return;
             }
 
-            SetSelectedUnitPosition(closestHit);
+            foreach ((RefRO<OwnerTagComponent> _, Entity entity) in 
+                     SystemAPI.Query<RefRO<OwnerTagComponent>>().WithEntityAccess())
+            {
+                SetSelectedUnitPosition(closestHit, entity);
+            }
         }
 
-        private void SetSelectedUnitPosition(RaycastHit closestHit)
+        private void SetSelectedUnitPosition(RaycastHit closestHit, Entity entity)
         {
-            Entity unitEntity = SystemAPI.GetSingletonEntity<OwnerTagComponent>();
-            UnitSelectionComponent selectedPositionComponent = EntityManager.GetComponentData<UnitSelectionComponent>(unitEntity);
+            UnitSelectionComponent selectedPositionComponent = EntityManager.GetComponentData<UnitSelectionComponent>(entity);
 
             if (!selectedPositionComponent.IsSelected)
             {
                 return;
             }
 
-            EntityManager.SetComponentData(unitEntity, GetUnitPositionComponent(closestHit));
+            EntityManager.SetComponentData(entity, GetUnitPositionComponent(closestHit));
         }
 
         private UnitTargetPositionComponent GetUnitPositionComponent(RaycastHit closestHit)

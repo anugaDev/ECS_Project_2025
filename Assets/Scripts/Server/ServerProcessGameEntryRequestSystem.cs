@@ -14,7 +14,11 @@ namespace Server
     [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
     public partial struct ServerProcessGameEntryRequestSystem : ISystem
     {
+        private const float DEFAULT_UNIT_OFFSET = 5f;
+
         private EntityCommandBuffer _entityCommandBuffer;
+
+        private int _currentUnitIndex;
 
         public void OnCreate(ref SystemState state)
         {
@@ -36,13 +40,22 @@ namespace Server
                 SetTeam(teamRequest);
                 int clientId = SystemAPI.GetComponent<NetworkId>(requestSource.SourceConnection).Value;
                 DebugTeam(clientId, teamRequest);
+                InstantiateInitialUnits(unitEntity, clientId, teamRequest, requestSource);
+            }
+            _entityCommandBuffer.Playback(state.EntityManager);
+        }
 
+        private void InstantiateInitialUnits(Entity unitEntity, int clientId, TeamRequest teamRequest,
+            ReceiveRpcCommandRequest requestSource)
+        {
+            for (int i = 0; i < GlobalParameters.INITIAL_UNITS; i++)
+            {
+                _currentUnitIndex = i;
                 Entity unit = InstantiateUnit(unitEntity, clientId, teamRequest.Team);
                 LinkedEntityGroup linkedEntityGroup = new LinkedEntityGroup();
                 linkedEntityGroup.Value = unit;
                 _entityCommandBuffer.AppendToBuffer(requestSource.SourceConnection, linkedEntityGroup);
             }
-            _entityCommandBuffer.Playback(state.EntityManager);
         }
 
         private void DebugTeam(int clientId, TeamRequest teamRequest)
@@ -92,13 +105,14 @@ namespace Server
         private LocalTransform GetUnitPosition(TeamType team)
         {
             float3 unitPosition;
+            float unitOffset = _currentUnitIndex * DEFAULT_UNIT_OFFSET;
             if (team is TeamType.Red)
             {
-                unitPosition = new float3(50f, 1f, 50);
+                unitPosition = new float3(50f + unitOffset, 1f, 50 + unitOffset);
             }
             else
             {
-                unitPosition = new float3(-50f, 1f, -50);
+                unitPosition = new float3(-50f - unitOffset, 1f, -50- unitOffset);
             }
             return LocalTransform.FromPosition(unitPosition);
         }
