@@ -87,12 +87,9 @@ namespace PlayerInputs
 
         private SelectionBoxPositionComponent GetUnitPositionComponent()
         {
-            Vector2 convertedStartingPosition = SelectionBoxController.Instance.ScreenToCanvas(_startingPosition);
-            Vector2 convertedLastPosition = SelectionBoxController.Instance.ScreenToCanvas(_lastPosition);
-
             return new SelectionBoxPositionComponent
             {
-                Value = GetBoxScreenRect(convertedStartingPosition, convertedLastPosition),
+                Value = GetBoxScreenRect(_startingPosition, _lastPosition),
             };
         }
 

@@ -29,7 +29,6 @@ namespace Units
 
     public struct UnitSelectionComponent : IComponentData
     {
-        [GhostField] 
         public bool IsSelected;
     }
 }
