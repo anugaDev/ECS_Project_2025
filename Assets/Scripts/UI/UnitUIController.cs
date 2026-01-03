@@ -3,13 +3,16 @@ using UnityEngine.UI;
 
 namespace UI
 {
-    public class HealthBarController : MonoBehaviour
+    public class UnitUIController : MonoBehaviour
     {
         [SerializeField]
         private Slider _healthBarSlider;
         
         [SerializeField]
-        private Canvas _canvas; 
+        private Canvas _healthbarCanvas;
+
+        [SerializeField]
+        private GameObject _selectionCircle; 
 
         public void UpdateHealthBar(int curHitPoints, int maxHitPoints)
         {
@@ -18,14 +21,16 @@ namespace UI
             _healthBarSlider.value = curHitPoints;
         }
 
-        public void Enable()
+        public void EnableUI()
         {
-            _canvas.enabled = true;
+            _healthbarCanvas.enabled = true;
+            _selectionCircle.SetActive(true);
         }
 
-        public void Disable()
+        public void DisableUI()
         {
-            _canvas.enabled = false;;
+            _healthbarCanvas.enabled = false;
+            _selectionCircle.SetActive(false);
         }
     }
 }

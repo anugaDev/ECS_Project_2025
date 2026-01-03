@@ -198,7 +198,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _baseUnit: {fileID: 2147052715152915695, guid: a5aa2e5ab6bf0da4682c82e287d6c279, type: 3}
-  _healthBarPrefab: {fileID: 3302274785000864678, guid: 92b59f9193e1877439190d2298da7b41, type: 3}
+  _unitUIPrefab: {fileID: 1725246225933484181, guid: f049706217984d345ba9b2b8db84b620, type: 3}
 --- !u!1 &1356770831
 GameObject:
   m_ObjectHideFlags: 0

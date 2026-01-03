@@ -1,6 +1,7 @@
 using UI;
 using Unity.Entities;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Units
 {
@@ -10,11 +11,11 @@ namespace Units
         private GameObject _baseUnit;
         
         [SerializeField] 
-        private HealthBarController _healthBarPrefab;
+        private UnitUIController _unitUIPrefab;
 
         public GameObject BaseUnit => _baseUnit;
 
-        public HealthBarController HealthBarPrefab => _healthBarPrefab;
+        public UnitUIController UnitUIPrefab => _unitUIPrefab;
 
         public class UnitPrefabBaker : Baker<UnitPrefabAuthoring>
         {
@@ -30,7 +31,7 @@ namespace Units
             {
                 return new UIPrefabs
                 {
-                    HealthBar =  prefabAuthoring.HealthBarPrefab
+                    UnitUI =  prefabAuthoring.UnitUIPrefab
                 };
             }
 

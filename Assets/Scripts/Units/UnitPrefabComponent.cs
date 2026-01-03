@@ -11,6 +11,6 @@ namespace Units
 
     public class UIPrefabs : IComponentData
     {
-        public HealthBarController HealthBar;
+        public UnitUIController UnitUI;
     }
 }
