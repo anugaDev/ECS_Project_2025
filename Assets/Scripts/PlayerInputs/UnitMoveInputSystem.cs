@@ -1,6 +1,9 @@
 using PlayerCamera;
+using PlayerInputs.MoveIndicator;
 using Units;
+using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.NetCode;
 using Unity.Physics;
 using UnityEngine;
@@ -22,7 +25,15 @@ namespace PlayerInputs
         private CollisionFilter _selectionFilter;
         
         private InputActions _inputActionMap;
-        
+
+        private bool _anySelected;
+
+        private UnitTargetPositionComponent _unitTargetPositionComponent;
+
+        private MoveIndicatorController _moveIndicator;
+
+        private bool _indicatorIsSet;
+
         protected override void OnCreate()
         {
             _inputActionMap = new InputActions();
@@ -33,6 +44,7 @@ namespace PlayerInputs
             };
             
             RequireForUpdate<OwnerTagComponent>();
+            RequireForUpdate<MoveIndicatorPrefabComponent>();
         }
 
         protected override void OnStartRunning()
@@ -40,6 +52,14 @@ namespace PlayerInputs
             _inputActionMap.Enable();
             _inputActionMap.GameplayMap.SelectMovePosition.performed += OnSelectMovePosition;
         }
+
+        private void SetMoveIndicator()
+        {
+            MoveIndicatorController moveIndicatorPrefab = SystemAPI.ManagedAPI.GetSingleton<MoveIndicatorPrefabComponent>().Value;
+            _moveIndicator = Object.Instantiate(moveIndicatorPrefab);
+            _indicatorIsSet = true;
+        }
+
         protected override void OnStopRunning()
         {
             _inputActionMap.GameplayMap.SelectMovePosition.performed -= OnSelectMovePosition;
@@ -67,6 +87,25 @@ namespace PlayerInputs
             {
                 SetSelectedUnitPosition(closestHit, entity);
             }
+
+            SetMovePositionIndicator();
+        }
+
+        private void SetMovePositionIndicator()
+        {
+            if (!_anySelected)
+            {
+                return;
+            }
+
+            if (!_indicatorIsSet)
+            {
+                SetMoveIndicator();
+            }
+
+            float3 spawnPosition = _unitTargetPositionComponent.Value;
+            _moveIndicator.Set(spawnPosition);
+            _anySelected = false;
         }
 
         private void SetSelectedUnitPosition(RaycastHit closestHit, Entity entity)
@@ -78,7 +117,9 @@ namespace PlayerInputs
                 return;
             }
 
-            EntityManager.SetComponentData(entity, GetUnitPositionComponent(closestHit));
+            _anySelected = true;
+            _unitTargetPositionComponent = GetUnitPositionComponent(closestHit);
+            EntityManager.SetComponentData(entity, _unitTargetPositionComponent);
         }
 
         private UnitTargetPositionComponent GetUnitPositionComponent(RaycastHit closestHit)

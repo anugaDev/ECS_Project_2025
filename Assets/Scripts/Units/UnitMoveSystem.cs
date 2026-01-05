@@ -32,9 +32,9 @@ namespace Units
         {
             float3 moveTarget = targetPosition.Value;
             moveTarget.y = transform.ValueRO.Position.y;
-            var distancesq = math.distancesq(transform.ValueRO.Position, moveTarget);
+            float targetDistance = math.distancesq(transform.ValueRO.Position, moveTarget);
 
-            if (distancesq < POSITION_THRESHOLD)
+            if (targetDistance < POSITION_THRESHOLD)
             {
                 targetPosition.MustMove = false;
                 return;

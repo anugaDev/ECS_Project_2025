@@ -12,10 +12,10 @@ namespace Units
         
         [SerializeField] 
         private UnitUIController _unitUIPrefab;
-
-        public GameObject BaseUnit => _baseUnit;
-
+        
         public UnitUIController UnitUIPrefab => _unitUIPrefab;
+        
+        public GameObject BaseUnit => _baseUnit;
 
         public class UnitPrefabBaker : Baker<UnitPrefabAuthoring>
         {
