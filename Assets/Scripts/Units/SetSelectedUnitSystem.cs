@@ -31,7 +31,6 @@ namespace Units
                          .WithAll<Simulate>())
             {
                 Rect selectPositionValue = selectPosition.Value;
-                selectPositionValue.y = transform.ValueRO.Position.y;
                 _selection = selection;
                 UpdateSelection(selectPosition, transform, selectPositionValue, entityCommandBuffer, unitEntity,camera);
                 entityCommandBuffer.RemoveComponent<SelectionBoxPositionComponent>(unitEntity);
@@ -56,12 +55,10 @@ namespace Units
 
             if (selectPositionValue.Contains(screenPos))
             {
-                Debug.Log("isSelected");
                 _selection.IsSelected = true;
                 return;
             }
             
-            Debug.Log("notSelected");
             _selection.IsSelected = false;
         }
     }
