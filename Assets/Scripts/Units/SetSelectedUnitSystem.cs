@@ -12,7 +12,9 @@ namespace Units
     [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
     public partial struct SetSelectedUnitSystem : ISystem
     {
-        private UnitSelectionComponent _selection;
+        private UnitSelectionComponent _currentSelectionComponent;
+
+        private NewSelectionComponent _currentNewSelection;
 
         public void OnCreate(ref SystemState state)
         {
@@ -25,41 +27,63 @@ namespace Units
             Camera camera = state.EntityManager
                 .GetComponentObject<MainCameraComponentData>(cameraEntity) .Camera;
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            foreach ((RefRW<LocalTransform> transform, SelectionBoxPositionComponent selectPosition,
+            foreach ((RefRW<LocalTransform> transform, NewSelectionComponent newSelection,
                          UnitSelectionComponent selection,Entity unitEntity)
-                     in SystemAPI.Query<RefRW<LocalTransform>, SelectionBoxPositionComponent, UnitSelectionComponent>().WithEntityAccess()
+                     in SystemAPI.Query<RefRW<LocalTransform>, NewSelectionComponent, UnitSelectionComponent>().WithEntityAccess()
                          .WithAll<Simulate>())
             {
-                Rect selectPositionValue = selectPosition.Value;
-                _selection = selection;
-                UpdateSelection(selectPosition, transform, selectPositionValue, entityCommandBuffer, unitEntity,camera);
-                entityCommandBuffer.RemoveComponent<SelectionBoxPositionComponent>(unitEntity);
+                _currentNewSelection = newSelection;
+                _currentSelectionComponent = selection;
+                UpdateSelection(newSelection, transform, entityCommandBuffer, unitEntity,camera);
+                entityCommandBuffer.RemoveComponent<NewSelectionComponent>(unitEntity);
             }
             
             entityCommandBuffer.Playback(state.EntityManager);
         }
 
-        private void UpdateSelection(SelectionBoxPositionComponent selectPosition, RefRW<LocalTransform> transform,
-            Rect selectPositionValue,
+        private void UpdateSelection(NewSelectionComponent selectPosition, RefRW<LocalTransform> transform,
             EntityCommandBuffer entityCommandBuffer, Entity unitEntity, Camera camera)
         {
-            SelectionBoxPositionComponent newSelectPosition = selectPosition;
-            UpdateUnitSelection(transform, selectPositionValue, camera);
-            entityCommandBuffer.SetComponent(unitEntity, _selection);
+            NewSelectionComponent newSelectPosition = selectPosition;
+            UpdateUnitSelection(transform, camera);
+            entityCommandBuffer.SetComponent(unitEntity, _currentSelectionComponent);
             entityCommandBuffer.SetComponent(unitEntity, newSelectPosition);
         }
 
-        private void UpdateUnitSelection(RefRW<LocalTransform> transform, Rect selectPositionValue, Camera camera)
+        private void UpdateUnitSelection(RefRW<LocalTransform> transform, Camera camera)
         {
             Vector3 screenPos = camera.WorldToScreenPoint(transform.ValueRO.Position);
 
-            if (selectPositionValue.Contains(screenPos))
+            if (_currentNewSelection.SelectionRect.Contains(screenPos))
             {
-                _selection.IsSelected = true;
+                UpdateSelected();
                 return;
             }
+
             
-            _selection.IsSelected = false;
+            UpdateNotSelected();
+        }
+
+        private void UpdateSelected()
+        {
+            if (_currentNewSelection.MustKeepSelection && _currentSelectionComponent.IsSelected)
+            {
+                _currentSelectionComponent.IsSelected = false;
+            }
+            else
+            {
+                _currentSelectionComponent.IsSelected = true;
+            }
+        }
+
+        private void UpdateNotSelected()
+        {
+            if (_currentNewSelection.MustKeepSelection)
+            {
+                return;
+            }
+
+            _currentSelectionComponent.IsSelected = false;
         }
     }
 }

@@ -382,6 +382,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -4874341865532683252, guid: d45f722c320003246903a2c976806705, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: d45f722c320003246903a2c976806705, type: 3}
       propertyPath: m_Name
       value: Thug
@@ -389,6 +393,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: d45f722c320003246903a2c976806705, type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1630794972795428178, guid: d45f722c320003246903a2c976806705, type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

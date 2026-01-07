@@ -13,10 +13,13 @@ namespace PlayerInputs
         [GhostField(Quantization = 0)] 
         public bool MustMove;
     }
-    public struct SelectionBoxPositionComponent : IInputComponentData
+    public struct NewSelectionComponent : IInputComponentData
     {
         [GhostField(Quantization = 0)] 
-        public Rect Value;
+        public Rect SelectionRect;
+        
+        [GhostField(Quantization = 0)]
+        public bool MustKeepSelection;
     }
 
     [GhostComponent(PrefabType = GhostPrefabType.AllPredicted)]

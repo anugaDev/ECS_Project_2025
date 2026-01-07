@@ -21,6 +21,8 @@ namespace PlayerInputs
 
         private bool _isDragging;
 
+        private bool _mustKeepSelection;
+
         protected override void OnCreate()
         {
             _inputActionMap = new InputActions();
@@ -56,6 +58,7 @@ namespace PlayerInputs
                 return;
             }
 
+            _mustKeepSelection = _inputActionMap.GameplayMap.KeepSelectionKey.IsPressed();
             _lastPosition = GetPointerPosition();
             SelectionBoxController.Instance.UpdateBoxSize(_startingPosition, _lastPosition);
         }
@@ -96,11 +99,12 @@ namespace PlayerInputs
             }
         }
 
-        private SelectionBoxPositionComponent GetUnitPositionComponent()
+        private NewSelectionComponent GetUnitPositionComponent()
         {
-            return new SelectionBoxPositionComponent
+            return new NewSelectionComponent
             {
-                Value = GetBoxScreenRect(_startingPosition, _lastPosition),
+                SelectionRect = GetBoxScreenRect(_startingPosition, _lastPosition),
+                MustKeepSelection = _mustKeepSelection
             };
         }
 
