@@ -11,6 +11,8 @@ namespace PlayerInputs
     [UpdateInGroup(typeof(GhostInputSystemGroup))]
     public partial class UnitSelectionInputSystem : SystemBase
     {
+        private const float CLICK_SELECTION_SIZE = 10f;
+
         private InputActions _inputActionMap;
 
         private Vector2 _startingPosition;
@@ -72,16 +74,26 @@ namespace PlayerInputs
 
         private void SelectUnits()
         {
+            NormalizeSelectionClick();
             EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
 
             foreach ((RefRO<OwnerTagComponent> _, Entity entity) in 
                      SystemAPI.Query<RefRO<OwnerTagComponent>>().WithEntityAccess())
-            { 
+            {
                 ecb.AddComponent(entity, GetUnitPositionComponent());
             }
 
             ecb.Playback(EntityManager);
             ecb.Dispose();
+        }
+
+        private void NormalizeSelectionClick()
+        {
+            if (Vector2.Distance(_startingPosition, _lastPosition) < CLICK_SELECTION_SIZE)
+            {
+                _startingPosition -= Vector2.one * CLICK_SELECTION_SIZE;
+                _lastPosition   += Vector2.one * CLICK_SELECTION_SIZE;
+            }
         }
 
         private SelectionBoxPositionComponent GetUnitPositionComponent()
