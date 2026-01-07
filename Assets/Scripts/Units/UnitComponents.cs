@@ -27,6 +27,11 @@ namespace Units
         public float Speed;
     }
 
+    public struct UnitTypeComponent : IComponentData
+    {
+        public UnitType Type;
+    }
+
     public struct UnitSelectionComponent : IComponentData
     {
         public bool IsSelected;

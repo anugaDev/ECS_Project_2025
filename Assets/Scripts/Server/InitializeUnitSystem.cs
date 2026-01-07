@@ -5,6 +5,8 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Rendering;
+using UnityEngine;
+using Utils;
 
 namespace Server
 {
@@ -29,11 +31,11 @@ namespace Server
 
         private void SetTeamColor(Entity unitEntity, UnitTeamComponent unitTeamComponent)
         {
-            float4 teamColor = new float4(0,0,1,1);
+            float4 teamColor = Color.red.ToFloat4();
 
             if (unitTeamComponent.Team is TeamType.Blue)
             {
-                teamColor = new float4(0,0,1,1);
+                teamColor = Color.blue.ToFloat4();
             }
 
             URPMaterialPropertyBaseColor unitColor = new URPMaterialPropertyBaseColor();

@@ -62,7 +62,7 @@ namespace PlayerInputs
             _lastPosition = GetPointerPosition();
             SelectionBoxController.Instance.UpdateBoxSize(_startingPosition, _lastPosition);
         }
-        
+
         private void EndSelectionBox(InputAction.CallbackContext _)
         {
             _isDragging = false;
