@@ -1,4 +1,4 @@
-using PlayerInputs.SelectionBox;
+using UI.UIControllers;
 using Units;
 using Unity.Collections;
 using Unity.Entities;
@@ -47,7 +47,7 @@ namespace PlayerInputs
         private void StartBoxSelection(InputAction.CallbackContext _)
         {
             _isDragging = true;
-            SelectionBoxController.Instance.Enable();
+            UserInterfaceController.Instance.SelectionBoxController.Enable();
             _startingPosition = GetPointerPosition();
         }
 
@@ -60,13 +60,13 @@ namespace PlayerInputs
 
             _mustKeepSelection = _inputActionMap.GameplayMap.KeepSelectionKey.IsPressed();
             _lastPosition = GetPointerPosition();
-            SelectionBoxController.Instance.UpdateBoxSize(_startingPosition, _lastPosition);
+            UserInterfaceController.Instance.SelectionBoxController.UpdateBoxSize(_startingPosition, _lastPosition);
         }
 
         private void EndSelectionBox(InputAction.CallbackContext _)
         {
             _isDragging = false;
-            SelectionBoxController.Instance.Disable();
+            UserInterfaceController.Instance.SelectionBoxController.Disable();
             SelectUnits();
         }
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     

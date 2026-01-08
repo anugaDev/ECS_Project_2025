@@ -1,31 +1,17 @@
 using UnityEngine;
 
-namespace PlayerInputs.SelectionBox
+namespace UI.UIControllers
 {
     public class SelectionBoxController : MonoBehaviour
     {
         private const float DEFAULT_BOX_SCALE = 1;
-     
-        public static SelectionBoxController Instance; //TEMP
-
+        
         [SerializeField]
         private RectTransform _boxTransform;
         
         [SerializeField]
         private Canvas _canvas;
-
-        private void Awake()
-        {
-            if (Instance != null)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            Instance = this;
-            Disable();
-        }
-
+        
         public void Enable()
         {
             _canvas.enabled = true;
@@ -49,13 +35,6 @@ namespace PlayerInputs.SelectionBox
             float newSizeX = GetFlippedAxis(size.x);
             float newSizeY = GetFlippedAxis(size.y);
             _boxTransform.localScale = new Vector3(newSizeX, newSizeY, DEFAULT_BOX_SCALE);
-        }
-
-        public Vector2 ScreenToCanvas(Vector2 screenPos)
-        {
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(_canvas.transform as RectTransform,
-                screenPos, null, out Vector2 localPoint);
-            return localPoint;
         }
 
         private float GetFlippedAxis(float axis)

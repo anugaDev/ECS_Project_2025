@@ -16,4 +16,8 @@ namespace UI
     public struct HealthBarSpawnedTagComponent : IComponentData
     {
     }
+
+    public struct PlayerUIActionsTagComponent : IComponentData
+    {
+    }
 }
