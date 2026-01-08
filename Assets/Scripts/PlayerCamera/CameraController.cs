@@ -9,8 +9,6 @@ namespace PlayerCamera
 {
     public class CameraController : MonoBehaviour
     { 
-        private const float PERCENTAGE_THRESHOLD = 0.01f;
-    
         [SerializeField] 
         private CinemachineVirtualCamera _cinemachineVirtualCamera;
 
@@ -159,7 +157,7 @@ namespace PlayerCamera
                 return;
             }
 
-            TeamType team = _entityManager.GetComponentData<UnitTeamComponent>(localUnit).Team;
+            TeamType team = _entityManager.GetComponentData<EntityTeamComponent>(localUnit).Team;
             Vector3 cameraPosition = GetCameraPosition(team);
             transform.position = cameraPosition;
             _cameraSet = true;

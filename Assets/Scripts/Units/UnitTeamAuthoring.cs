@@ -17,9 +17,9 @@ namespace Units
                 AddComponent(entity, GetUnitTeamComponent(authoring));
             }
 
-            private UnitTeamComponent GetUnitTeamComponent(UnitTeamAuthoring authoring)
+            private EntityTeamComponent GetUnitTeamComponent(UnitTeamAuthoring authoring)
             {
-                return new UnitTeamComponent
+                return new EntityTeamComponent
                 {
                     Team = authoring.Team
                 };

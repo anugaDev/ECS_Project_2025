@@ -1,8 +1,6 @@
-using Client;
 using PlayerInputs;
 using Types;
 using Unity.Entities;
-using Unity.Mathematics;
 using Unity.Rendering;
 using UnityEngine;
 
@@ -27,7 +25,7 @@ namespace Units
                 Entity unitEntity = GetEntity(TransformUsageFlags.Dynamic);
                 AddComponent<UnitTagComponent>(unitEntity);
                 AddComponent<NewUnitTagComponent>(unitEntity);
-                AddComponent<UnitTeamComponent>(unitEntity);
+                AddComponent<EntityTeamComponent>(unitEntity);
                 AddComponent<URPMaterialPropertyBaseColor>(unitEntity);
                 AddComponent<UnitTargetPositionComponent>(unitEntity);
                 AddComponent<UnitSelectionComponent>(unitEntity);

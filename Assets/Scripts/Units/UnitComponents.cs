@@ -16,7 +16,7 @@ namespace Units
     {
     }
 
-    public struct UnitTeamComponent : IComponentData
+    public struct EntityTeamComponent : IComponentData
     {
         [GhostField] 
         public TeamType Team;

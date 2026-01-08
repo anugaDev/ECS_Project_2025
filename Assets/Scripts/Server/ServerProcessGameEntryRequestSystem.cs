@@ -89,9 +89,9 @@ namespace Server
             };
         }
 
-        private UnitTeamComponent GetTeamComponent(TeamType team)
+        private EntityTeamComponent GetTeamComponent(TeamType team)
         {
-            return new UnitTeamComponent{Team = team};
+            return new EntityTeamComponent{Team = team};
         }
 
         private GhostOwner GetGhostOwner(int clientId)

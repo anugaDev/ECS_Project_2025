@@ -5,6 +5,6 @@ namespace Types
         Center = 0,
         House = 1,
         Farm = 2,
-        Barracks = 2
+        Barracks = 3
     }
 }
