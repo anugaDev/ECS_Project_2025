@@ -12,14 +12,24 @@ namespace UI.UIControllers
         [SerializeField]
         private Button _button;
 
-        public Action<IComponentData> OnClick;
+        public Action<SetPlayerUIActionComponent> OnClick;
         
-        private IComponentData _componentData;
+        private SetPlayerUIActionComponent _componentData;
 
-        public void Initialize(IComponentData componentData)
+        public void Initialize(SetPlayerUIActionComponent componentData)
         {
             _componentData = componentData;
             _button.onClick.AddListener(SendAction);
+        }
+
+        public PlayerUIActionType GetActionType()
+        {
+            return _componentData.Action;
+        }
+
+        public int GetPayloadId()
+        {
+            return _componentData.PayloadID;
         }
 
         private void SendAction()
@@ -30,6 +40,25 @@ namespace UI.UIControllers
         private void OnDestroy()
         {
             _button.onClick.RemoveAllListeners();
+        }
+
+        public void Show()
+        {
+            _button.enabled = true;
+        }
+
+        public void Hide()
+        {
+            _button.enabled = false;
+        }
+
+        public void Enable()
+        {
+            _button.interactable = true;
+        }
+        public void Disable()
+        {
+            _button.interactable = false;
         }
     }
 }

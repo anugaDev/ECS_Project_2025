@@ -17,11 +17,6 @@ namespace Buildings
         public BuildingType Type;
     }
 
-    public struct SetBuildingActionComponent : IComponentData
-    {
-        public BuildingType BuildingType;
-    }
-
     public class BuildingConfigurationComponent : IComponentData
     {
         public BuildingsScriptableObject Configuration;

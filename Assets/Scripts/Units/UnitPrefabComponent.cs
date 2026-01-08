@@ -1,6 +1,6 @@
+using ScriptableObjects;
 using UI;
 using Unity.Entities;
-using UnityEngine;
 
 namespace Units
 {
@@ -12,5 +12,10 @@ namespace Units
     public class UIPrefabs : IComponentData
     {
         public UnitUIController UnitUI;
+    }
+
+    public class UnitsConfigurationComponent : IComponentData
+    {
+        public UnitsScriptableObject Configuration;
     }
 }

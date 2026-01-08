@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace UI.UIControllers
 {
@@ -10,9 +11,14 @@ namespace UI.UIControllers
         private SelectionBoxController _selectionBoxController;
         
         [SerializeField]
-        private ActionDisplayController _actionDisplayerController;
+        private SelectionActionsDisplayController _selectionActionsDisplayerController;
+        
+        [SerializeField]
+        private SelectedDetailsDisplayController _selectedDisplaysController;
 
-        public ActionDisplayController ActionDisplayerController => _actionDisplayerController;
+        public SelectionActionsDisplayController SelectionActionsDisplayerController => _selectionActionsDisplayerController;
+
+        public SelectedDetailsDisplayController SelectedDisplaysController => _selectedDisplaysController;
 
         public SelectionBoxController SelectionBoxController => _selectionBoxController;
 
