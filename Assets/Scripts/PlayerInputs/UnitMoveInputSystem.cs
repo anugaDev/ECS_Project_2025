@@ -110,7 +110,7 @@ namespace PlayerInputs
 
         private void SetSelectedUnitPosition(RaycastHit closestHit, Entity entity)
         {
-            UnitSelectionComponent selectedPositionComponent = EntityManager.GetComponentData<UnitSelectionComponent>(entity);
+            EntitySelectionComponent selectedPositionComponent = EntityManager.GetComponentData<EntitySelectionComponent>(entity);
 
             if (!selectedPositionComponent.IsSelected)
             {

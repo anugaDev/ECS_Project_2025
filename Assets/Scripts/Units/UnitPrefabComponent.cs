@@ -6,7 +6,7 @@ namespace Units
 {
     public struct UnitPrefabComponent : IComponentData
     {
-        public Entity Unit;
+        public Entity Worker;
     }
 
     public class UIPrefabs : IComponentData

@@ -32,8 +32,10 @@ namespace Units
         public UnitType Type;
     }
 
-    public struct UnitSelectionComponent : IComponentData
+    public struct EntitySelectionComponent : IComponentData
     {
         public bool IsSelected;
+
+        public bool MustUpdateUI;
     }
 }

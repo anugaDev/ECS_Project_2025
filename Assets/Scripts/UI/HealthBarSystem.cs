@@ -41,8 +41,8 @@ namespace UI
                 UpdateHealthBar(transform, healthBarOffset, healthBarUI, currentHitPoints, maxHitPoints);
             }
 
-            foreach ((UnitSelectionComponent unitSelectionComponent, HealthBarUIReferenceComponent healthBar) in
-                     SystemAPI.Query<UnitSelectionComponent, HealthBarUIReferenceComponent>())
+            foreach ((EntitySelectionComponent unitSelectionComponent, HealthBarUIReferenceComponent healthBar) in
+                     SystemAPI.Query<EntitySelectionComponent, HealthBarUIReferenceComponent>())
             {
                 EnableHealthBar(unitSelectionComponent, healthBar);
             }
@@ -80,11 +80,11 @@ namespace UI
             ecb.AddComponent(entity, new HealthBarUIReferenceComponent() { Value = newUnitUI });
         }
 
-        private void EnableHealthBar(UnitSelectionComponent unitSelectionComponent,
+        private void EnableHealthBar(EntitySelectionComponent entitySelectionComponent,
             HealthBarUIReferenceComponent healthBar)
         {
             UnitUIController barController = healthBar.Value;
-            if (unitSelectionComponent.IsSelected)
+            if (entitySelectionComponent.IsSelected)
             {
                 barController.EnableUI();
             }

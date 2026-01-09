@@ -12,7 +12,7 @@ namespace Units
     [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
     public partial struct SetSelectedUnitSystem : ISystem
     {
-        private UnitSelectionComponent _currentSelectionComponent;
+        private EntitySelectionComponent _currentSelectionComponent;
 
         private NewSelectionComponent _currentNewSelection;
 
@@ -28,8 +28,8 @@ namespace Units
                 .GetComponentObject<MainCameraComponentData>(cameraEntity) .Camera;
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
             foreach ((RefRW<LocalTransform> transform, NewSelectionComponent newSelection,
-                         UnitSelectionComponent selection,Entity unitEntity)
-                     in SystemAPI.Query<RefRW<LocalTransform>, NewSelectionComponent, UnitSelectionComponent>().WithEntityAccess()
+                         EntitySelectionComponent selection,Entity unitEntity)
+                     in SystemAPI.Query<RefRW<LocalTransform>, NewSelectionComponent, EntitySelectionComponent>().WithEntityAccess()
                          .WithAll<Simulate>())
             {
                 _currentNewSelection = newSelection;
@@ -46,6 +46,7 @@ namespace Units
         {
             NewSelectionComponent newSelectPosition = selectPosition;
             UpdateUnitSelection(transform, camera);
+            _currentSelectionComponent.MustUpdateUI = true;
             entityCommandBuffer.SetComponent(unitEntity, _currentSelectionComponent);
             entityCommandBuffer.SetComponent(unitEntity, newSelectPosition);
         }

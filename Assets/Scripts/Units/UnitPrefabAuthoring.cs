@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using ScriptableObjects;
+using Types;
 using UI;
 using Unity.Entities;
 using UnityEngine;
@@ -8,14 +11,14 @@ namespace Units
     public class UnitPrefabAuthoring : MonoBehaviour
     { 
         [SerializeField] 
-        private GameObject _baseUnit;
+        private UnitsScriptableObject _unitsConfiguration;
         
         [SerializeField] 
         private UnitUIController _unitUIPrefab;
         
         public UnitUIController UnitUIPrefab => _unitUIPrefab;
         
-        public GameObject BaseUnit => _baseUnit;
+        public UnitsScriptableObject UnitsConfiguration => _unitsConfiguration;
 
         public class UnitPrefabBaker : Baker<UnitPrefabAuthoring>
         {
@@ -37,9 +40,11 @@ namespace Units
 
             private UnitPrefabComponent GetUnitComponent(UnitPrefabAuthoring prefabAuthoring)
             {
+                Dictionary<UnitType, GameObject> unitsDictionary = prefabAuthoring.UnitsConfiguration.GetUnitsDictionary();
+
                 return new UnitPrefabComponent
                 {
-                    Unit = GetEntity(prefabAuthoring.BaseUnit, TransformUsageFlags.Dynamic)
+                    Worker = GetEntity(unitsDictionary[UnitType.Worker], TransformUsageFlags.Dynamic)
                 };
             }
         }

@@ -51,6 +51,4 @@ namespace UI
     public struct UpdateUIActionTag : IComponentData
     {
     }
-    
-    
 }

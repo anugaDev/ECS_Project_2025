@@ -18,6 +18,7 @@ namespace UI
         {
             RequireForUpdate<EndSimulationEntityCommandBufferSystem.Singleton>();
             RequireForUpdate<BuildingConfigurationComponent>();
+            RequireForUpdate<UnitsConfigurationComponent>();
         }
 
         protected override void OnStartRunning()

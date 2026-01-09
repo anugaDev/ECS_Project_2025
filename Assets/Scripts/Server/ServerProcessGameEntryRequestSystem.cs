@@ -30,7 +30,7 @@ namespace Server
         public void OnUpdate(ref SystemState state)
         {
             _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            Entity unitEntity = SystemAPI.GetSingleton<UnitPrefabComponent>().Unit;
+            Entity unitEntity = SystemAPI.GetSingleton<UnitPrefabComponent>().Worker;
             foreach ((TeamRequest teamRequest, ReceiveRpcCommandRequest requestSource, Entity requestEntity) 
                      in SystemAPI.Query<TeamRequest, ReceiveRpcCommandRequest>().WithEntityAccess())
             {

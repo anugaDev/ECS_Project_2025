@@ -23,7 +23,7 @@ namespace Buildings
                 AddComponent<NewBuildingTagComponent>(buildingEntity);
                 AddComponent<EntityTeamComponent>(buildingEntity);
                 AddComponent<URPMaterialPropertyBaseColor>(buildingEntity);
-                AddComponent<UnitSelectionComponent>(buildingEntity);
+                AddComponent<EntitySelectionComponent>(buildingEntity);
                 AddComponent(buildingEntity, GetUnitTypeComponent(authoring));
             }
 
