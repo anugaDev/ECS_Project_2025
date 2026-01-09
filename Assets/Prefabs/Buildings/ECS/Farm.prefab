@@ -55,6 +55,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2061228570722979853}
   - component: {fileID: 1585325852229852317}
+  - component: {fileID: 4064869704507561338}
   m_Layer: 0
   m_Name: Farm
   m_TagString: Untagged
@@ -91,6 +92,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _buildingType: 2
+--- !u!114 &4064869704507561338
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2881682225047266158}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 985c77851d09408a853e85245a153d86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _buildingRenderers:
+  - {fileID: 1226459116519337984}
 --- !u!1001 &143534069025650395
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1126,6 +1141,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: afb730bc9e4aeb441802d87f403e85a6, type: 3}
+--- !u!23 &1226459116519337984 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -1748651611201842591, guid: afb730bc9e4aeb441802d87f403e85a6, type: 3}
+  m_PrefabInstance: {fileID: 8556496855700791905}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &8157270114295055754 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: afb730bc9e4aeb441802d87f403e85a6, type: 3}
