@@ -11,9 +11,9 @@ namespace ScriptableObjects
         [SerializeField]
         private List<UnitScriptableObject> _unitConfigurations;
 
-        public Dictionary<UnitType, GameObject> GetUnitsDictionary()
+        public Dictionary<UnitType, UnitScriptableObject> GetUnitsDictionary()
         {
-            return _unitConfigurations.ToDictionary(building => building.UnitType, building => building.UnitPrefab);
+            return _unitConfigurations.ToDictionary(unit => unit.UnitType, unit => unit);
         }
     }
 }

@@ -28,20 +28,20 @@ namespace UI.UIControllers
 
         public void SetBuildingActions(BuildingsScriptableObject buildingConfigurations)
         {
-            foreach (BuildingType buildingType in buildingConfigurations.GetBuildingsDictionary().Keys)
+            foreach (BuildingScriptableObject building in buildingConfigurations.GetBuildingsDictionary().Values)
             {
                 ActionButtonController actionButton = Instantiate(_actionButtonPrefab, _parent);
-                actionButton.Initialize(GetBuildingActionComponent(buildingType));
+                actionButton.Initialize(GetBuildingActionComponent(building.BuildingType), building.Name);
                 _buttonActions.Add(actionButton);
                 actionButton.OnClick += SendActionComponent;
             }
         }
         public void SetRecruitmentActions(UnitsScriptableObject unitsConfiguration)
         {
-            foreach (UnitType buildingType in unitsConfiguration.GetUnitsDictionary().Keys)
+            foreach (UnitScriptableObject unit in unitsConfiguration.GetUnitsDictionary().Values)
             {
                 ActionButtonController actionButton = Instantiate(_actionButtonPrefab, _parent);
-                actionButton.Initialize(GetUnitsActionComponent(buildingType));
+                actionButton.Initialize(GetUnitsActionComponent(unit.UnitType), unit.Name);
                 _buttonActions.Add(actionButton);
                 actionButton.OnClick += SendActionComponent;
             }

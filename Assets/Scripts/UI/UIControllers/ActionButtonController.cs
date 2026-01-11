@@ -1,5 +1,6 @@
 using System;
 using Buildings;
+using TMPro;
 using Types;
 using Unity.Entities;
 using UnityEngine;
@@ -13,15 +14,19 @@ namespace UI.UIControllers
         private Button _button;
 
         [SerializeField]
+        private TextMeshProUGUI _text;
+
+        [SerializeField]
         private GameObject _parent;
 
         public Action<SetPlayerUIActionComponent> OnClick;
         
         private SetPlayerUIActionComponent _componentData;
 
-        public void Initialize(SetPlayerUIActionComponent componentData)
+        public void Initialize(SetPlayerUIActionComponent componentData, string name)
         {
             _componentData = componentData;
+            _text.text = name;
             _button.onClick.AddListener(SendAction);
         }
 

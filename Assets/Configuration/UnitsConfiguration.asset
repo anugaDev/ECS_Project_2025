@@ -15,3 +15,5 @@ MonoBehaviour:
   _unitConfigurations:
   - _unitType: 0
     _unitPrefab: {fileID: 2147052715152915695, guid: a5aa2e5ab6bf0da4682c82e287d6c279, type: 3}
+    _name: Worker
+    _description: 

@@ -48,11 +48,11 @@ namespace Units
 
             private UnitPrefabComponent GetUnitComponent(UnitPrefabAuthoring prefabAuthoring)
             {
-                Dictionary<UnitType, GameObject> unitsDictionary = prefabAuthoring.UnitsConfiguration.GetUnitsDictionary();
+                Dictionary<UnitType, UnitScriptableObject> unitsDictionary = prefabAuthoring.UnitsConfiguration.GetUnitsDictionary();
 
                 return new UnitPrefabComponent
                 {
-                    Worker = GetEntity(unitsDictionary[UnitType.Worker], TransformUsageFlags.Dynamic)
+                    Worker = GetEntity(unitsDictionary[UnitType.Worker].UnitPrefab, TransformUsageFlags.Dynamic)
                 };
             }
         }

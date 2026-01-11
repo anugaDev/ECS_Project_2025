@@ -13,8 +13,18 @@ namespace ScriptableObjects
         [SerializeField]
         private GameObject _unitPrefab;
 
+        [SerializeField]
+        private string _name;
+
+        [SerializeField]
+        private string _description;
+
         public UnitType UnitType => _unitType;
 
         public GameObject UnitPrefab => _unitPrefab;
+
+        public string Name => _name;
+
+        public string Description => _description;
     }
 }

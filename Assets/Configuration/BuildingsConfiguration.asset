@@ -14,10 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _buildingConfigurations:
   - _buildingType: 0
+    _name: Town Center
+    _description: 
     _buildingPrefab: {fileID: 2881682225047266158, guid: d74520dbe079f074386815f42f620ee3, type: 3}
   - _buildingType: 3
+    _name: Barracks
+    _description: 
     _buildingPrefab: {fileID: 2881682225047266158, guid: 642ba2f3abc04b641b91164b89800a04, type: 3}
   - _buildingType: 1
+    _name: House
+    _description: 
     _buildingPrefab: {fileID: 2881682225047266158, guid: a1fa0bd2859994c4196e9a98374bf178, type: 3}
   - _buildingType: 2
+    _name: Farm
+    _description: 
     _buildingPrefab: {fileID: 2881682225047266158, guid: 87c07d99fb471f348bdf77bea860c26e, type: 3}

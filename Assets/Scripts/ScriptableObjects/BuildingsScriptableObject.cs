@@ -11,9 +11,9 @@ namespace ScriptableObjects
         [SerializeField]
         private List<BuildingScriptableObject> _buildingConfigurations;
 
-        public Dictionary<BuildingType, GameObject> GetBuildingsDictionary()
+        public Dictionary<BuildingType, BuildingScriptableObject> GetBuildingsDictionary()
         {
-            return _buildingConfigurations.ToDictionary(building => building.BuildingType, building => building.BuildingPrefab);
+            return _buildingConfigurations.ToDictionary(building => building.BuildingType, building => building);
         }
     }
 }
