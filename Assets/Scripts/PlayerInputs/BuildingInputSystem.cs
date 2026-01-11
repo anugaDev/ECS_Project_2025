@@ -1,16 +1,26 @@
 using System.Collections.Generic;
 using Buildings;
+using PlayerCamera;
 using ScriptableObjects;
 using Types;
 using UI;
 using Unity.Entities;
+using Unity.NetCode;
+using Unity.Physics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace PlayerInputs
 {
-    public partial class PlayerInputBuildingSystem : SystemBase
+    [UpdateInGroup(typeof(GhostInputSystemGroup))]
+    public partial class BuildingInputSystem : SystemBase
     {
+        private const uint GROUNDPLANE_GROUP = 1 << 0; 
+        
+        private const uint RAYCAST_GROUP = 1 << 5; 
+
+        private const float DEFAULT_Z_POSITION = 100f; 
+        
         private bool _isBuilding;
 
         private BuildingView _currentBuildingTemplate;
@@ -22,12 +32,19 @@ namespace PlayerInputs
         private Dictionary<BuildingType, BuildingScriptableObject> _buildingConfiguration;
 
         private Dictionary<BuildingType, BuildingView> _buildingTemplates;
+        
+        private CollisionFilter _selectionFilter;
 
         protected override void OnCreate()
         {
             _buildingTemplates = new Dictionary<BuildingType, BuildingView>();
             _inputActionMap = new InputActions();
             RequireForUpdate<BuildingsConfigurationComponent>();
+            _selectionFilter = new CollisionFilter
+            {
+                BelongsTo = RAYCAST_GROUP,
+                CollidesWith = GROUNDPLANE_GROUP
+            };
             base.OnCreate();
         }
 
@@ -58,9 +75,36 @@ namespace PlayerInputs
 
         private void UpdateBuilding()
         {
-            Vector2 mousePosition = _inputActionMap.GameplayMap.PointerPosition.ReadValue<Vector2>();
-            _currentBuildingTemplate.transform.position =
-                new Vector3(mousePosition.x, GlobalParameters.DEFAULT_SCENE_HEIGHT, mousePosition.y);
+            CollisionWorld collisionWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld;
+            var selectionInput = GetRaycastInput(collisionWorld);
+
+            if (!collisionWorld.CastRay(selectionInput, out var closestHit))
+            { 
+                return;
+            }
+
+            _currentBuildingTemplate.transform.position = closestHit.Position;
+        }
+
+        private RaycastInput GetRaycastInput(CollisionWorld collisionWorld)
+        {
+            Entity cameraEntity = SystemAPI.GetSingletonEntity<MainCameraTagComponent>();
+            Camera mainCamera = EntityManager.GetComponentObject<MainCameraComponentData>(cameraEntity).Camera;
+            return GetRaycastInput(mainCamera);
+        }
+
+        private RaycastInput GetRaycastInput(Camera mainCamera)
+        {
+            Vector3 mousePosition = Input.mousePosition;
+            mousePosition.z = DEFAULT_Z_POSITION;
+            Vector3 worldPosition = mainCamera.ScreenToWorldPoint(mousePosition);
+
+            return new RaycastInput
+            {
+                Start = mainCamera.transform.position,
+                End = worldPosition,
+                Filter = _selectionFilter,
+            };
         }
 
         private void CheckBuilding()
