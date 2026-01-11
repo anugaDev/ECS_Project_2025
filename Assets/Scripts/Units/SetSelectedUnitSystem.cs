@@ -45,8 +45,9 @@ namespace Units
             EntityCommandBuffer entityCommandBuffer, Entity unitEntity, Camera camera)
         {
             NewSelectionComponent newSelectPosition = selectPosition;
+            bool currentSelectionState = _currentSelectionComponent.IsSelected;
             UpdateUnitSelection(transform, camera);
-            _currentSelectionComponent.MustUpdateUI = true;
+            _currentSelectionComponent.MustUpdateUI = currentSelectionState != _currentSelectionComponent.IsSelected;
             entityCommandBuffer.SetComponent(unitEntity, _currentSelectionComponent);
             entityCommandBuffer.SetComponent(unitEntity, newSelectPosition);
         }

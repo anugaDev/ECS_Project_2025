@@ -17,7 +17,7 @@ namespace Buildings
         public BuildingType Type;
     }
 
-    public class BuildingConfigurationComponent : IComponentData
+    public class BuildingsConfigurationComponent : IComponentData
     {
         public BuildingsScriptableObject Configuration;
     }

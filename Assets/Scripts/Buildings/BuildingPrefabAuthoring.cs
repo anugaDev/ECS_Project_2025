@@ -19,9 +19,9 @@ namespace Buildings
                 AddComponentObject(prefabContainerEntity, GetBuildingConfiguration(prefabAuthoring));
             }
 
-            private BuildingConfigurationComponent GetBuildingConfiguration(BuildingPrefabAuthoring prefabAuthoring)
+            private BuildingsConfigurationComponent GetBuildingConfiguration(BuildingPrefabAuthoring prefabAuthoring)
             {
-                return new BuildingConfigurationComponent
+                return new BuildingsConfigurationComponent
                 {
                     Configuration =  prefabAuthoring.Configuration
                 };

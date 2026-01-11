@@ -8,6 +8,7 @@ namespace ScriptableObjects
     [CreateAssetMenu(fileName = "BuildingsList", menuName = "ScriptableObjects/BuildingsList")]
     public class BuildingsScriptableObject : ScriptableObject
     {
+        [SerializeField]
         private List<BuildingScriptableObject> _buildingConfigurations;
 
         public Dictionary<BuildingType, GameObject> GetBuildingsDictionary()

@@ -21,6 +21,11 @@ namespace UI.UIControllers
         
         public Action<SetPlayerUIActionComponent> OnActionSelected;
 
+        private void Awake()
+        {
+            _buttonActions  = new List<ActionButtonController>();
+        }
+
         public void SetBuildingActions(BuildingsScriptableObject buildingConfigurations)
         {
             foreach (BuildingType buildingType in buildingConfigurations.GetBuildingsDictionary().Keys)
@@ -62,13 +67,26 @@ namespace UI.UIControllers
         public void SetActionsActive(DynamicBuffer<UpdateUIActionPayload> buffers)
         {
             HideActions();
-            foreach (ActionButtonController actionButton in _buttonActions.Where(actionButton => 
-                         buffers.Any(buffer =>
-                         actionButton.GetActionType() == buffer.Action &&
-                         actionButton.GetPayloadId() == buffer.PayloadID)))
+            HashSet<(PlayerUIActionType action, int payload)> validActions = GetActionBufferAsHashSet(buffers);
+
+            foreach (ActionButtonController actionButton in _buttonActions.Where(actionButton => validActions.Contains((
+                         actionButton.GetActionType(),
+                         actionButton.GetPayloadId()))))
             {
                 actionButton.Show();
             }
+        }
+
+        private HashSet<(PlayerUIActionType action, int payload)> GetActionBufferAsHashSet(DynamicBuffer<UpdateUIActionPayload> buffers)
+        {
+            HashSet<(PlayerUIActionType action, int payload)> validActions = new();
+
+            for (int i = 0; i < buffers.Length; i++)
+            {
+                validActions.Add((buffers[i].Action, buffers[i].PayloadID));
+            }
+
+            return validActions;
         }
 
         private void HideActions()

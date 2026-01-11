@@ -12,6 +12,9 @@ namespace UI.UIControllers
         [SerializeField]
         private Button _button;
 
+        [SerializeField]
+        private GameObject _parent;
+
         public Action<SetPlayerUIActionComponent> OnClick;
         
         private SetPlayerUIActionComponent _componentData;
@@ -44,12 +47,12 @@ namespace UI.UIControllers
 
         public void Show()
         {
-            _button.enabled = true;
+            _parent.SetActive(true);
         }
 
         public void Hide()
         {
-            _button.enabled = false;
+            _parent.SetActive(false);
         }
 
         public void Enable()

@@ -28,6 +28,7 @@ namespace Units
                 Entity unitContainer = GetEntity(TransformUsageFlags.None);
                 AddComponent(unitContainer, GetUnitComponent(prefabAuthoring));
                 AddComponentObject(prefabContainerEntity, GetUIPrefabs(prefabAuthoring));
+                AddComponentObject(prefabContainerEntity, GetUnitsConfiguration(prefabAuthoring));
             }
 
             private UIPrefabs GetUIPrefabs(UnitPrefabAuthoring prefabAuthoring)
@@ -35,6 +36,13 @@ namespace Units
                 return new UIPrefabs
                 {
                     UnitUI =  prefabAuthoring.UnitUIPrefab
+                };
+            }
+            private UnitsConfigurationComponent GetUnitsConfiguration(UnitPrefabAuthoring prefabAuthoring)
+            {
+                return new UnitsConfigurationComponent
+                {
+                    Configuration = prefabAuthoring.UnitsConfiguration
                 };
             }
 

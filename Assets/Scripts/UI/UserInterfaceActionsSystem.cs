@@ -17,7 +17,7 @@ namespace UI
         protected override void OnCreate()
         {
             RequireForUpdate<EndSimulationEntityCommandBufferSystem.Singleton>();
-            RequireForUpdate<BuildingConfigurationComponent>();
+            RequireForUpdate<BuildingsConfigurationComponent>();
             RequireForUpdate<UnitsConfigurationComponent>();
         }
 
@@ -38,14 +38,14 @@ namespace UI
 
         private void SetBuildingActions()
         {
-            BuildingsScriptableObject configuration = SystemAPI.ManagedAPI.GetSingleton<BuildingConfigurationComponent>().Configuration;
+            BuildingsScriptableObject configuration = SystemAPI.ManagedAPI.GetSingleton<BuildingsConfigurationComponent>().Configuration;
             _selectionActionsController.SetBuildingActions(configuration);
         }
 
         private void SetPlayerUIActionComponent(SetPlayerUIActionComponent actionComponent)
         {
             Entity uiEntity = SystemAPI.GetSingletonEntity<PlayerUIActionsTagComponent>();
-            EntityManager.SetComponentData(uiEntity, actionComponent);
+            EntityManager.AddComponentData(uiEntity, actionComponent);
         }
 
         protected override void OnStopRunning()
