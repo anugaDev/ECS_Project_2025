@@ -648,6 +648,8 @@ MonoBehaviour:
   - {fileID: 295797773324077910}
   - {fileID: 8709383604136064000}
   - {fileID: 3662816462272266971}
+  _transform: {fileID: 2061228570722979853}
+  _gameObject: {fileID: 344423600908912569}
 --- !u!1 &3478916890801542871
 GameObject:
   m_ObjectHideFlags: 0

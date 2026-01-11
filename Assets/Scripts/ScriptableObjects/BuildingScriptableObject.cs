@@ -1,4 +1,5 @@
 using System;
+using Buildings;
 using Types;
 using UnityEngine;
 
@@ -18,6 +19,9 @@ namespace ScriptableObjects
         
         [SerializeField]
         private GameObject _buildingPrefab;
+        
+        [SerializeField]
+        private BuildingView _buildingTemplate;
 
         public BuildingType BuildingType => _buildingType;
 
@@ -26,5 +30,7 @@ namespace ScriptableObjects
         public string Name => _name;
 
         public string Description => _description;
+        
+        public BuildingView BuildingTemplate => _buildingTemplate;
     }
 }

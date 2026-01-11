@@ -8,6 +8,16 @@ namespace Buildings
         [SerializeField] 
         private List<Renderer> _buildingRenderers;
 
+        [SerializeField]
+        private Transform _transform;
+        
+        [SerializeField]
+        private GameObject _gameObject;
+        
+        public Transform Transform=> _transform;
+
+        public GameObject GameObject=> _gameObject;
+
         public void SetTeamColorMaterial(Material material)
         {
             foreach (Renderer renderer in _buildingRenderers)

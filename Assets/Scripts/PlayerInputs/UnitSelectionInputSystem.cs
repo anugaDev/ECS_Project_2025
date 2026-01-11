@@ -1,3 +1,5 @@
+using Buildings;
+using UI;
 using UI.UIControllers;
 using Units;
 using Unity.Collections;
@@ -46,6 +48,14 @@ namespace PlayerInputs
 
         private void StartBoxSelection(InputAction.CallbackContext _)
         {
+            foreach (SetPlayerUIActionComponent playerUIActionComponent in SystemAPI.Query<SetPlayerUIActionComponent>())
+            {
+                if (playerUIActionComponent.Action == PlayerUIActionType.Build)
+                {
+                    return;
+                }
+            }
+
             _isDragging = true;
             UserInterfaceController.Instance.SelectionBoxController.Enable();
             _startingPosition = GetPointerPosition();

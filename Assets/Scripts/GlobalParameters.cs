@@ -9,4 +9,6 @@ public static class GlobalParameters
     public const int GAME_SCENE_INDEX = 1;
     
     public const int INITIAL_UNITS = 3;
+
+    public const float DEFAULT_SCENE_HEIGHT = 1f;
 }

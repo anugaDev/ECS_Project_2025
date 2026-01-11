@@ -108,11 +108,11 @@ namespace Server
             float unitOffset = _currentUnitIndex * DEFAULT_UNIT_OFFSET;
             if (team is TeamType.Red)
             {
-                unitPosition = new float3(50f + unitOffset, 1f, 50 + unitOffset);
+                unitPosition = new float3(50f + unitOffset, GlobalParameters.DEFAULT_SCENE_HEIGHT, 50 + unitOffset);
             }
             else
             {
-                unitPosition = new float3(-50f - unitOffset, 1f, -50- unitOffset);
+                unitPosition = new float3(-50f - unitOffset, GlobalParameters.DEFAULT_SCENE_HEIGHT, -50- unitOffset);
             }
             return LocalTransform.FromPosition(unitPosition);
         }
