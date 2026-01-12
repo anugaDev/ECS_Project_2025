@@ -4,6 +4,7 @@ using PlayerCamera;
 using ScriptableObjects;
 using Types;
 using UI;
+using Units;
 using Unity.Entities;
 using Unity.NetCode;
 using Unity.Physics;
@@ -39,6 +40,7 @@ namespace PlayerInputs
         {
             _buildingTemplates = new Dictionary<BuildingType, BuildingView>();
             _inputActionMap = new InputActions();
+            RequireForUpdate<OwnerTagComponent>();
             RequireForUpdate<BuildingsConfigurationComponent>();
             _selectionFilter = new CollisionFilter
             {
@@ -50,10 +52,19 @@ namespace PlayerInputs
 
         protected override void OnStartRunning()
         {
-            _inputActionMap.GameplayMap.SelectGameEntity.started += PlaceBuilding;
-            _inputActionMap.GameplayMap.SelectMovePosition.started += CancelBuilding;
+            _inputActionMap.Enable();
+            _inputActionMap.GameplayMap.SelectGameEntity.performed += PlaceBuilding;
+            _inputActionMap.GameplayMap.SelectMovePosition.performed += CancelBuilding;
             GetBuildingConfiguration();
             base.OnStartRunning();
+        }
+
+        protected override void OnStopRunning()
+        {
+            _inputActionMap.GameplayMap.SelectGameEntity.performed -= PlaceBuilding;
+            _inputActionMap.GameplayMap.SelectMovePosition.performed -= CancelBuilding;
+            _inputActionMap.Disable();
+            base.OnStopRunning();
         }
 
         private void GetBuildingConfiguration()
@@ -185,10 +196,8 @@ namespace PlayerInputs
         {
             _isBuilding = false;
             _currentBuildingTemplate.GameObject.SetActive(false);
-            EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer();
             Entity entity = SystemAPI.GetSingletonEntity<SetPlayerUIActionComponent>();
-            entityCommandBuffer.RemoveComponent<SetPlayerUIActionComponent>(entity);
-            entityCommandBuffer.Playback(EntityManager);
+            EntityManager.RemoveComponent<SetPlayerUIActionComponent>(entity);
         }
     }
 }
