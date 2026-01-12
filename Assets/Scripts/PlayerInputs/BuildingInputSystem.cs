@@ -14,7 +14,7 @@ using UnityEngine.InputSystem;
 
 namespace PlayerInputs
 {
-    [UpdateInGroup(typeof(GhostInputSystemGroup))]
+    [WorldSystemFilter((WorldSystemFilterFlags.ClientSimulation) | WorldSystemFilterFlags.ThinClientSimulation)]
     public partial class BuildingInputSystem : SystemBase
     {
         private const uint GROUNDPLANE_GROUP = 1 << 0; 
@@ -43,8 +43,12 @@ namespace PlayerInputs
         
         private Vector3 _lastPosition;
 
+        private EntityQuery _pendingNetworkIdQuery;
+
         protected override void OnCreate()
         {
+            EntityQueryBuilder builder = new EntityQueryBuilder(Allocator.Temp).WithAll<NetworkId>().WithNone<NetworkStreamInGame>();
+            _pendingNetworkIdQuery = GetEntityQuery(builder);
             _interactionPolicy = new CheckGameplayInteractionPolicy();
             _buildingTemplates = new Dictionary<BuildingType, BuildingView>();
             _inputActionMap = new InputActions();
@@ -215,16 +219,27 @@ namespace PlayerInputs
 
         private void SetBuildingComponent()
         {
-            EntityCommandBuffer  entityCommandBuffer= new EntityCommandBuffer(Allocator.Temp);
-            PlaceBuildingComponent buildingComponent = GetBuildingComponent();
-            Entity buildingEntity = SystemAPI.GetSingletonEntity<PlayerUIActionsTagComponent>();
-            entityCommandBuffer.SetComponent(buildingEntity, buildingComponent);
+            EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
+            NativeArray<Entity> pendingNetworkIds = _pendingNetworkIdQuery.ToEntityArray(Allocator.Temp); 
+            PlaceBuildingRequest buildingRequest = GetBuildingComponent();
+
+            foreach (Entity networkId in pendingNetworkIds)
+            {
+                entityCommandBuffer.AddComponent<NetworkStreamInGame>(networkId);
+                Entity requestTeamEntity = entityCommandBuffer.CreateEntity();
+                entityCommandBuffer.AddComponent(requestTeamEntity, buildingRequest);
+                SendRpcCommandRequest sendRpcCommandRequest = new SendRpcCommandRequest();
+                sendRpcCommandRequest.TargetConnection = networkId;
+                entityCommandBuffer.AddComponent(requestTeamEntity, sendRpcCommandRequest);
+            }
+
             entityCommandBuffer.Playback(EntityManager);
         }
 
-        private PlaceBuildingComponent GetBuildingComponent()
+
+        private PlaceBuildingRequest GetBuildingComponent()
         {
-            return new PlaceBuildingComponent()
+            return new PlaceBuildingRequest()
             {
                 BuildingType = _currentBuildingType,
                 Position = _lastPosition

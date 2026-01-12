@@ -58,6 +58,8 @@ GameObject:
   - component: {fileID: 4064869704507561338}
   - component: {fileID: -6217968419504794557}
   - component: {fileID: -5154689503818207158}
+  - component: {fileID: 4409414685017130729}
+  - component: {fileID: -4581568304590023509}
   m_Layer: 0
   m_Name: Farm
   m_TagString: Untagged
@@ -285,6 +287,44 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &4409414685017130729
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2881682225047266158}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c16549610bfe4458aa9389201d072bb6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &-4581568304590023509
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2881682225047266158}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c79d771cedb4794bf100ce60df5f764, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DefaultGhostMode: 0
+  SupportedGhostModes: 3
+  OptimizationMode: 0
+  Importance: 3000
+  MaxSendRate: 0
+  prefabId: 87c07d99fb471f348bdf77bea860c26e
+  HasOwner: 1
+  SupportAutoCommandTarget: 1
+  TrackInterpolationDelay: 0
+  GhostGroup: 0
+  UsePreSerialization: 0
+  UseSingleBaseline: 0
+  RollbackPredictedSpawnedGhostState: 0
+  RollbackPredictionOnStructuralChanges: 1
 --- !u!1001 &143534069025650395
 PrefabInstance:
   m_ObjectHideFlags: 0

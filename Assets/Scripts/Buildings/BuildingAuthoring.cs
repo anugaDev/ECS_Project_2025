@@ -19,7 +19,7 @@ namespace Buildings
             public override void Bake(BuildingAuthoring authoring)
             {
                 Entity buildingEntity = GetEntity(TransformUsageFlags.Dynamic);
-                AddComponent<BuildingComponents>(buildingEntity);
+                AddComponent<BuildingTagComponent>(buildingEntity);
                 AddComponent<NewBuildingTagComponent>(buildingEntity);
                 AddComponent<EntityTeamComponent>(buildingEntity);
                 AddComponent<URPMaterialPropertyBaseColor>(buildingEntity);

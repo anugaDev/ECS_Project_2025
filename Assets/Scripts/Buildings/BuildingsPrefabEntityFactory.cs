@@ -1,36 +1,28 @@
-using System.Collections.Generic;
 using Buildings;
 using Types;
 using Unity.Entities;
 
-public class BuildingsPrefabEntityFactory
+public struct BuildingsPrefabEntityFactory
 {
-    public Dictionary<BuildingType, Entity> _buildingPrefabs;
+    private BuildingPrefabComponent _prefabComponent;
 
-    private bool _isInitialized;
+    public bool IsInitialized;
 
-    public bool IsInitialized => _isInitialized;
-
-    public BuildingsPrefabEntityFactory()
+    public void Set(BuildingPrefabComponent prefabs)
     {
-        _isInitialized = false;
+        _prefabComponent = prefabs;
+        IsInitialized = true;
     }
 
-    public void Set(BuildingPrefabComponent prefabComponent)
+    public Entity Get(BuildingType type)
     {
-        _isInitialized = true;
-
-        _buildingPrefabs = new Dictionary<BuildingType, Entity>
+        return type switch
         {
-            [BuildingType.Center] = prefabComponent.TownCenter,
-            [BuildingType.Barracks] = prefabComponent.Barracks,
-            [BuildingType.House] = prefabComponent.House,
-            [BuildingType.Farm] = prefabComponent.Farm
+            BuildingType.Center => _prefabComponent.TownCenter,
+            BuildingType.Barracks => _prefabComponent.Barracks,
+            BuildingType.House => _prefabComponent.House,
+            BuildingType.Farm => _prefabComponent.Farm,
+            _ => Entity.Null
         };
-    }
-
-    public Entity Get(BuildingType buildingType)
-    {
-        return _buildingPrefabs[buildingType];
     }
 }

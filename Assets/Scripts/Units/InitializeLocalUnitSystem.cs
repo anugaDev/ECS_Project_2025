@@ -17,8 +17,8 @@ namespace Units
         public void OnUpdate(ref SystemState state)
         {
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            foreach ((LocalTransform transform, Entity entity) 
-                     in SystemAPI.Query<LocalTransform>().WithAll<GhostOwnerIsLocal>().WithNone<OwnerTagComponent>().WithEntityAccess())
+            foreach ((LocalTransform transform, UnitTagComponent _, Entity entity) 
+                     in SystemAPI.Query<LocalTransform, UnitTagComponent>().WithAll<GhostOwnerIsLocal>().WithNone<OwnerTagComponent>().WithEntityAccess())
             {
                 entityCommandBuffer.AddComponent<OwnerTagComponent>(entity);
                 entityCommandBuffer.SetComponent(entity, GetTargetPositionComponent(transform));

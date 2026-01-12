@@ -21,7 +21,6 @@ namespace Client
 
         public void OnUpdate(ref SystemState state)
         {
-            Debug.Log("client request game entry");
             TeamType teamType = SystemAPI.GetSingleton<ClientTeamRequest>().Value;
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
             NativeArray<Entity> pendingNetworkIds = _pendingNetworkIdQuery.ToEntityArray(Allocator.Temp);

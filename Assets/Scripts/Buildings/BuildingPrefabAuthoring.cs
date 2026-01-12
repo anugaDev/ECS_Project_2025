@@ -22,7 +22,6 @@ namespace Buildings
                 Entity prefabContainerEntity = GetEntity(TransformUsageFlags.None); 
                 AddComponent(buildingContainer, GetBuildingsComponent(prefabAuthoring));
                 AddComponentObject(prefabContainerEntity, GetBuildingConfiguration(prefabAuthoring));
-                AddComponentObject(prefabContainerEntity, GetBuildingConfiguration(prefabAuthoring));
             }
 
             private BuildingsConfigurationComponent GetBuildingConfiguration(BuildingPrefabAuthoring prefabAuthoring)

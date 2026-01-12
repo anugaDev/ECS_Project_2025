@@ -2,10 +2,11 @@ using ScriptableObjects;
 using Types;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.NetCode;
 
 namespace Buildings
 {
-    public struct BuildingComponents : IComponentData
+    public struct BuildingTagComponent : IComponentData
     {
     }
 
@@ -23,7 +24,7 @@ namespace Buildings
         public BuildingsScriptableObject Configuration;
     }
 
-    public struct PlaceBuildingComponent : IComponentData
+    public struct PlaceBuildingRequest : IRpcCommand
     {
         public BuildingType BuildingType;
 
