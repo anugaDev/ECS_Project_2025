@@ -21,12 +21,12 @@ namespace PlayerInputs
         private Vector2 _startingPosition;
 
         private Vector2 _lastPosition;
+        
+        private bool _mustKeepSelection;
+        
+        private bool _isAvailable;
 
         private bool _isDragging;
-
-        private bool _mustKeepSelection;
-
-        private bool _isAvailable;
 
         private CheckGameplayInteractionPolicy _interactionPolicy;
 

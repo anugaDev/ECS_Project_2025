@@ -25,21 +25,21 @@ namespace PlayerInputs
         
         private const float DEFAULT_Z_POSITION = 100f; 
         
+        private UnitTargetPositionComponent _unitTargetPositionComponent;
+
+        private CheckGameplayInteractionPolicy _interactionPolicy;
+        
+        private MoveIndicatorController _moveIndicator;
+        
         private CollisionFilter _selectionFilter;
         
         private InputActions _inputActionMap;
-
-        private bool _anySelected;
-
-        private UnitTargetPositionComponent _unitTargetPositionComponent;
-
-        private MoveIndicatorController _moveIndicator;
-        
-        private CheckGameplayInteractionPolicy _interactionPolicy;
         
         private bool _indicatorIsSet;
         
         private bool _isAvailable;
+        
+        private bool _anySelected;
 
         protected override void OnCreate()
         {

@@ -22,21 +22,21 @@ namespace PlayerInputs
 
         private const float DEFAULT_Z_POSITION = 100f; 
         
-        private bool _isBuilding;
-
-        private BuildingView _currentBuildingTemplate;
-        
-        private InputActions _inputActionMap;
-
-        private BuildingType _currentBuildingType;
-
         private Dictionary<BuildingType, BuildingScriptableObject> _buildingConfiguration;
 
         private Dictionary<BuildingType, BuildingView> _buildingTemplates;
         
-        private CollisionFilter _selectionFilter;
-
         private CheckGameplayInteractionPolicy _interactionPolicy;
+        
+        private BuildingView _currentBuildingTemplate;
+        
+        private BuildingType _currentBuildingType;
+        
+        private CollisionFilter _selectionFilter;
+        
+        private InputActions _inputActionMap;
+        
+        private bool _isBuilding;
 
         protected override void OnCreate()
         {
