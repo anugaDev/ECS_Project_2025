@@ -5,6 +5,7 @@ using ScriptableObjects;
 using Types;
 using UI;
 using Units;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
 using Unity.Physics;
@@ -37,6 +38,10 @@ namespace PlayerInputs
         private InputActions _inputActionMap;
         
         private bool _isBuilding;
+
+        private bool _isPositionAvailable;
+        
+        private Vector3 _lastPosition;
 
         protected override void OnCreate()
         {
@@ -97,7 +102,14 @@ namespace PlayerInputs
                 return;
             }
 
-            _currentBuildingTemplate.transform.position = closestHit.Position;
+            _lastPosition = closestHit.Position;
+            _currentBuildingTemplate.transform.position = _lastPosition;
+            SetLastPositionAvailable();
+        }
+
+        private void SetLastPositionAvailable()
+        {
+            _isPositionAvailable = true; //TODO Check Template collision
         }
 
         private RaycastInput GetRaycastInput(CollisionWorld collisionWorld)
@@ -187,12 +199,36 @@ namespace PlayerInputs
 
         private void PlaceBuilding(InputAction.CallbackContext _)
         {
-            if (!_isBuilding || !_interactionPolicy.IsAllowed())
+            if (!IsBuildingPlacingAvailable())
             {
                 return;
             }
 
+            SetBuildingComponent();
             EndBuilding();
+        }
+
+        private bool IsBuildingPlacingAvailable()
+        {
+            return _isBuilding && _interactionPolicy.IsAllowed() && _isPositionAvailable;
+        }
+
+        private void SetBuildingComponent()
+        {
+            EntityCommandBuffer  entityCommandBuffer= new EntityCommandBuffer(Allocator.Temp);
+            PlaceBuildingComponent buildingComponent = GetBuildingComponent();
+            Entity buildingEntity = SystemAPI.GetSingletonEntity<PlayerUIActionsTagComponent>();
+            entityCommandBuffer.SetComponent(buildingEntity, buildingComponent);
+            entityCommandBuffer.Playback(EntityManager);
+        }
+
+        private PlaceBuildingComponent GetBuildingComponent()
+        {
+            return new PlaceBuildingComponent()
+            {
+                BuildingType = _currentBuildingType,
+                Position = _lastPosition
+            };
         }
 
         private void EndBuilding()

@@ -19,7 +19,7 @@ namespace Server
         private EntityCommandBuffer _entityCommandBuffer;
 
         private int _currentUnitIndex;
-
+        
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<UnitPrefabComponent>();
