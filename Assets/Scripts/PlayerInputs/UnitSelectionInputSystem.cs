@@ -6,6 +6,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace PlayerInputs
@@ -25,8 +26,13 @@ namespace PlayerInputs
 
         private bool _mustKeepSelection;
 
+        private bool _isAvailable;
+
+        private CheckGameplayInteractionPolicy _interactionPolicy;
+
         protected override void OnCreate()
         {
+            _interactionPolicy = new CheckGameplayInteractionPolicy();
             _inputActionMap = new InputActions();
             RequireForUpdate<OwnerTagComponent>();
             RequireForUpdate<NetworkTime>();
@@ -48,17 +54,39 @@ namespace PlayerInputs
 
         private void StartBoxSelection(InputAction.CallbackContext _)
         {
+            CheckInteractionAvailable();
+            _isDragging = _isAvailable;
+            EnableBoxSelection();
+        }
+        
+        private void CheckInteractionAvailable()
+        {
             foreach (SetPlayerUIActionComponent playerUIActionComponent in SystemAPI.Query<SetPlayerUIActionComponent>())
             {
                 if (playerUIActionComponent.Action == PlayerUIActionType.Build)
                 {
-                    return;
+                    _isAvailable = false;
                 }
             }
 
-            _isDragging = true;
+            _isAvailable = _interactionPolicy.IsAllowed();
+        }
+
+        private void EnableBoxSelection()
+        {
+            if (!_isDragging)
+            {
+                return;
+            }
+
             UserInterfaceController.Instance.SelectionBoxController.Enable();
             _startingPosition = GetPointerPosition();
+        }
+
+        private void StartDragging()
+        {
+            bool dragStartedOverUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+            _isDragging = !dragStartedOverUI;
         }
 
         private void UpdateBoxSelection()

@@ -1,5 +1,7 @@
+using Buildings;
 using PlayerCamera;
 using PlayerInputs.MoveIndicator;
+using UI;
 using Units;
 using Unity.Collections;
 using Unity.Entities;
@@ -7,6 +9,7 @@ using Unity.Mathematics;
 using Unity.NetCode;
 using Unity.Physics;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Input = UnityEngine.Input;
 using RaycastHit = Unity.Physics.RaycastHit;
@@ -31,11 +34,16 @@ namespace PlayerInputs
         private UnitTargetPositionComponent _unitTargetPositionComponent;
 
         private MoveIndicatorController _moveIndicator;
-
+        
+        private CheckGameplayInteractionPolicy _interactionPolicy;
+        
         private bool _indicatorIsSet;
+        
+        private bool _isAvailable;
 
         protected override void OnCreate()
         {
+            _interactionPolicy = new CheckGameplayInteractionPolicy();
             _inputActionMap = new InputActions();
             _selectionFilter = new CollisionFilter
             {
@@ -67,6 +75,30 @@ namespace PlayerInputs
         }
 
         private void OnSelectMovePosition(InputAction.CallbackContext obj)
+        {
+            CheckInteractionAvailable();
+            if (!_isAvailable)
+            {
+                return;
+            }
+
+            SelectTargetPosition();
+        }
+
+        private void CheckInteractionAvailable()
+        {
+            foreach (SetPlayerUIActionComponent playerUIActionComponent in SystemAPI.Query<SetPlayerUIActionComponent>())
+            {
+                if (playerUIActionComponent.Action == PlayerUIActionType.Build)
+                {
+                    _isAvailable = false;
+                }
+            }
+
+            _isAvailable = _interactionPolicy.IsAllowed();
+        }
+
+        private void SelectTargetPosition()
         {
             CollisionWorld collisionWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld;
             Entity cameraEntity = SystemAPI.GetSingletonEntity<MainCameraTagComponent>();

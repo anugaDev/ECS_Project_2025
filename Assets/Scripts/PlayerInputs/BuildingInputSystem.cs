@@ -36,8 +36,11 @@ namespace PlayerInputs
         
         private CollisionFilter _selectionFilter;
 
+        private CheckGameplayInteractionPolicy _interactionPolicy;
+
         protected override void OnCreate()
         {
+            _interactionPolicy = new CheckGameplayInteractionPolicy();
             _buildingTemplates = new Dictionary<BuildingType, BuildingView>();
             _inputActionMap = new InputActions();
             RequireForUpdate<OwnerTagComponent>();
@@ -53,7 +56,7 @@ namespace PlayerInputs
         protected override void OnStartRunning()
         {
             _inputActionMap.Enable();
-            _inputActionMap.GameplayMap.SelectGameEntity.performed += PlaceBuilding;
+            _inputActionMap.GameplayMap.SelectGameEntity.canceled += PlaceBuilding;
             _inputActionMap.GameplayMap.SelectMovePosition.performed += CancelBuilding;
             GetBuildingConfiguration();
             base.OnStartRunning();
@@ -61,7 +64,7 @@ namespace PlayerInputs
 
         protected override void OnStopRunning()
         {
-            _inputActionMap.GameplayMap.SelectGameEntity.performed -= PlaceBuilding;
+            _inputActionMap.GameplayMap.SelectGameEntity.canceled -= PlaceBuilding;
             _inputActionMap.GameplayMap.SelectMovePosition.performed -= CancelBuilding;
             _inputActionMap.Disable();
             base.OnStopRunning();
@@ -184,7 +187,7 @@ namespace PlayerInputs
 
         private void PlaceBuilding(InputAction.CallbackContext _)
         {
-            if (!_isBuilding)
+            if (!_isBuilding || !_interactionPolicy.IsAllowed())
             {
                 return;
             }
