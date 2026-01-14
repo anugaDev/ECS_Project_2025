@@ -61,6 +61,12 @@ namespace Server
             _entityCommandBuffer.SetComponent(connection, new CommandTarget{targetEntity = player});
             _entityCommandBuffer.SetComponent(player, GetGhostOwner(networkId));
             _entityCommandBuffer.SetComponent(player, new PlayerTeamComponent{Team = teamRequest.Team});
+            _entityCommandBuffer.AddComponent(player, new LastProcessedBuildingCommand
+            {
+                Tick = NetworkTick.Invalid,
+                Position = float3.zero,
+                BuildingType = BuildingType.Center
+            });
             return player;
         }
 

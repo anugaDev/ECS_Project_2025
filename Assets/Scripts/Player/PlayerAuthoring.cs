@@ -13,7 +13,7 @@ namespace Player
             {
                 Entity entity = GetEntity(TransformUsageFlags.Dynamic);
                 AddBuffer<UpdateUIActionPayload>(entity);
-                // PlaceBuildingCommand is ICommandData - NetCode manages this automatically, don't add manually
+                AddBuffer<PlaceBuildingCommand>(entity);
                 AddComponent<PlayerTeamComponent>(entity);
                 AddComponent(entity, new PlayerTagComponent());
             }

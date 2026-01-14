@@ -29,7 +29,6 @@ namespace Buildings
         public BuildingType BuildingType;
 
         public float3 Position;
-
         public NetworkTick Tick { get; set; }
     }
 

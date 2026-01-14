@@ -65,4 +65,11 @@ namespace UI
         [GhostField]
         public TeamType Team;
     }
+
+    public struct LastProcessedBuildingCommand : IComponentData
+    {
+        public NetworkTick Tick;
+        public float3 Position;
+        public BuildingType BuildingType;
+    }
 }

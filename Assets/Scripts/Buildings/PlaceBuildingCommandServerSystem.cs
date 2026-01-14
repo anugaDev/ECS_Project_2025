@@ -4,6 +4,7 @@ using UI;
 using Units;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.NetCode;
 using Unity.Transforms;
 
@@ -14,58 +15,73 @@ namespace Buildings
     public partial struct PlaceBuildingCommandServerSystem : ISystem
     {
         private BuildingsPrefabEntityFactory _prefabFactory;
-
         private EntityCommandBuffer _entityCommandBuffer;
-        
-        private TeamType _currentTeam;
 
         public void OnCreate(ref SystemState state)
         {
-            _currentTeam = TeamType.Red; //REMOVE ON TEAM FIX
             _prefabFactory = new BuildingsPrefabEntityFactory();
             state.RequireForUpdate<PlayerTagComponent>();
             state.RequireForUpdate<BuildingPrefabComponent>();
+            state.RequireForUpdate<NetworkTime>();
         }
 
         public void OnUpdate(ref SystemState state)
         {
             InitializeFactory();
             _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            foreach ((DynamicBuffer<PlaceBuildingCommand> bufferBuild, Entity entity) 
-                     in SystemAPI.Query<DynamicBuffer<PlaceBuildingCommand>>().WithEntityAccess())
+
+            NetworkTick serverTick = SystemAPI.GetSingleton<NetworkTime>().ServerTick;
+
+            foreach ((DynamicBuffer<PlaceBuildingCommand> buildingCommands, RefRW<LastProcessedBuildingCommand> lastProcessedCommand,
+                         PlayerTeamComponent playerTeam, GhostOwner ghostOwner, Entity playerEntity)
+                     in SystemAPI.Query<DynamicBuffer<PlaceBuildingCommand>, RefRW<LastProcessedBuildingCommand>, PlayerTeamComponent, GhostOwner>()
+                               .WithAll<PlayerTagComponent>().WithEntityAccess())
             {
-                InstantiateBuildings(bufferBuild);
-                _entityCommandBuffer.DestroyEntity(entity);
+                ProcessBuildingCommands(buildingCommands, serverTick, lastProcessedCommand, playerTeam.Team, ghostOwner.NetworkId);
             }
 
             _entityCommandBuffer.Playback(state.EntityManager);
         }
 
-        private void InstantiateBuildings(DynamicBuffer<PlaceBuildingCommand> bufferBuild)
+        private void ProcessBuildingCommands(DynamicBuffer<PlaceBuildingCommand> buildingCommands, NetworkTick serverTick,
+            RefRW<LastProcessedBuildingCommand> lastProcessedCommand, TeamType playerTeam, int networkId)
         {
-            foreach (PlaceBuildingCommand placeBuildingCommand in bufferBuild)
-            {
-                InstantiateBuilding(placeBuildingCommand);
-            }
+            buildingCommands.GetDataAtTick(serverTick, out PlaceBuildingCommand command);
 
-            bufferBuild.Clear();
+            if (!command.Tick.IsValid)
+                return;
+
+            if (IsDuplicateCommand(command, lastProcessedCommand.ValueRO))
+                return;
+
+            lastProcessedCommand.ValueRW = new LastProcessedBuildingCommand
+            {
+                Tick = command.Tick,
+                Position = command.Position,
+                BuildingType = command.BuildingType
+            };
+
+            InstantiateBuilding(command, playerTeam, networkId);
         }
 
-        private void InstantiateBuilding(PlaceBuildingCommand placeBuildingCommand)
+        private bool IsDuplicateCommand(PlaceBuildingCommand newCommand, LastProcessedBuildingCommand lastCommand)
+        {
+            if (!lastCommand.Tick.IsValid)
+                return false;
+
+            bool samePosition = math.distancesq(newCommand.Position, lastCommand.Position) < 0.01f;
+            bool sameType = newCommand.BuildingType == lastCommand.BuildingType;
+
+            return samePosition && sameType;
+        }
+
+        private void InstantiateBuilding(PlaceBuildingCommand placeBuildingCommand,TeamType playerTeam,int networkId)
         {
             Entity buildingEntity = _prefabFactory.Get(placeBuildingCommand.BuildingType);
             Entity newBuilding = _entityCommandBuffer.Instantiate(buildingEntity);
             _entityCommandBuffer.SetComponent(newBuilding, LocalTransform.FromPosition(placeBuildingCommand.Position));
-            //_entityCommandBuffer.SetComponent(newBuilding, new GhostOwner{NetworkId = owner.NetworkId});
-            _entityCommandBuffer.SetComponent(newBuilding, GetTeamComponent());
-        }
-
-        private EntityTeamComponent GetTeamComponent()
-        {
-            return new EntityTeamComponent
-            {
-                Team = _currentTeam//TODO Get team
-            };
+            _entityCommandBuffer.SetComponent(newBuilding, new GhostOwner{NetworkId = networkId});
+            _entityCommandBuffer.SetComponent(newBuilding, new EntityTeamComponent{Team = playerTeam});
         }
 
         private void InitializeFactory()
