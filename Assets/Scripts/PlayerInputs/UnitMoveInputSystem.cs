@@ -114,8 +114,8 @@ namespace PlayerInputs
                 return;
             }
 
-            foreach ((RefRO<OwnerTagComponent> _, Entity entity) in 
-                     SystemAPI.Query<RefRO<OwnerTagComponent>>().WithEntityAccess())
+            foreach ((RefRO<OwnerTagComponent> _, UnitTypeComponent unitType, Entity entity) in 
+                     SystemAPI.Query<RefRO<OwnerTagComponent>, UnitTypeComponent>().WithEntityAccess())
             {
                 SetSelectedUnitPosition(closestHit, entity);
             }
