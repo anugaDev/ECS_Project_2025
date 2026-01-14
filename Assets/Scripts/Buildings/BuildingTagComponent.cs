@@ -24,11 +24,13 @@ namespace Buildings
         public BuildingsScriptableObject Configuration;
     }
 
-    public struct PlaceBuildingRequest : IRpcCommand
+    public struct PlaceBuildingCommand : ICommandData
     {
         public BuildingType BuildingType;
 
         public float3 Position;
+
+        public NetworkTick Tick { get; set; }
     }
 
     public struct BuildingPrefabComponent : IComponentData

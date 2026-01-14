@@ -23,7 +23,7 @@ namespace Client
         {
             TeamType teamType = SystemAPI.GetSingleton<ClientTeamRequest>().Value;
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            NativeArray<Entity> pendingNetworkIds = _pendingNetworkIdQuery.ToEntityArray(Allocator.Temp);
+             NativeArray<Entity> pendingNetworkIds = _pendingNetworkIdQuery.ToEntityArray(Allocator.Temp);
 
             foreach (Entity networkId in pendingNetworkIds)
             {

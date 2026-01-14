@@ -1,5 +1,6 @@
 using PlayerInputs;
 using Types;
+using UI;
 using Units;
 using Unity.Collections;
 using Unity.Entities;
@@ -8,8 +9,9 @@ using Unity.Transforms;
 
 namespace Buildings
 {
+    [UpdateInGroup(typeof(GhostSimulationSystemGroup))]
     [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
-    public partial struct PlaceBuildingSystem : ISystem
+    public partial struct PlaceBuildingCommandServerSystem : ISystem
     {
         private BuildingsPrefabEntityFactory _prefabFactory;
 
@@ -21,7 +23,7 @@ namespace Buildings
         {
             _currentTeam = TeamType.Red; //REMOVE ON TEAM FIX
             _prefabFactory = new BuildingsPrefabEntityFactory();
-            state.RequireForUpdate<OwnerTagComponent>();
+            state.RequireForUpdate<PlayerTagComponent>();
             state.RequireForUpdate<BuildingPrefabComponent>();
         }
 
@@ -29,27 +31,33 @@ namespace Buildings
         {
             InitializeFactory();
             _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            foreach ((PlaceBuildingRequest buildingRequest, ReceiveRpcCommandRequest requestSource, Entity entity) 
-                     in SystemAPI.Query<PlaceBuildingRequest, ReceiveRpcCommandRequest>().WithEntityAccess())
+            foreach ((DynamicBuffer<PlaceBuildingCommand> bufferBuild, Entity entity) 
+                     in SystemAPI.Query<DynamicBuffer<PlaceBuildingCommand>>().WithEntityAccess())
             {
-                int clientId = SystemAPI.GetComponent<NetworkId>(requestSource.SourceConnection).Value;
-                InstantiateBuilding(buildingRequest, clientId, requestSource);
+                InstantiateBuildings(bufferBuild);
                 _entityCommandBuffer.DestroyEntity(entity);
             }
 
             _entityCommandBuffer.Playback(state.EntityManager);
         }
 
-        private void InstantiateBuilding(PlaceBuildingRequest buildingRequest, int clientId, ReceiveRpcCommandRequest requestSource)
+        private void InstantiateBuildings(DynamicBuffer<PlaceBuildingCommand> bufferBuild)
         {
-            Entity buildingEntity = _prefabFactory.Get(buildingRequest.BuildingType);
+            foreach (PlaceBuildingCommand placeBuildingCommand in bufferBuild)
+            {
+                InstantiateBuilding(placeBuildingCommand);
+            }
+
+            bufferBuild.Clear();
+        }
+
+        private void InstantiateBuilding(PlaceBuildingCommand placeBuildingCommand)
+        {
+            Entity buildingEntity = _prefabFactory.Get(placeBuildingCommand.BuildingType);
             Entity newBuilding = _entityCommandBuffer.Instantiate(buildingEntity);
-            LinkedEntityGroup linkedEntityGroup = new LinkedEntityGroup();
-            linkedEntityGroup.Value = newBuilding; 
-            _entityCommandBuffer.SetComponent(newBuilding, LocalTransform.FromPosition(buildingRequest.Position));
-            _entityCommandBuffer.SetComponent(newBuilding, new GhostOwner { NetworkId = clientId });
+            _entityCommandBuffer.SetComponent(newBuilding, LocalTransform.FromPosition(placeBuildingCommand.Position));
+            //_entityCommandBuffer.SetComponent(newBuilding, new GhostOwner{NetworkId = owner.NetworkId});
             _entityCommandBuffer.SetComponent(newBuilding, GetTeamComponent());
-            _entityCommandBuffer.AppendToBuffer(requestSource.SourceConnection, linkedEntityGroup);
         }
 
         private EntityTeamComponent GetTeamComponent()

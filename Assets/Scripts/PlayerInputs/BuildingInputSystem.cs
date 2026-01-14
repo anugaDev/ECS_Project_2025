@@ -14,7 +14,8 @@ using UnityEngine.InputSystem;
 
 namespace PlayerInputs
 {
-    [WorldSystemFilter((WorldSystemFilterFlags.ClientSimulation) | WorldSystemFilterFlags.ThinClientSimulation)]
+    [UpdateInGroup(typeof(GhostInputSystemGroup))]
+    [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
     public partial class BuildingInputSystem : SystemBase
     {
         private const uint GROUNDPLANE_GROUP = 1 << 0; 
@@ -139,7 +140,7 @@ namespace PlayerInputs
 
         private void CheckBuilding()
         {
-            foreach (SetPlayerUIActionComponent playerUIActionComponent in SystemAPI.Query<SetPlayerUIActionComponent>())
+            foreach ((SetPlayerUIActionComponent playerUIActionComponent, PlayerTagComponent playerTag) in SystemAPI.Query<SetPlayerUIActionComponent, PlayerTagComponent>())
             {
                 if (playerUIActionComponent.Action != PlayerUIActionType.Build)
                 {
@@ -220,27 +221,19 @@ namespace PlayerInputs
         private void SetBuildingComponent()
         {
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            NativeArray<Entity> pendingNetworkIds = _pendingNetworkIdQuery.ToEntityArray(Allocator.Temp); 
-            PlaceBuildingRequest buildingRequest = GetBuildingComponent();
-
-            foreach (Entity networkId in pendingNetworkIds)
-            {
-                entityCommandBuffer.AddComponent<NetworkStreamInGame>(networkId);
-                Entity requestTeamEntity = entityCommandBuffer.CreateEntity();
-                entityCommandBuffer.AddComponent(requestTeamEntity, buildingRequest);
-                SendRpcCommandRequest sendRpcCommandRequest = new SendRpcCommandRequest();
-                sendRpcCommandRequest.TargetConnection = networkId;
-                entityCommandBuffer.AddComponent(requestTeamEntity, sendRpcCommandRequest);
-            }
-
+            PlaceBuildingCommand buildingCommand = GetBuildingComponent();
+            Entity entity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
+            DynamicBuffer<PlaceBuildingCommand> placeBuildingCommands = SystemAPI.GetBuffer<PlaceBuildingCommand>(entity);
+            placeBuildingCommands.AddCommandData(buildingCommand);
             entityCommandBuffer.Playback(EntityManager);
         }
 
 
-        private PlaceBuildingRequest GetBuildingComponent()
+        private PlaceBuildingCommand GetBuildingComponent()
         {
-            return new PlaceBuildingRequest()
+            return new PlaceBuildingCommand
             {
+                Tick = SystemAPI.GetSingleton<NetworkTime>().ServerTick,
                 BuildingType = _currentBuildingType,
                 Position = _lastPosition
             };

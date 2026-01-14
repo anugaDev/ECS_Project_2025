@@ -12,6 +12,7 @@ namespace UI
 
         protected override void OnCreate()
         {
+            RequireForUpdate<PlayerTagComponent>();
         }
 
         protected override void OnUpdate()

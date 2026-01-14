@@ -25,11 +25,11 @@ namespace UI
 
         protected override void OnCreate()
         {
+            RequireForUpdate<PlayerTagComponent>();
             _buildingActionsFactory = new BuildingFactoryActionsFactory();
             _buildingTypesSelected = new Dictionary<SelectionEntity, bool>();
             _unitTypesSelected = new Dictionary<SelectionEntity, bool>();
             FillSelectableDictionary();
-            RequireForUpdate<PlayerUIActionsTagComponent>();
             base.OnCreate();
         }
 
@@ -210,7 +210,7 @@ namespace UI
         private void SetActionComponent(PlayerUIActionType action, int[] payload)
         {
             EntityCommandBuffer entityCommandBuffer = GetEntityCommandBuffer();
-            Entity UIUpdateEntity = SystemAPI.GetSingletonEntity<PlayerUIActionsTagComponent>();
+            Entity UIUpdateEntity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
             entityCommandBuffer.AddComponent(UIUpdateEntity, new UpdateUIActionTag());
 
             DynamicBuffer<UpdateUIActionPayload> updateUIActionPayloads =

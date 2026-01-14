@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using Buildings;
+using Types;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.NetCode;
 using UnityEditor.Build;
 using UnityEngine;
 
@@ -17,7 +19,7 @@ namespace UI
         public float3 Value;
     }
 
-    public struct PlayerUIActionsTagComponent : IComponentData
+    public struct PlayerTagComponent : IComponentData
     {
     }
 
@@ -48,7 +50,19 @@ namespace UI
         
         public int PayloadID;
     }
+
     public struct UpdateUIActionTag : IComponentData
     {
+    }
+
+    public struct PlayerPrefabComponent : IComponentData
+    {
+        public Entity Entity;
+    }
+    
+    public struct PlayerTeamComponent : IComponentData
+    {
+        [GhostField]
+        public TeamType Team;
     }
 }

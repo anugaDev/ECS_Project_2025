@@ -16,6 +16,7 @@ namespace UI
 
         protected override void OnCreate()
         {
+            RequireForUpdate<PlayerTagComponent>();
             RequireForUpdate<EndSimulationEntityCommandBufferSystem.Singleton>();
             RequireForUpdate<BuildingsConfigurationComponent>();
             RequireForUpdate<UnitsConfigurationComponent>();
@@ -44,7 +45,7 @@ namespace UI
 
         private void SetPlayerUIActionComponent(SetPlayerUIActionComponent actionComponent)
         {
-            Entity uiEntity = SystemAPI.GetSingletonEntity<PlayerUIActionsTagComponent>();
+            Entity uiEntity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
             EntityManager.AddComponentData(uiEntity, actionComponent);
         }
 
