@@ -54,10 +54,10 @@ namespace UI
 
         private void CheckUnitsSelection()
         {
-            foreach ((ElementSelectionComponent selectionComponent, UnitTypeComponent unitTypeComponent)
-                     in SystemAPI.Query<ElementSelectionComponent, UnitTypeComponent>())
+            foreach ((ElementSelectionComponent selectionComponent, UnitTypeComponent unitTypeComponent, Entity entity)
+                     in SystemAPI.Query<ElementSelectionComponent, UnitTypeComponent>().WithEntityAccess())
             {
-                CheckUnitSelection(selectionComponent, unitTypeComponent);
+                CheckUnitSelection(selectionComponent, unitTypeComponent, entity);
             }
 
             SetSelectionAsUnit();
@@ -75,7 +75,7 @@ namespace UI
             }
         }
 
-        private void CheckUnitSelection(ElementSelectionComponent selectionComponent, UnitTypeComponent unitTypeComponent)
+        private void CheckUnitSelection(ElementSelectionComponent selectionComponent, UnitTypeComponent unitTypeComponent, Entity entity)
         {
             if (!selectionComponent.MustUpdateUI)
             {
@@ -83,7 +83,7 @@ namespace UI
             }
 
             selectionComponent.MustUpdateUI = false;
-            SelectionEntity selectionEntity = GetNewSelectionEntity(_unitTypesSelected.Keys.ToList(), (int)unitTypeComponent.Type);
+            SelectionEntity selectionEntity = GetNewSelectionEntity(_unitTypesSelected.Keys.ToList(), (int)unitTypeComponent.Type, entity);
             _unitTypesSelected.Add(selectionEntity, selectionComponent.IsSelected);
         }
 
@@ -99,10 +99,10 @@ namespace UI
 
         private void CheckBuildingsSelection()
         {
-            foreach ((ElementSelectionComponent selectionComponent, BuildingTypeComponent buildingTypeComponent)
-                     in SystemAPI.Query<ElementSelectionComponent, BuildingTypeComponent>())
+            foreach ((ElementSelectionComponent selectionComponent, BuildingTypeComponent buildingTypeComponent, Entity entity)
+                     in SystemAPI.Query<ElementSelectionComponent, BuildingTypeComponent>().WithEntityAccess())
             {
-                CheckBuildingSelection(selectionComponent, buildingTypeComponent);
+                CheckBuildingSelection(selectionComponent, buildingTypeComponent, entity);
             }
 
             SetSelectionAsBuilding();
@@ -121,7 +121,7 @@ namespace UI
         }
 
         private void CheckBuildingSelection(ElementSelectionComponent selectionComponent,
-            BuildingTypeComponent buildingTypeComponent)
+            BuildingTypeComponent buildingTypeComponent, Entity entity)
         {
             if (!selectionComponent.MustUpdateUI)
             {
@@ -129,11 +129,11 @@ namespace UI
             }
 
             selectionComponent.MustUpdateUI = false;
-            SelectionEntity selectionEntity = GetNewSelectionEntity(_buildingTypesSelected.Keys.ToList(), (int)buildingTypeComponent.Type);
+            SelectionEntity selectionEntity = GetNewSelectionEntity(_buildingTypesSelected.Keys.ToList(), (int)buildingTypeComponent.Type, entity);
             _buildingTypesSelected.Add(selectionEntity, selectionComponent.IsSelected);
         }
 
-        private SelectionEntity GetNewSelectionEntity(List<SelectionEntity> selectionEntities, int type)
+        private SelectionEntity GetNewSelectionEntity(List<SelectionEntity> selectionEntities, int type, Entity entity)
         {
             int lastTypeId = -1;
             
@@ -142,7 +142,7 @@ namespace UI
                 lastTypeId = selectionEntities.Last(entity => entity.Type == type).Id;
             }
 
-            return new SelectionEntity(lastTypeId + 1, type);
+            return new SelectionEntity(lastTypeId + 1, type, entity);
         }
 
         private void ResetSelectionData()
@@ -165,6 +165,51 @@ namespace UI
         private void SetUISelectionDetails()
         {
             _selectableToAction[_currentSelection]?.Invoke();
+            SetDetailsDisplay();
+        }
+
+        private void SetDetailsDisplay()
+        {
+            if(_currentSelection is SelectableElementType.None)
+            {
+                SendEmptyDetails();
+                return;
+            }
+
+            Entity detailsEntity = GetDetailsEntity();
+            EntityCommandBuffer entityCommandBuffer = GetEntityCommandBuffer();
+            Entity UIUpdateEntity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
+            entityCommandBuffer.AddComponent(UIUpdateEntity, GetDetailsComponent(detailsEntity));
+        }
+
+        private void SendEmptyDetails()
+        {
+            EntityCommandBuffer entityCommandBuffer = GetEntityCommandBuffer();
+            Entity UIUpdateEntity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
+            entityCommandBuffer.AddComponent(UIUpdateEntity, new SetEmptyDetailsComponent());
+        }
+
+        private SetUIDisplayDetailsComponent GetDetailsComponent(Entity detailsEntity)
+        {
+            return new SetUIDisplayDetailsComponent
+            {
+                Entity = detailsEntity
+            };
+        }
+
+        private Entity GetDetailsEntity()
+        {
+            if (_currentSelection is SelectableElementType.Building)
+            {
+                return _buildingTypesSelected.First().Key.SelectedEntity;
+            }
+
+            if (_unitTypesSelected.Any(unit => unit.Value && unit.Key.Type is (int)UnitType.Worker))
+            {
+                return _unitTypesSelected.First(unit => unit.Value && unit.Key.Type is (int)UnitType.Worker).Key.SelectedEntity;
+            }
+
+            return _unitTypesSelected.First().Key.SelectedEntity;
         }
 
         private void SetNoneSelected()

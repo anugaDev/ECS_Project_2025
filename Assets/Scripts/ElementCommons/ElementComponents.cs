@@ -28,4 +28,13 @@ namespace ElementCommons
         [GhostField] 
         public TeamType Team;
     }
+
+    public struct TestComponent : IComponentData
+    {
+    }
+
+    public class ElementDisplayDetailsComponent : IComponentData
+    {
+        public string Name;
+    }
 }

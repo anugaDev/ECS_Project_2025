@@ -1,4 +1,5 @@
 using Buildings;
+using ElementCommons;
 using ScriptableObjects;
 using UI.UIControllers;
 using Units;
@@ -16,7 +17,7 @@ namespace UI
 
         protected override void OnCreate()
         {
-            RequireForUpdate<PlayerTagComponent>();
+            RequireForUpdate<OwnerTagComponent>();
             RequireForUpdate<EndSimulationEntityCommandBufferSystem.Singleton>();
             RequireForUpdate<BuildingsConfigurationComponent>();
             RequireForUpdate<UnitsConfigurationComponent>();

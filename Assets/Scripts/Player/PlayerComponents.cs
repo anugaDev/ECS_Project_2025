@@ -23,6 +23,11 @@ namespace UI
     {
     }
 
+    public struct SetUIDisplayDetailsComponent : IComponentData
+    {
+        public Entity Entity;
+    }
+
     public struct SetPlayerUIActionComponent : IComponentData
     {
         public PlayerUIActionType Action;
@@ -71,5 +76,9 @@ namespace UI
         public NetworkTick Tick;
         public float3 Position;
         public BuildingType BuildingType;
+    }
+    
+    public struct SetEmptyDetailsComponent : IComponentData
+    {
     }
 }

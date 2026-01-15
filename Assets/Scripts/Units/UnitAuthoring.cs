@@ -36,6 +36,7 @@ namespace Units
                 AddComponent<URPMaterialPropertyBaseColor>(unitEntity);
                 AddComponent<UnitTargetPositionComponent>(unitEntity);
                 AddComponent<ElementSelectionComponent>(unitEntity);
+                AddComponent<ElementDisplayDetailsComponent>(unitEntity);
                 AddComponent(unitEntity, GetUnitTypeComponent(authoring));
                 AddComponent(unitEntity, GetMoveSpeedComponent(authoring));
                 AddComponent(unitEntity, GetSelectableTypeComponent(authoring));

@@ -8,17 +8,15 @@ namespace Buildings
 {
     public class BuildingAuthoring : MonoBehaviour
     {
-        [SerializeField]
-        private BuildingType _buildingType;
-        
-        [SerializeField]
-        private SelectableElementType _selectableType;
+        [SerializeField] private BuildingType _buildingType;
+
+        [SerializeField] private SelectableElementType _selectableType;
 
         public BuildingType BuildingType => _buildingType;
 
         public SelectableElementType SelectableType => _selectableType;
 
-        public class UnitBaker : Baker<BuildingAuthoring>
+        public class BuildingBaker : Baker<BuildingAuthoring>
         {
             public override void Bake(BuildingAuthoring authoring)
             {
@@ -26,19 +24,20 @@ namespace Buildings
                 AddComponent<BuildingTagComponent>(buildingEntity);
                 AddComponent<NewBuildingTagComponent>(buildingEntity);
                 AddComponent<ElementTeamComponent>(buildingEntity);
-                AddComponent<URPMaterialPropertyBaseColor>(buildingEntity);
                 AddComponent<ElementSelectionComponent>(buildingEntity);
-                AddComponent(buildingEntity, GetUnitTypeComponent(authoring)); 
+                AddComponent<URPMaterialPropertyBaseColor>(buildingEntity);
+                AddComponent<ElementDisplayDetailsComponent>(buildingEntity);
+                AddComponent(buildingEntity, GetUnitTypeComponent(authoring));
                 AddComponent(buildingEntity, GetSelectableTypeComponent(authoring));
-        }
+            }
 
-        private SelectableElementTypeComponent GetSelectableTypeComponent(BuildingAuthoring authoring)
-        {
-            return new SelectableElementTypeComponent
+            private SelectableElementTypeComponent GetSelectableTypeComponent(BuildingAuthoring authoring)
             {
-                Type = authoring.SelectableType
-            };
-        }
+                return new SelectableElementTypeComponent
+                {
+                    Type = authoring.SelectableType
+                };
+            }
 
             private BuildingTypeComponent GetUnitTypeComponent(BuildingAuthoring authoring)
             {
@@ -48,6 +47,5 @@ namespace Buildings
                 };
             }
         }
-
     }
 }
