@@ -34,6 +34,7 @@ namespace UI.UIControllers
                 actionButton.Initialize(GetBuildingActionComponent(building.BuildingType), building.Name);
                 _buttonActions.Add(actionButton);
                 actionButton.OnClick += SendActionComponent;
+                actionButton.Hide();
             }
         }
         public void SetRecruitmentActions(UnitsScriptableObject unitsConfiguration)
@@ -44,6 +45,7 @@ namespace UI.UIControllers
                 actionButton.Initialize(GetUnitsActionComponent(unit.UnitType), unit.Name);
                 _buttonActions.Add(actionButton);
                 actionButton.OnClick += SendActionComponent;
+                actionButton.Hide();
             }
         }
         

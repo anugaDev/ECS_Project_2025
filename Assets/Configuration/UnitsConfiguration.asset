@@ -17,3 +17,15 @@ MonoBehaviour:
     _unitPrefab: {fileID: 2147052715152915695, guid: a5aa2e5ab6bf0da4682c82e287d6c279, type: 3}
     _name: Worker
     _description: 
+  - _unitType: 3
+    _unitPrefab: {fileID: 919132149155446097, guid: 0c23e85424b2e3746a00c78be983dcde, type: 3}
+    _name: Ballista
+    _description: 
+  - _unitType: 1
+    _unitPrefab: {fileID: 2147052715152915695, guid: a5aa2e5ab6bf0da4682c82e287d6c279, type: 3}
+    _name: Warrior
+    _description: 
+  - _unitType: 2
+    _unitPrefab: {fileID: 2147052715152915695, guid: a5aa2e5ab6bf0da4682c82e287d6c279, type: 3}
+    _name: Archer
+    _description: 

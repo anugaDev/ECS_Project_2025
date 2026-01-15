@@ -52,7 +52,10 @@ namespace Units
 
                 return new UnitPrefabComponent
                 {
-                    Worker = GetEntity(unitsDictionary[UnitType.Worker].UnitPrefab, TransformUsageFlags.Dynamic)
+                    Ballista = GetEntity(unitsDictionary[UnitType.Ballista].UnitPrefab, TransformUsageFlags.Dynamic),
+                    Worker = GetEntity(unitsDictionary[UnitType.Worker].UnitPrefab, TransformUsageFlags.Dynamic),
+                    Warrior = GetEntity(unitsDictionary[UnitType.Warrior].UnitPrefab, TransformUsageFlags.Dynamic),
+                    Archer = GetEntity(unitsDictionary[UnitType.Archer].UnitPrefab, TransformUsageFlags.Dynamic)
                 };
             }
         }

@@ -9,7 +9,14 @@ namespace Units
 {
     public struct UnitPrefabComponent : IComponentData
     {
+        public Entity Ballista;
+
+        public Entity Warrior;
+        
         public Entity Worker;
+
+        public Entity Archer;
+
     }
 
     public class UIPrefabs : IComponentData

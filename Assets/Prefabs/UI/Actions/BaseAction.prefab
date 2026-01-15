@@ -105,7 +105,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _button: {fileID: 2764431430096300401}
   _text: {fileID: 5950782102379408874}
-  _parent: {fileID: 6203903581452442448}
+  _parent: {fileID: 1241949790394681482}
 --- !u!1 &1785061438458401333
 GameObject:
   m_ObjectHideFlags: 0
@@ -330,7 +330,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &3292373038319770612
 RectTransform:
   m_ObjectHideFlags: 0
