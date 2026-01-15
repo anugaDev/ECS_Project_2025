@@ -20,6 +20,9 @@ namespace PlayerInputs
         
         [GhostField(Quantization = 0)]
         public bool MustKeepSelection;
+
+        [GhostField(Quantization = 0)]
+        public bool IsClickSelection;
     }
 
     [GhostComponent(PrefabType = GhostPrefabType.AllPredicted)]

@@ -1,3 +1,4 @@
+using ElementCommons;
 using Types;
 using UI;
 using Units;
@@ -19,9 +20,9 @@ namespace Server
         public void OnUpdate(ref SystemState state)
         {
             _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            foreach ((PlayerTagComponent playerTag, EntityTeamComponent playerTeam, Entity unitEntity) 
+            foreach ((PlayerTagComponent playerTag, ElementTeamComponent playerTeam, Entity unitEntity) 
                      in SystemAPI.Query<PlayerTagComponent, 
-                         EntityTeamComponent>().WithAny<NewUnitTagComponent>().WithEntityAccess())
+                         ElementTeamComponent>().WithAny<NewUnitTagComponent>().WithEntityAccess())
             {
 
             }

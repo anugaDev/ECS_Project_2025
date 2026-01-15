@@ -1,4 +1,5 @@
 using Client;
+using ElementCommons;
 using PlayerInputs;
 using Units;
 using Types;
@@ -108,9 +109,9 @@ namespace Server
             };
         }
 
-        private EntityTeamComponent GetTeamComponent(TeamType team)
+        private ElementTeamComponent GetTeamComponent(TeamType team)
         {
-            return new EntityTeamComponent{Team = team};
+            return new ElementTeamComponent{Team = team};
         }
 
         private GhostOwner GetGhostOwner(int clientId)

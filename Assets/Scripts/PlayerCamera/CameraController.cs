@@ -1,5 +1,6 @@
 using Cinemachine;
 using Client;
+using ElementCommons;
 using Types;
 using Units;
 using Unity.Entities;
@@ -157,7 +158,7 @@ namespace PlayerCamera
                 return;
             }
 
-            TeamType team = _entityManager.GetComponentData<EntityTeamComponent>(localUnit).Team;
+            TeamType team = _entityManager.GetComponentData<ElementTeamComponent>(localUnit).Team;
             Vector3 cameraPosition = GetCameraPosition(team);
             transform.position = cameraPosition;
             _cameraSet = true;

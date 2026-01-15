@@ -1,8 +1,10 @@
+using ElementCommons;
 using PlayerInputs;
 using Types;
 using Unity.Entities;
 using Unity.Rendering;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Units
 {
@@ -14,9 +16,14 @@ namespace Units
         [SerializeField]
         private UnitType _unitType;
 
+        [SerializeField]
+        private SelectableElementType _selectableType;
+
         public float MoveSpeed => _moveSpeed;
 
         public UnitType UnitType => _unitType;
+
+        public SelectableElementType SelectableType => _selectableType;
 
         public class UnitBaker : Baker<UnitAuthoring>
         {
@@ -25,12 +32,21 @@ namespace Units
                 Entity unitEntity = GetEntity(TransformUsageFlags.Dynamic);
                 AddComponent<UnitTagComponent>(unitEntity);
                 AddComponent<NewUnitTagComponent>(unitEntity);
-                AddComponent<EntityTeamComponent>(unitEntity);
+                AddComponent<ElementTeamComponent>(unitEntity);
                 AddComponent<URPMaterialPropertyBaseColor>(unitEntity);
                 AddComponent<UnitTargetPositionComponent>(unitEntity);
-                AddComponent<EntitySelectionComponent>(unitEntity);
-                AddComponent(unitEntity, GetMoveSpeedComponent(authoring));
+                AddComponent<ElementSelectionComponent>(unitEntity);
                 AddComponent(unitEntity, GetUnitTypeComponent(authoring));
+                AddComponent(unitEntity, GetMoveSpeedComponent(authoring));
+                AddComponent(unitEntity, GetSelectableTypeComponent(authoring));
+            }
+
+            private SelectableElementTypeComponent GetSelectableTypeComponent(UnitAuthoring authoring)
+            {
+                return new SelectableElementTypeComponent
+                {
+                    Type = authoring.SelectableType
+                };
             }
 
             private UnitMoveSpeedComponent GetMoveSpeedComponent(UnitAuthoring authoring)

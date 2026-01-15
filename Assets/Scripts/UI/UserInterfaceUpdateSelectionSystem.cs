@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Buildings;
+using ElementCommons;
 using Types;
 using Units;
 using Unity.Collections;
@@ -13,7 +14,7 @@ namespace UI
     [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
     public partial class UserInterfaceUpdateSelectionSystem : SystemBase
     {
-        private SelectableTypes _currentSelection;
+        private SelectableElementType _currentSelection;
 
         private Dictionary<SelectionEntity, bool> _unitTypesSelected;
         
@@ -21,7 +22,7 @@ namespace UI
 
         private BuildingFactoryActionsFactory _buildingActionsFactory;
 
-        private Dictionary<SelectableTypes, Action> _selectableToAction;
+        private Dictionary<SelectableElementType, Action> _selectableToAction;
 
         protected override void OnCreate()
         {
@@ -35,11 +36,11 @@ namespace UI
 
         private void FillSelectableDictionary()
         {
-            _selectableToAction = new Dictionary<SelectableTypes, Action>
+            _selectableToAction = new Dictionary<SelectableElementType, Action>
             {
-                [SelectableTypes.Building] = SetBuildingActions,
-                [SelectableTypes.Unit] = SetUnitActions,
-                [SelectableTypes.None] = SetNoneSelected
+                [SelectableElementType.Building] = SetBuildingActions,
+                [SelectableElementType.Unit] = SetUnitActions,
+                [SelectableElementType.None] = SetNoneSelected
             };
         }
 
@@ -53,8 +54,8 @@ namespace UI
 
         private void CheckUnitsSelection()
         {
-            foreach ((EntitySelectionComponent selectionComponent, UnitTypeComponent unitTypeComponent)
-                     in SystemAPI.Query<EntitySelectionComponent, UnitTypeComponent>())
+            foreach ((ElementSelectionComponent selectionComponent, UnitTypeComponent unitTypeComponent)
+                     in SystemAPI.Query<ElementSelectionComponent, UnitTypeComponent>())
             {
                 CheckUnitSelection(selectionComponent, unitTypeComponent);
             }
@@ -66,15 +67,15 @@ namespace UI
         {
             if (_unitTypesSelected.ContainsValue(true))
             {
-                _currentSelection = SelectableTypes.Unit;
+                _currentSelection = SelectableElementType.Unit;
             }
             else if(_unitTypesSelected.Any())
             {
-                _currentSelection = SelectableTypes.None;
+                _currentSelection = SelectableElementType.None;
             }
         }
 
-        private void CheckUnitSelection(EntitySelectionComponent selectionComponent, UnitTypeComponent unitTypeComponent)
+        private void CheckUnitSelection(ElementSelectionComponent selectionComponent, UnitTypeComponent unitTypeComponent)
         {
             if (!selectionComponent.MustUpdateUI)
             {
@@ -88,7 +89,7 @@ namespace UI
 
         private void SetBuildingsSelection()
         {
-            if (_currentSelection == SelectableTypes.Unit)
+            if (_currentSelection == SelectableElementType.Unit)
             {
                 return;
             }
@@ -98,8 +99,8 @@ namespace UI
 
         private void CheckBuildingsSelection()
         {
-            foreach ((EntitySelectionComponent selectionComponent, BuildingTypeComponent buildingTypeComponent)
-                     in SystemAPI.Query<EntitySelectionComponent, BuildingTypeComponent>())
+            foreach ((ElementSelectionComponent selectionComponent, BuildingTypeComponent buildingTypeComponent)
+                     in SystemAPI.Query<ElementSelectionComponent, BuildingTypeComponent>())
             {
                 CheckBuildingSelection(selectionComponent, buildingTypeComponent);
             }
@@ -111,15 +112,15 @@ namespace UI
         {
             if (_buildingTypesSelected.ContainsValue(true))
             {
-                _currentSelection = SelectableTypes.Building;
+                _currentSelection = SelectableElementType.Building;
             }
             else if (_buildingTypesSelected.Any())
             {
-                _currentSelection = SelectableTypes.None;
+                _currentSelection = SelectableElementType.None;
             }
         }
 
-        private void CheckBuildingSelection(EntitySelectionComponent selectionComponent,
+        private void CheckBuildingSelection(ElementSelectionComponent selectionComponent,
             BuildingTypeComponent buildingTypeComponent)
         {
             if (!selectionComponent.MustUpdateUI)
@@ -146,14 +147,14 @@ namespace UI
 
         private void ResetSelectionData()
         {
-            _currentSelection = SelectableTypes.Empty;
+            _currentSelection = SelectableElementType.Empty;
             _buildingTypesSelected.Clear();
             _unitTypesSelected.Clear();
         }
 
         private void SetUIDetailsType()
         {
-            if (_currentSelection is SelectableTypes.Empty)
+            if (_currentSelection is SelectableElementType.Empty)
             {
                 return;
             }

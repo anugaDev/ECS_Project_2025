@@ -1,4 +1,5 @@
 ﻿using Combat;
+using ElementCommons;
 using Units;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -41,10 +42,15 @@ namespace UI
                 UpdateHealthBar(transform, healthBarOffset, healthBarUI, currentHitPoints, maxHitPoints);
             }
 
-            foreach ((EntitySelectionComponent unitSelectionComponent, HealthBarUIReferenceComponent healthBar) in
-                     SystemAPI.Query<EntitySelectionComponent, HealthBarUIReferenceComponent>())
+            foreach ((ElementSelectionComponent elementSelectionComponent, HealthBarUIReferenceComponent healthBar) in
+                     SystemAPI.Query<ElementSelectionComponent, HealthBarUIReferenceComponent>())
             {
-                EnableHealthBar(unitSelectionComponent, healthBar);
+                if (!elementSelectionComponent.MustEnableFeedback)
+                {
+                    continue;
+                }
+
+                EnableHealthBar(elementSelectionComponent, healthBar);
             }
 
             foreach ((HealthBarUIReferenceComponent healthBarUI, Entity entity) in SystemAPI
@@ -80,11 +86,13 @@ namespace UI
             ecb.AddComponent(entity, new HealthBarUIReferenceComponent() { Value = newUnitUI });
         }
 
-        private void EnableHealthBar(EntitySelectionComponent entitySelectionComponent,
+        private void EnableHealthBar(ElementSelectionComponent elementSelectionComponent,
             HealthBarUIReferenceComponent healthBar)
         {
+            elementSelectionComponent.MustEnableFeedback = false;
             UnitUIController barController = healthBar.Value;
-            if (entitySelectionComponent.IsSelected)
+
+            if (elementSelectionComponent.IsSelected)
             {
                 barController.EnableUI();
             }

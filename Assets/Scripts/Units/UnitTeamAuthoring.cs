@@ -1,3 +1,4 @@
+using ElementCommons;
 using Types;
 using Unity.Entities;
 using UnityEngine;
@@ -17,9 +18,9 @@ namespace Units
                 AddComponent(entity, GetUnitTeamComponent(authoring));
             }
 
-            private EntityTeamComponent GetUnitTeamComponent(UnitTeamAuthoring authoring)
+            private ElementTeamComponent GetUnitTeamComponent(UnitTeamAuthoring authoring)
             {
-                return new EntityTeamComponent
+                return new ElementTeamComponent
                 {
                     Team = authoring.Team
                 };

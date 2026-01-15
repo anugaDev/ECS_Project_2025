@@ -1,3 +1,4 @@
+using ElementCommons;
 using PlayerInputs;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -16,8 +17,8 @@ namespace Units
         public void OnUpdate(ref SystemState state)
         {
             _currentDeltaTime = SystemAPI.Time.DeltaTime;
-            foreach ((RefRW<LocalTransform> transform, UnitTargetPositionComponent movePosition, UnitMoveSpeedComponent moveSpeed, EntitySelectionComponent selection) 
-                     in SystemAPI.Query<RefRW<LocalTransform>, UnitTargetPositionComponent, UnitMoveSpeedComponent, EntitySelectionComponent>().WithAll<Simulate>())
+            foreach ((RefRW<LocalTransform> transform, UnitTargetPositionComponent movePosition, UnitMoveSpeedComponent moveSpeed, ElementSelectionComponent selection) 
+                     in SystemAPI.Query<RefRW<LocalTransform>, UnitTargetPositionComponent, UnitMoveSpeedComponent, ElementSelectionComponent>().WithAll<Simulate>())
             { 
                 if (!movePosition.MustMove)
                 {

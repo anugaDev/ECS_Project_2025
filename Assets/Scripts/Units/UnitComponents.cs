@@ -12,16 +12,6 @@ namespace Units
     {
     }
 
-    public struct OwnerTagComponent : IComponentData
-    {
-    }
-
-    public struct EntityTeamComponent : IComponentData
-    {
-        [GhostField] 
-        public TeamType Team;
-    }
-
     public struct UnitMoveSpeedComponent : IComponentData
     {
         public float Speed;
@@ -30,12 +20,5 @@ namespace Units
     public struct UnitTypeComponent : IComponentData
     {
         public UnitType Type;
-    }
-
-    public struct EntitySelectionComponent : IComponentData
-    {
-        public bool IsSelected;
-
-        public bool MustUpdateUI;
     }
 }

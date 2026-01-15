@@ -1,7 +1,6 @@
-using PlayerInputs;
+using ElementCommons;
 using Types;
 using UI;
-using Units;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -33,9 +32,9 @@ namespace Buildings
             NetworkTick serverTick = SystemAPI.GetSingleton<NetworkTime>().ServerTick;
 
             foreach ((DynamicBuffer<PlaceBuildingCommand> buildingCommands, RefRW<LastProcessedBuildingCommand> lastProcessedCommand,
-                         PlayerTeamComponent playerTeam, GhostOwner ghostOwner, Entity playerEntity)
+                         PlayerTeamComponent playerTeam, GhostOwner ghostOwner)
                      in SystemAPI.Query<DynamicBuffer<PlaceBuildingCommand>, RefRW<LastProcessedBuildingCommand>, PlayerTeamComponent, GhostOwner>()
-                               .WithAll<PlayerTagComponent>().WithEntityAccess())
+                               .WithAll<PlayerTagComponent>())
             {
                 ProcessBuildingCommands(buildingCommands, serverTick, lastProcessedCommand, playerTeam.Team, ghostOwner.NetworkId);
             }
@@ -81,7 +80,7 @@ namespace Buildings
             Entity newBuilding = _entityCommandBuffer.Instantiate(buildingEntity);
             _entityCommandBuffer.SetComponent(newBuilding, LocalTransform.FromPosition(placeBuildingCommand.Position));
             _entityCommandBuffer.SetComponent(newBuilding, new GhostOwner{NetworkId = networkId});
-            _entityCommandBuffer.SetComponent(newBuilding, new EntityTeamComponent{Team = playerTeam});
+            _entityCommandBuffer.SetComponent(newBuilding, new ElementTeamComponent{Team = playerTeam});
         }
 
         private void InitializeFactory()

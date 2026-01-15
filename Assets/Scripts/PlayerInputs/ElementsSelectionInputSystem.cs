@@ -1,7 +1,7 @@
 using Buildings;
+using ElementCommons;
 using UI;
 using UI.UIControllers;
-using Units;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
@@ -12,18 +12,20 @@ using UnityEngine.InputSystem;
 namespace PlayerInputs
 {
     [UpdateInGroup(typeof(GhostInputSystemGroup))]
-    public partial class UnitSelectionInputSystem : SystemBase
+    public partial class ElementsSelectionInputSystem : SystemBase
     {
-        private const float CLICK_SELECTION_SIZE = 10f;
+        private const float CLICK_SELECTION_SIZE = 1f;
 
         private InputActions _inputActionMap;
 
         private Vector2 _startingPosition;
 
         private Vector2 _lastPosition;
-        
+
         private bool _mustKeepSelection;
-        
+
+        private bool _isClickSelection;
+
         private bool _isAvailable;
 
         private bool _isDragging;
@@ -105,7 +107,7 @@ namespace PlayerInputs
         {
             _isDragging = false;
             UserInterfaceController.Instance.SelectionBoxController.Disable();
-            SelectUnits();
+            SelectElements();
         }
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
         private Vector2 GetPointerPosition()
@@ -113,13 +115,13 @@ namespace PlayerInputs
             return _inputActionMap.GameplayMap.PointerPosition.ReadValue<Vector2>();
         }
 
-        private void SelectUnits()
+        private void SelectElements()
         {
             NormalizeSelectionClick();
             EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            foreach ((RefRO<OwnerTagComponent> _, Entity entity) in 
-                     SystemAPI.Query<RefRO<OwnerTagComponent>>().WithEntityAccess())
+            foreach ((RefRO<SelectableElementTypeComponent> _, Entity entity) in 
+                     SystemAPI.Query<RefRO<SelectableElementTypeComponent>>().WithEntityAccess())
             {
                 ecb.AddComponent(entity, GetUnitPositionComponent());
             }
@@ -130,7 +132,8 @@ namespace PlayerInputs
 
         private void NormalizeSelectionClick()
         {
-            if (Vector2.Distance(_startingPosition, _lastPosition) < CLICK_SELECTION_SIZE)
+            _isClickSelection = Vector2.Distance(_startingPosition, _lastPosition) < CLICK_SELECTION_SIZE;
+            if (_isClickSelection)
             {
                 _startingPosition -= Vector2.one * CLICK_SELECTION_SIZE;
                 _lastPosition   += Vector2.one * CLICK_SELECTION_SIZE;
@@ -142,7 +145,8 @@ namespace PlayerInputs
             return new NewSelectionComponent
             {
                 SelectionRect = GetBoxScreenRect(_startingPosition, _lastPosition),
-                MustKeepSelection = _mustKeepSelection
+                MustKeepSelection = _mustKeepSelection,
+                IsClickSelection = _isClickSelection
             };
         }
 

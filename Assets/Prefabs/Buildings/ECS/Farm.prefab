@@ -60,6 +60,7 @@ GameObject:
   - component: {fileID: -5154689503818207158}
   - component: {fileID: 4409414685017130729}
   - component: {fileID: -4581568304590023509}
+  - component: {fileID: -4047095236056761628}
   m_Layer: 0
   m_Name: Farm
   m_TagString: Untagged
@@ -96,6 +97,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _buildingType: 2
+  _selectableType: 2
 --- !u!114 &4064869704507561338
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -311,7 +313,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c79d771cedb4794bf100ce60df5f764, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DefaultGhostMode: 0
+  DefaultGhostMode: 1
   SupportedGhostModes: 3
   OptimizationMode: 0
   Importance: 500
@@ -325,6 +327,20 @@ MonoBehaviour:
   UseSingleBaseline: 0
   RollbackPredictedSpawnedGhostState: 0
   RollbackPredictionOnStructuralChanges: 1
+--- !u!114 &-4047095236056761628
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2881682225047266158}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 525e8eebea574d399a43b83d2c64c69c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaxHitPoints: 300
+  HealthBarOffset: {x: 0, y: 2, z: 0}
 --- !u!1001 &143534069025650395
 PrefabInstance:
   m_ObjectHideFlags: 0

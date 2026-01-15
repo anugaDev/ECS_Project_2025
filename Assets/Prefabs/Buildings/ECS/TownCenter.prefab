@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 3597968658489848813}
   - component: {fileID: 398805222804567771}
   - component: {fileID: -4901536424572016452}
+  - component: {fileID: 5434483728812792670}
   m_Layer: 0
   m_Name: TownCenter
   m_TagString: Untagged
@@ -51,6 +52,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _buildingType: 0
+  _selectableType: 2
 --- !u!114 &5527367336661994744
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -273,7 +275,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c79d771cedb4794bf100ce60df5f764, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DefaultGhostMode: 0
+  DefaultGhostMode: 1
   SupportedGhostModes: 3
   OptimizationMode: 0
   Importance: 500
@@ -287,6 +289,20 @@ MonoBehaviour:
   UseSingleBaseline: 0
   RollbackPredictedSpawnedGhostState: 0
   RollbackPredictionOnStructuralChanges: 1
+--- !u!114 &5434483728812792670
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2881682225047266158}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 525e8eebea574d399a43b83d2c64c69c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaxHitPoints: 1000
+  HealthBarOffset: {x: 0, y: 5, z: 0}
 --- !u!1 &5203610453827931822
 GameObject:
   m_ObjectHideFlags: 0

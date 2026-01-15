@@ -1,4 +1,5 @@
 using Buildings;
+using ElementCommons;
 using PlayerCamera;
 using PlayerInputs.MoveIndicator;
 using UI;
@@ -142,7 +143,7 @@ namespace PlayerInputs
 
         private void SetSelectedUnitPosition(RaycastHit closestHit, Entity entity)
         {
-            EntitySelectionComponent selectedPositionComponent = EntityManager.GetComponentData<EntitySelectionComponent>(entity);
+            ElementSelectionComponent selectedPositionComponent = EntityManager.GetComponentData<ElementSelectionComponent>(entity);
 
             if (!selectedPositionComponent.IsSelected)
             {

@@ -1,3 +1,4 @@
+using ElementCommons;
 using Types;
 using Units;
 using Unity.Collections;
@@ -18,9 +19,9 @@ namespace Server
         public void OnUpdate(ref SystemState state)
         {
             _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            foreach ((RefRW<PhysicsMass> physicsMass, EntityTeamComponent unitTeam, Entity unitEntity) 
+            foreach ((RefRW<PhysicsMass> physicsMass, ElementTeamComponent unitTeam, Entity unitEntity) 
                      in SystemAPI.Query<RefRW<PhysicsMass>, 
-                         EntityTeamComponent>().WithAny<NewUnitTagComponent>().WithEntityAccess())
+                         ElementTeamComponent>().WithAny<NewUnitTagComponent>().WithEntityAccess())
             {
                 SetPhysicsValues(physicsMass);
                 SetTeamColor(unitEntity, unitTeam);
@@ -29,11 +30,11 @@ namespace Server
             _entityCommandBuffer.Playback(state.EntityManager);
         }
 
-        private void SetTeamColor(Entity unitEntity, EntityTeamComponent entityTeamComponent)
+        private void SetTeamColor(Entity unitEntity, ElementTeamComponent elementTeamComponent)
         {
             float4 teamColor = Color.red.ToFloat4();
 
-            if (entityTeamComponent.Team is TeamType.Blue)
+            if (elementTeamComponent.Team is TeamType.Blue)
             {
                 teamColor = Color.blue.ToFloat4();
             }

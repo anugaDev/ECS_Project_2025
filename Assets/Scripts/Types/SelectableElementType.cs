@@ -1,6 +1,6 @@
 namespace Types
 {
-    public enum SelectableTypes : byte
+    public enum SelectableElementType : byte
     {
         Empty,
         None,
