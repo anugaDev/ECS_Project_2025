@@ -14,9 +14,9 @@ namespace UI
         public UnitUIController Value;
     }
 
-    public struct HealthBarOffsetComponent : IComponentData
+    public struct SelectionFeedbackOffset : IComponentData
     {
-        public float3 Value;
+        public float3 HealthBarOffset;
     }
 
     public struct PlayerTagComponent : IComponentData

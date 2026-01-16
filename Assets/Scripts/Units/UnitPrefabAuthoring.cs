@@ -29,6 +29,16 @@ namespace Units
                 AddComponent(unitContainer, GetUnitComponent(prefabAuthoring));
                 AddComponentObject(prefabContainerEntity, GetUIPrefabs(prefabAuthoring));
                 AddComponentObject(prefabContainerEntity, GetUnitsConfiguration(prefabAuthoring));
+                AddComponentObject(prefabContainerEntity, GetUITeamColors(prefabAuthoring));
+            }
+
+            private UITeamColors GetUITeamColors(UnitPrefabAuthoring prefabAuthoring)
+            {
+                return new UITeamColors
+                {
+                    RedColor = Color.red,
+                    BlueColor = Color.blue
+                };
             }
 
             private UIPrefabs GetUIPrefabs(UnitPrefabAuthoring prefabAuthoring)

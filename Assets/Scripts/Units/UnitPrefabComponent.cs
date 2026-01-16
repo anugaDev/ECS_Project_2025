@@ -24,6 +24,13 @@ namespace Units
         public UnitUIController UnitUI;
     }
 
+    public class UITeamColors : IComponentData
+    {
+        public Color RedColor;
+
+        public Color BlueColor;
+    }
+
     public class UnitsConfigurationComponent : IComponentData
     {
         public UnitsScriptableObject Configuration;

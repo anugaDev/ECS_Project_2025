@@ -19,6 +19,9 @@ namespace ScriptableObjects
         [SerializeField]
         private string _description;
 
+        [SerializeField] 
+        private float _recruitmentTime;
+
         public UnitType UnitType => _unitType;
 
         public GameObject UnitPrefab => _unitPrefab;
@@ -26,5 +29,7 @@ namespace ScriptableObjects
         public string Name => _name;
 
         public string Description => _description;
+
+        public float RecruitmentTime => _recruitmentTime;
     }
 }

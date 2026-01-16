@@ -1,10 +1,13 @@
 ﻿using Combat;
 using ElementCommons;
+using Types;
 using Units;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Physics;
 using Unity.Transforms;
 using UnityEngine;
+using RaycastHit = Unity.Physics.RaycastHit;
 
 namespace UI
 {
@@ -23,20 +26,21 @@ namespace UI
             EndSimulationEntityCommandBufferSystem.Singleton ecbSingleton =
                 SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
             EntityCommandBuffer ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
+            PhysicsWorldSingleton physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
 
-            foreach ((LocalTransform transform, HealthBarOffsetComponent healthBarOffset,
-                         MaxHitPointsComponent maxHitPoints, Entity entity) in SystemAPI
-                         .Query<LocalTransform, HealthBarOffsetComponent, MaxHitPointsComponent>()
+            foreach ((LocalTransform transform, SelectionFeedbackOffset healthBarOffset,
+                         MaxHitPointsComponent maxHitPoints, ElementTeamComponent team, RefRO<PhysicsCollider> collider, Entity entity) in SystemAPI
+                         .Query<LocalTransform, SelectionFeedbackOffset, MaxHitPointsComponent, ElementTeamComponent, RefRO<PhysicsCollider>>()
                          .WithNone<HealthBarUIReferenceComponent>()
                          .WithEntityAccess())
             {
-                SpawnHealthBar(transform, healthBarOffset, maxHitPoints, ecb, entity);
+                SpawnHealthBar(transform, healthBarOffset, maxHitPoints, ecb, entity, team, collider.ValueRO, physicsWorld);
             }
 
-            foreach ((LocalTransform transform, HealthBarOffsetComponent healthBarOffset,
+            foreach ((LocalTransform transform, SelectionFeedbackOffset healthBarOffset,
                          CurrentHitPointsComponent currentHitPoints, MaxHitPointsComponent maxHitPoints,
                          HealthBarUIReferenceComponent healthBarUI) in SystemAPI
-                         .Query<LocalTransform, HealthBarOffsetComponent, CurrentHitPointsComponent,
+                         .Query<LocalTransform, SelectionFeedbackOffset, CurrentHitPointsComponent,
                              MaxHitPointsComponent, HealthBarUIReferenceComponent>())
             {
                 UpdateHealthBar(transform, healthBarOffset, healthBarUI, currentHitPoints, maxHitPoints);
@@ -67,23 +71,42 @@ namespace UI
             ecb.RemoveComponent<HealthBarUIReferenceComponent>(entity);
         }
 
-        private void UpdateHealthBar(LocalTransform transform, HealthBarOffsetComponent healthBarOffset,
+        private void UpdateHealthBar(LocalTransform transform, SelectionFeedbackOffset selectionFeedbackOffset,
             HealthBarUIReferenceComponent healthBarUI, CurrentHitPointsComponent currentHitPoints,
             MaxHitPointsComponent maxHitPoints)
         {
-            float3 healthBarPosition = transform.Position + healthBarOffset.Value;
-            healthBarUI.Value.transform.position = healthBarPosition;
+            healthBarUI.Value.transform.position = transform.Position;
             healthBarUI.Value.UpdateHealthBar(currentHitPoints.Value, maxHitPoints.Value);
         }
 
-        private void SpawnHealthBar(LocalTransform transform, HealthBarOffsetComponent healthBarOffset,
-            MaxHitPointsComponent maxHitPoints, EntityCommandBuffer ecb, Entity entity)
+        private void SpawnHealthBar(LocalTransform transform, SelectionFeedbackOffset selectionFeedbackOffset,
+            MaxHitPointsComponent maxHitPoints, EntityCommandBuffer ecb, Entity entity, ElementTeamComponent team, PhysicsCollider collider, PhysicsWorldSingleton physicsWorld)
         {
-            UnitUIController unitUIPrefab = SystemAPI.ManagedAPI.GetSingleton<UIPrefabs>().UnitUI;
-            float3 spawnPosition = transform.Position + healthBarOffset.Value;
-            UnitUIController newUnitUI = Object.Instantiate(unitUIPrefab, spawnPosition, Quaternion.identity);
-            newUnitUI.UpdateHealthBar(maxHitPoints.Value, maxHitPoints.Value);
-            ecb.AddComponent(entity, new HealthBarUIReferenceComponent() { Value = newUnitUI });
+            UnitUIController uiPrefab = SystemAPI.ManagedAPI.GetSingleton<UIPrefabs>().UnitUI;
+            float3 spawnPosition = transform.Position;
+            UnitUIController elementUI = Object.Instantiate(uiPrefab, spawnPosition, Quaternion.identity);
+            elementUI.UpdateHealthBar(maxHitPoints.Value, maxHitPoints.Value);
+            SetUIColor(team, elementUI);
+            RigidTransform rigidTransform = new RigidTransform(transform.Rotation, transform.Position);
+            Aabb aabb = collider.Value.Value.CalculateAabb(rigidTransform);
+            float2 colliderSize = new float2(aabb.Extents.x * 2f, aabb.Extents.z * 2f);
+            elementUI.SetRectTransform(colliderSize.x, colliderSize.y);
+            elementUI.SetHealthBarOffset(selectionFeedbackOffset.HealthBarOffset);
+            ecb.AddComponent(entity, new HealthBarUIReferenceComponent() { Value = elementUI });
+        }
+
+        private void SetUIColor(ElementTeamComponent team, UnitUIController elementUI)
+        {
+            UITeamColors uiColors = SystemAPI.ManagedAPI.GetSingleton<UITeamColors>();
+            
+            if (team.Team is TeamType.Red)
+            {
+                elementUI.SetTeamColor(uiColors.RedColor);
+            }
+            else
+            {
+                elementUI.SetTeamColor(uiColors.BlueColor);
+            }
         }
 
         private void EnableHealthBar(ElementSelectionComponent elementSelectionComponent,

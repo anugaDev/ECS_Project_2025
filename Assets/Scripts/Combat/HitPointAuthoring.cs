@@ -24,9 +24,9 @@ namespace Combat
                 AddComponent(entity, GetHealthBarOffsetComponent(authoring));
             }
 
-            private HealthBarOffsetComponent GetHealthBarOffsetComponent(HitPointAuthoring authoring)
+            private SelectionFeedbackOffset GetHealthBarOffsetComponent(HitPointAuthoring authoring)
             {
-                return new HealthBarOffsetComponent { Value = authoring.HealthBarOffset };
+                return new SelectionFeedbackOffset { HealthBarOffset = authoring.HealthBarOffset };
             }
 
             private MaxHitPointsComponent GetMaxHitPointsComponent(HitPointAuthoring authoring)

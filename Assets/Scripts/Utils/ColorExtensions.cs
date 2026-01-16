@@ -9,5 +9,9 @@ namespace Utils
         {
             return new float4(color.r, color.g, color.b, color.a);
         }
+        public static Color ToColor(this float4 color)
+        {
+            return new Color(color.x, color.y, color.z, color.w);;
+        }
     }
 }

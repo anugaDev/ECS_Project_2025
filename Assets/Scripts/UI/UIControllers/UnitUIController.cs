@@ -1,5 +1,8 @@
+using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
+using Utils;
 
 namespace UI
 {
@@ -9,10 +12,22 @@ namespace UI
         private Slider _healthBarSlider;
         
         [SerializeField]
+        private Image _healthBarImage;
+        
+        [SerializeField]
         private Canvas _healthbarCanvas;
 
         [SerializeField]
-        private GameObject _selectionCircle; 
+        private Canvas _selectionCanvas; 
+        
+        [SerializeField]
+        private Transform _healthBarTransform; 
+        
+        [SerializeField]
+        private RectTransform _selectionTransform; 
+
+        [SerializeField]
+        private Image _selectionImage; 
 
         public void UpdateHealthBar(int curHitPoints, int maxHitPoints)
         {
@@ -21,16 +36,32 @@ namespace UI
             _healthBarSlider.value = curHitPoints;
         }
 
+        public void SetRectTransform(float sizeX, float sizeY)
+        {
+            _selectionTransform.sizeDelta = new Vector2(sizeX, sizeY);
+        }
+
+        public void SetTeamColor(Color color)
+        {
+            _healthBarImage.color = color;
+            _selectionImage.color = color;
+        }
+
         public void EnableUI()
         {
             _healthbarCanvas.enabled = true;
-            _selectionCircle.SetActive(true);
+            _selectionCanvas.enabled = true;
+        }
+
+        public void SetHealthBarOffset(float3 offset)
+        {
+            _healthBarTransform.localPosition = offset;
         }
 
         public void DisableUI()
         {
             _healthbarCanvas.enabled = false;
-            _selectionCircle.SetActive(false);
+            _selectionCanvas.enabled = false;
         }
     }
 }
