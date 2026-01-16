@@ -118,16 +118,16 @@ namespace PlayerInputs
         private void SelectElements()
         {
             NormalizeSelectionClick();
-            EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
+            EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
 
             foreach ((RefRO<SelectableElementTypeComponent> _, Entity entity) in 
                      SystemAPI.Query<RefRO<SelectableElementTypeComponent>>().WithEntityAccess())
             {
-                ecb.AddComponent(entity, GetUnitPositionComponent());
+                entityCommandBuffer.AddComponent(entity, GetUnitPositionComponent());
             }
 
-            ecb.Playback(EntityManager);
-            ecb.Dispose();
+            entityCommandBuffer.Playback(EntityManager);
+            entityCommandBuffer.Dispose();
         }
 
         private void NormalizeSelectionClick()

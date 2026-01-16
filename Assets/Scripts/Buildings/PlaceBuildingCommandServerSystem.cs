@@ -14,6 +14,7 @@ namespace Buildings
     public partial struct PlaceBuildingCommandServerSystem : ISystem
     {
         private BuildingsPrefabEntityFactory _prefabFactory;
+
         private EntityCommandBuffer _entityCommandBuffer;
 
         public void OnCreate(ref SystemState state)
@@ -36,14 +37,16 @@ namespace Buildings
                      in SystemAPI.Query<DynamicBuffer<PlaceBuildingCommand>, RefRW<LastProcessedBuildingCommand>, PlayerTeamComponent, GhostOwner>()
                                .WithAll<PlayerTagComponent>())
             {
-                ProcessBuildingCommands(buildingCommands, serverTick, lastProcessedCommand, playerTeam.Team, ghostOwner.NetworkId);
+                ProcessBuildingCommands(buildingCommands, serverTick, lastProcessedCommand, playerTeam.Team, ghostOwner.NetworkId, state);
             }
 
             _entityCommandBuffer.Playback(state.EntityManager);
         }
 
-        private void ProcessBuildingCommands(DynamicBuffer<PlaceBuildingCommand> buildingCommands, NetworkTick serverTick,
-            RefRW<LastProcessedBuildingCommand> lastProcessedCommand, TeamType playerTeam, int networkId)
+        private void ProcessBuildingCommands(DynamicBuffer<PlaceBuildingCommand> buildingCommands,
+            NetworkTick serverTick,
+            RefRW<LastProcessedBuildingCommand> lastProcessedCommand, TeamType playerTeam, int networkId,
+            SystemState state)
         {
             buildingCommands.GetDataAtTick(serverTick, out PlaceBuildingCommand command);
 
@@ -60,7 +63,7 @@ namespace Buildings
                 BuildingType = command.BuildingType
             };
 
-            InstantiateBuilding(command, playerTeam, networkId);
+            InstantiateBuilding(command, playerTeam, networkId, state);
         }
 
         private bool IsDuplicateCommand(PlaceBuildingCommand newCommand, LastProcessedBuildingCommand lastCommand)
@@ -74,7 +77,8 @@ namespace Buildings
             return samePosition && sameType;
         }
 
-        private void InstantiateBuilding(PlaceBuildingCommand placeBuildingCommand,TeamType playerTeam,int networkId)
+        private void InstantiateBuilding(PlaceBuildingCommand placeBuildingCommand, TeamType playerTeam, int networkId,
+            SystemState state)
         {
             Entity buildingEntity = _prefabFactory.Get(placeBuildingCommand.BuildingType);
             Entity newBuilding = _entityCommandBuffer.Instantiate(buildingEntity);

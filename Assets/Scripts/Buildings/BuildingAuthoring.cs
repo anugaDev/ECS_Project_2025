@@ -1,6 +1,7 @@
 using ElementCommons;
 using Types;
 using Unity.Entities;
+using Unity.NetCode;
 using Unity.Rendering;
 using UnityEngine;
 
@@ -11,10 +12,14 @@ namespace Buildings
         [SerializeField] private BuildingType _buildingType;
 
         [SerializeField] private SelectableElementType _selectableType;
+        
+        [SerializeField] private BuildingView _buildingView;
 
         public BuildingType BuildingType => _buildingType;
 
         public SelectableElementType SelectableType => _selectableType;
+
+        public BuildingView buildingView => _buildingView;
 
         public class BuildingBaker : Baker<BuildingAuthoring>
         {
@@ -25,10 +30,18 @@ namespace Buildings
                 AddComponent<NewBuildingTagComponent>(buildingEntity);
                 AddComponent<ElementTeamComponent>(buildingEntity);
                 AddComponent<ElementSelectionComponent>(buildingEntity);
-                AddComponent<URPMaterialPropertyBaseColor>(buildingEntity);
                 AddComponent<ElementDisplayDetailsComponent>(buildingEntity);
                 AddComponent(buildingEntity, GetUnitTypeComponent(authoring));
                 AddComponent(buildingEntity, GetSelectableTypeComponent(authoring));
+                AddComponentObject(buildingEntity, GetBuildingViewReferenceComponent(authoring));
+            }
+
+            private BuildingViewReferenceComponent GetBuildingViewReferenceComponent(BuildingAuthoring authoring)
+            {
+                return new BuildingViewReferenceComponent
+                {
+                    Value = authoring.buildingView
+                };
             }
 
             private SelectableElementTypeComponent GetSelectableTypeComponent(BuildingAuthoring authoring)

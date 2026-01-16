@@ -53,6 +53,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _buildingType: 0
   _selectableType: 2
+  _buildingView: {fileID: 5527367336661994744}
 --- !u!114 &5527367336661994744
 MonoBehaviour:
   m_ObjectHideFlags: 0

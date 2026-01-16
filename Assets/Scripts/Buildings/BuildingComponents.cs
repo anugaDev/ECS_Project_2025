@@ -42,6 +42,11 @@ namespace Buildings
     {
         public BuildingsScriptableObject Configuration;
     }
+    
+    public class BuildingViewReferenceComponent : IComponentData
+    {
+        public BuildingView Value;
+    }
 
     public class BuildingMaterialsConfigurationComponent : IComponentData
     {
