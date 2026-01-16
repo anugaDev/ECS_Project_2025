@@ -21,7 +21,7 @@ namespace Buildings
             public override void Bake(BuildingAuthoring authoring)
             {
                 Entity buildingEntity = GetEntity(TransformUsageFlags.Dynamic);
-                AddComponent<BuildingTagComponent>(buildingEntity);
+                AddComponent<BuildingComponents>(buildingEntity);
                 AddComponent<NewBuildingTagComponent>(buildingEntity);
                 AddComponent<ElementTeamComponent>(buildingEntity);
                 AddComponent<ElementSelectionComponent>(buildingEntity);

@@ -12,7 +12,12 @@ namespace Buildings
         [SerializeField]
         private BuildingsScriptableObject _configuration;
 
+        [SerializeField]
+        private BuildingMaterialsConfiguration _materialConfiguration;
+
         public BuildingsScriptableObject Configuration => _configuration;
+
+        public BuildingMaterialsConfiguration MaterialConfiguration => _materialConfiguration;
 
         public class BuildingPrefabBaker : Baker<BuildingPrefabAuthoring>
         {
@@ -22,6 +27,7 @@ namespace Buildings
                 Entity prefabContainerEntity = GetEntity(TransformUsageFlags.None); 
                 AddComponent(buildingContainer, GetBuildingsComponent(prefabAuthoring));
                 AddComponentObject(prefabContainerEntity, GetBuildingConfiguration(prefabAuthoring));
+                AddComponentObject(prefabContainerEntity, GetBuildingMaterialsConfiguration(prefabAuthoring));
             }
 
             private BuildingsConfigurationComponent GetBuildingConfiguration(BuildingPrefabAuthoring prefabAuthoring)
@@ -29,6 +35,14 @@ namespace Buildings
                 return new BuildingsConfigurationComponent
                 {
                     Configuration =  prefabAuthoring.Configuration
+                };
+            }
+
+            private BuildingMaterialsConfigurationComponent GetBuildingMaterialsConfiguration(BuildingPrefabAuthoring prefabAuthoring)
+            {
+                return new BuildingMaterialsConfigurationComponent
+                {
+                    Configuration =  prefabAuthoring.MaterialConfiguration
                 };
             }
             private BuildingPrefabComponent GetBuildingsComponent(BuildingPrefabAuthoring prefabAuthoring)

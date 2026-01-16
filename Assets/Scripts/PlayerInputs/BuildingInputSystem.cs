@@ -12,6 +12,7 @@ using Unity.NetCode;
 using Unity.Physics;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using BoxCollider = UnityEngine.BoxCollider;
 
 namespace PlayerInputs
 {
@@ -19,13 +20,17 @@ namespace PlayerInputs
     [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
     public partial class BuildingInputSystem : SystemBase
     {
-        private const uint GROUNDPLANE_GROUP = 1 << 0; 
-        
-        private const uint RAYCAST_GROUP = 1 << 5; 
+        private const uint GROUNDPLANE_GROUP = 1 << 0;
+
+        private const uint RAYCAST_GROUP = 1 << 5;
+
+        private const uint GHOST_ELEMENTS_GROUP = ~(GROUNDPLANE_GROUP | RAYCAST_GROUP);
 
         private const float DEFAULT_Z_POSITION = 100f; 
         
         private Dictionary<BuildingType, BuildingScriptableObject> _buildingConfiguration;
+        
+        private BuildingMaterialsConfiguration _materialsConfiguration;
 
         private Dictionary<BuildingType, BuildingView> _buildingTemplates;
         
@@ -42,6 +47,8 @@ namespace PlayerInputs
         private bool _isBuilding;
 
         private bool _isPositionAvailable;
+
+        private bool _lastAvailable;
         
         private Vector3 _lastPosition;
 
@@ -85,6 +92,9 @@ namespace PlayerInputs
         {
             BuildingsScriptableObject configuration = SystemAPI.ManagedAPI.GetSingleton<BuildingsConfigurationComponent>().Configuration;
             _buildingConfiguration = configuration.GetBuildingsDictionary();
+            BuildingMaterialsConfigurationComponent materialsComponent =
+                SystemAPI.ManagedAPI.GetSingleton<BuildingMaterialsConfigurationComponent>();
+            _materialsConfiguration = materialsComponent.Configuration;
         }
 
         protected override void OnUpdate()
@@ -115,7 +125,63 @@ namespace PlayerInputs
 
         private void SetLastPositionAvailable()
         {
-            _isPositionAvailable = true; //TODO Check Template collision
+            _isPositionAvailable = !CheckCollisionWithGhostElements();
+
+            if (_isPositionAvailable != _lastAvailable)
+            { 
+                UpdateTemplateMaterial();
+            }
+
+            _lastAvailable = _isPositionAvailable;
+        }
+
+        private void UpdateTemplateMaterial()
+        {
+            if (_isPositionAvailable)
+            {
+                _currentBuildingTemplate.SetTeamColorMaterial(_materialsConfiguration.AvailableMaterial);
+            }
+            else
+            {
+                _currentBuildingTemplate.SetTeamColorMaterial(_materialsConfiguration.NotAvailableMaterial);
+            }
+        }
+
+        private bool CheckCollisionWithGhostElements()
+        {
+            PhysicsWorldSingleton physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
+            CollisionWorld collisionWorld = physicsWorld.CollisionWorld;
+
+            BoxCollider templateCollider = _currentBuildingTemplate.GameObject.GetComponent<BoxCollider>();
+            Vector3 center = _lastPosition + templateCollider.center;
+            Vector3 halfExtents = templateCollider.size * 0.5f;
+            Quaternion rotation = Quaternion.identity;
+
+            NativeList<DistanceHit> hits = new NativeList<DistanceHit>(Allocator.Temp);
+
+            CollisionFilter filter = new CollisionFilter
+            {
+                BelongsTo = ~0u,
+                CollidesWith = ~0u,
+                GroupIndex = 0
+            };
+
+            collisionWorld.OverlapBox(center, rotation, halfExtents, ref hits, filter);
+
+            // Filter out ground plane hits - only count ghost entities (units/buildings)
+            int ghostCount = 0;
+            for (int i = 0; i < hits.Length; i++)
+            {
+                Entity hitEntity = hits[i].Entity;
+                if (EntityManager.HasComponent<UnitTagComponent>(hitEntity) ||
+                    EntityManager.HasComponent<BuildingComponents>(hitEntity))
+                {
+                    ghostCount++;
+                }
+            }
+
+            hits.Dispose();
+            return ghostCount > 0;
         }
 
         private RaycastInput GetRaycastInput(CollisionWorld collisionWorld)

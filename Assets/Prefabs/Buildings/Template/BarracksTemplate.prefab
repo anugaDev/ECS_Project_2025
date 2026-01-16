@@ -819,6 +819,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4327365337623208701}
+  - component: {fileID: 1046832797765851892}
   m_Layer: 0
   m_Name: Pivot
   m_TagString: Untagged
@@ -855,6 +856,27 @@ Transform:
   - {fileID: 44662706091445738}
   m_Father: {fileID: 2061228570722979853}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &1046832797765851892
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3235298543143018961}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 4.58, y: 4.35, z: 3.39}
+  m_Center: {x: 0, y: 2.05, z: 0}
 --- !u!1 &3243437393837176875
 GameObject:
   m_ObjectHideFlags: 0

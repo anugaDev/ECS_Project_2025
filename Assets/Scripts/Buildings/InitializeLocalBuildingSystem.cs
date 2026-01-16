@@ -20,8 +20,8 @@ namespace Units
         public void OnUpdate(ref SystemState state)
         {
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            foreach ((BuildingTagComponent _, BuildingTypeComponent typeComponent, Entity entity) 
-                     in SystemAPI.Query<BuildingTagComponent, BuildingTypeComponent>().WithAll<GhostOwnerIsLocal>().WithNone<OwnerTagComponent>().WithEntityAccess())
+            foreach ((BuildingComponents _, BuildingTypeComponent typeComponent, Entity entity) 
+                     in SystemAPI.Query<BuildingComponents, BuildingTypeComponent>().WithAll<GhostOwnerIsLocal>().WithNone<OwnerTagComponent>().WithEntityAccess())
             {
                 entityCommandBuffer.AddComponent<OwnerTagComponent>(entity);
                 entityCommandBuffer.SetComponent(entity, GetDetailsComponent(typeComponent));

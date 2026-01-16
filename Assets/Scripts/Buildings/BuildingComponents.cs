@@ -6,7 +6,7 @@ using Unity.NetCode;
 
 namespace Buildings
 {
-    public struct BuildingTagComponent : IComponentData
+    public struct BuildingComponents : IComponentData
     {
     }
 
@@ -17,11 +17,6 @@ namespace Buildings
     public struct BuildingTypeComponent : IComponentData
     {
         public BuildingType Type;
-    }
-
-    public class BuildingsConfigurationComponent : IComponentData
-    {
-        public BuildingsScriptableObject Configuration;
     }
 
     public struct PlaceBuildingCommand : ICommandData
@@ -41,5 +36,15 @@ namespace Buildings
         public Entity House;
 
         public Entity Farm;
+    }
+    
+    public class BuildingsConfigurationComponent : IComponentData
+    {
+        public BuildingsScriptableObject Configuration;
+    }
+
+    public class BuildingMaterialsConfigurationComponent : IComponentData
+    {
+        public BuildingMaterialsConfiguration Configuration;
     }
 }

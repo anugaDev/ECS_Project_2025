@@ -257,6 +257,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _configuration: {fileID: 11400000, guid: 3774664a9200a904d9855e234a98005b, type: 2}
+  _materialConfiguration: {fileID: 11400000, guid: 90f431831348fb548a8601049fd5007e, type: 2}
 --- !u!1 &886772394
 GameObject:
   m_ObjectHideFlags: 0
