@@ -15,6 +15,8 @@ namespace UI
     [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
     public partial struct HealthBarSystem : ISystem
     {
+        private const float EXTENTS_MULTIPLIER = 2f;
+
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<EndSimulationEntityCommandBufferSystem.Singleton>();
@@ -87,12 +89,17 @@ namespace UI
             UnitUIController elementUI = Object.Instantiate(uiPrefab, spawnPosition, Quaternion.identity);
             elementUI.UpdateHealthBar(maxHitPoints.Value, maxHitPoints.Value);
             SetUIColor(team, elementUI);
-            RigidTransform rigidTransform = new RigidTransform(transform.Rotation, transform.Position);
-            Aabb aabb = collider.Value.Value.CalculateAabb(rigidTransform);
-            float2 colliderSize = new float2(aabb.Extents.x * 2f, aabb.Extents.z * 2f);
-            elementUI.SetRectTransform(colliderSize.x, colliderSize.y);
+            SetSelectionFeedbackSize(transform, collider, elementUI);
             elementUI.SetHealthBarOffset(selectionFeedbackOffset.HealthBarOffset);
             ecb.AddComponent(entity, new HealthBarUIReferenceComponent() { Value = elementUI });
+        }
+
+        private static void SetSelectionFeedbackSize(LocalTransform transform, PhysicsCollider collider,UnitUIController elementUI)
+        {
+            RigidTransform rigidTransform = new RigidTransform(transform.Rotation, transform.Position);
+            Aabb aabb = collider.Value.Value.CalculateAabb(rigidTransform);
+            float2 colliderSize = new float2(aabb.Extents.x * EXTENTS_MULTIPLIER, aabb.Extents.z * EXTENTS_MULTIPLIER);
+            elementUI.SetRectTransform(colliderSize.x, colliderSize.y);
         }
 
         private void SetUIColor(ElementTeamComponent team, UnitUIController elementUI)

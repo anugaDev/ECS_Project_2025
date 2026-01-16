@@ -187,7 +187,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 102
+  m_PixelsPerUnitMultiplier: 500
 --- !u!1001 &799829247641729244
 PrefabInstance:
   m_ObjectHideFlags: 0
