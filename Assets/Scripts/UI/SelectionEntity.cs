@@ -18,5 +18,6 @@ public class SelectionEntity
     {
         _id = id;
         _type = type;
+        _selectedEntity = selectedEntity;
     }
 }

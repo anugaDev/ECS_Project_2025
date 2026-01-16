@@ -37,6 +37,7 @@ namespace UI.UIControllers
                 actionButton.Hide();
             }
         }
+
         public void SetRecruitmentActions(UnitsScriptableObject unitsConfiguration)
         {
             foreach (UnitScriptableObject unit in unitsConfiguration.GetUnitsDictionary().Values)

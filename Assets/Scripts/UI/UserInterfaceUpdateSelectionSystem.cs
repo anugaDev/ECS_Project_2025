@@ -24,6 +24,8 @@ namespace UI
 
         private Dictionary<SelectableElementType, Action> _selectableToAction;
 
+        private EntityCommandBuffer _entityCommandBuffer;
+
         protected override void OnCreate()
         {
             RequireForUpdate<PlayerTagComponent>();
@@ -46,10 +48,12 @@ namespace UI
 
         protected override void OnUpdate()
         {
+            _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
             CheckUnitsSelection();
             SetBuildingsSelection();
-            SetUIDetailsType();
+            CheckUISelection();
             ResetSelectionData();
+            _entityCommandBuffer.Playback(EntityManager);
         }
 
         private void CheckUnitsSelection()
@@ -85,6 +89,7 @@ namespace UI
             selectionComponent.MustUpdateUI = false;
             SelectionEntity selectionEntity = GetNewSelectionEntity(_unitTypesSelected.Keys.ToList(), (int)unitTypeComponent.Type, entity);
             _unitTypesSelected.Add(selectionEntity, selectionComponent.IsSelected);
+            SetComponentData(selectionComponent, entity);
         }
 
         private void SetBuildingsSelection()
@@ -130,7 +135,13 @@ namespace UI
 
             selectionComponent.MustUpdateUI = false;
             SelectionEntity selectionEntity = GetNewSelectionEntity(_buildingTypesSelected.Keys.ToList(), (int)buildingTypeComponent.Type, entity);
-            _buildingTypesSelected.Add(selectionEntity, selectionComponent.IsSelected);
+            _buildingTypesSelected.Add(selectionEntity, selectionComponent.IsSelected); 
+            SetComponentData(selectionComponent, entity);
+        }
+
+        private void SetComponentData(ElementSelectionComponent selectionComponent, Entity entity)
+        {
+            _entityCommandBuffer.SetComponent(entity, selectionComponent);
         }
 
         private SelectionEntity GetNewSelectionEntity(List<SelectionEntity> selectionEntities, int type, Entity entity)
@@ -152,17 +163,17 @@ namespace UI
             _unitTypesSelected.Clear();
         }
 
-        private void SetUIDetailsType()
+        private void CheckUISelection()
         {
             if (_currentSelection is SelectableElementType.Empty)
             {
                 return;
             }
 
-            SetUISelectionDetails();
+            SetUISelectionBySelected();
         }
 
-        private void SetUISelectionDetails()
+        private void SetUISelectionBySelected()
         {
             _selectableToAction[_currentSelection]?.Invoke();
             SetDetailsDisplay();
@@ -177,16 +188,14 @@ namespace UI
             }
 
             Entity detailsEntity = GetDetailsEntity();
-            EntityCommandBuffer entityCommandBuffer = GetEntityCommandBuffer();
             Entity UIUpdateEntity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
-            entityCommandBuffer.AddComponent(UIUpdateEntity, GetDetailsComponent(detailsEntity));
+            _entityCommandBuffer.AddComponent(UIUpdateEntity, GetDetailsComponent(detailsEntity));
         }
 
         private void SendEmptyDetails()
         {
-            EntityCommandBuffer entityCommandBuffer = GetEntityCommandBuffer();
             Entity UIUpdateEntity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
-            entityCommandBuffer.AddComponent(UIUpdateEntity, new SetEmptyDetailsComponent());
+            _entityCommandBuffer.AddComponent(UIUpdateEntity, new SetEmptyDetailsComponent());
         }
 
         private SetUIDisplayDetailsComponent GetDetailsComponent(Entity detailsEntity)
@@ -255,9 +264,8 @@ namespace UI
 
         private void SetActionComponent(PlayerUIActionType action, int[] payload)
         {
-            EntityCommandBuffer entityCommandBuffer = GetEntityCommandBuffer();
             Entity UIUpdateEntity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
-            entityCommandBuffer.AddComponent(UIUpdateEntity, new UpdateUIActionTag());
+            _entityCommandBuffer.AddComponent(UIUpdateEntity, new UpdateUIActionTag());
 
             DynamicBuffer<UpdateUIActionPayload> updateUIActionPayloads =
                 EntityManager.GetBuffer<UpdateUIActionPayload>(UIUpdateEntity);
@@ -266,13 +274,6 @@ namespace UI
             {
                 updateUIActionPayloads.Add(GetUpdateUIActioNPayload(action, payloadId));
             }
-
-            entityCommandBuffer.Playback(EntityManager);
-        }
-
-        private static EntityCommandBuffer GetEntityCommandBuffer()
-        {
-            return new EntityCommandBuffer(Allocator.Temp);
         }
 
         private UpdateUIActionPayload GetUpdateUIActioNPayload(PlayerUIActionType action, int payloadId)

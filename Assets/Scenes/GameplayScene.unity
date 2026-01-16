@@ -316,6 +316,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _selectionBoxController: {fileID: 1528029589}
   _selectionActionsDisplayerController: {fileID: 1303377466}
+  _selectedDetailsController: {fileID: 830978433}
 --- !u!1 &202402249
 GameObject:
   m_ObjectHideFlags: 0

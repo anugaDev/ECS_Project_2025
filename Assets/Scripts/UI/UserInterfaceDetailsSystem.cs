@@ -1,3 +1,4 @@
+using Combat;
 using ElementCommons;
 using UI.UIControllers;
 using Unity.Collections;
@@ -39,7 +40,6 @@ namespace UI
                      in SystemAPI.Query<SetEmptyDetailsComponent>().WithEntityAccess())
             {
                 _selectionDetailsController.DisableDetails();
-                SetTrackedEntityDetails();
                 entityCommandBuffer.RemoveComponent<SetEmptyDetailsComponent>(entity);
             }
 
@@ -50,9 +50,17 @@ namespace UI
         {
             _selectionDetailsController.EnableDetails();
             SetName();
+            SetHitPoints();
         }
 
-        private void SetName()
+        private void SetHitPoints()
+        {
+            int currentHitPoints = EntityManager.GetComponentData<CurrentHitPointsComponent>(_trackedEntity).Value;
+            int maxHitPoints = EntityManager.GetComponentData<MaxHitPointsComponent>(_trackedEntity).Value;
+            _selectionDetailsController.UpdateHitPoints(currentHitPoints, maxHitPoints);
+        }
+
+        private void SetName()           
         {
             EntityManager.GetComponentData<ElementDisplayDetailsComponent>(_trackedEntity);
             ElementDisplayDetailsComponent details = EntityManager.GetComponentData<ElementDisplayDetailsComponent>(_trackedEntity);

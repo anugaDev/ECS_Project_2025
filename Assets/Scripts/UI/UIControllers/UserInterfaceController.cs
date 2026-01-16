@@ -9,10 +9,11 @@ namespace UI.UIControllers
 
         [SerializeField]
         private SelectionBoxController _selectionBoxController;
-        
+
         [SerializeField]
         private SelectionActionsDisplayController _selectionActionsDisplayerController;
-        
+
+        [SerializeField]
         private SelectedDetailsDisplayController _selectedDetailsController;
 
         public SelectionActionsDisplayController SelectionActionsDisplayerController => _selectionActionsDisplayerController;
