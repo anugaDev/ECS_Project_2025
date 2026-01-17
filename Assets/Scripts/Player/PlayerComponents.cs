@@ -77,6 +77,15 @@ namespace UI
         public float3 Position;
         public BuildingType BuildingType;
     }
+
+    public struct LastProcessedUnitCommand : IComponentData
+    {
+        public NetworkTick Tick;
+
+        public float3 BuildingPosition;
+
+        public UnitType UnitType;
+    }
     
     public struct SetEmptyDetailsComponent : IComponentData
     {

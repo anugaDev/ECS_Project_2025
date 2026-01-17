@@ -1,4 +1,5 @@
 using Buildings;
+using ElementCommons;
 using UI;
 using Unity.Entities;
 using UnityEngine;
@@ -14,6 +15,8 @@ namespace Player
                 Entity entity = GetEntity(TransformUsageFlags.Dynamic);
                 AddBuffer<UpdateUIActionPayload>(entity);
                 AddBuffer<PlaceBuildingCommand>(entity);
+                AddBuffer<SpawnUnitCommand>(entity);
+                AddComponent<OwnerTagComponent>(entity);
                 AddComponent<PlayerTeamComponent>(entity);
                 AddComponent(entity, new PlayerTagComponent());
             }

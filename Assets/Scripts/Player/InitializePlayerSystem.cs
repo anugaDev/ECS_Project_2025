@@ -1,16 +1,10 @@
 using ElementCommons;
-using Types;
 using UI;
 using Units;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Mathematics;
-using Unity.Physics;
-using Unity.Rendering;
-using UnityEngine;
-using Utils;
 
-namespace Server
+namespace Player
 {
     [UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
     public partial struct InitializePlayerSystem : ISystem
@@ -20,11 +14,10 @@ namespace Server
         public void OnUpdate(ref SystemState state)
         {
             _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            foreach ((PlayerTagComponent playerTag, ElementTeamComponent playerTeam, Entity unitEntity) 
-                     in SystemAPI.Query<PlayerTagComponent, 
-                         ElementTeamComponent>().WithAny<NewUnitTagComponent>().WithEntityAccess())
-            {
-
+            foreach ((PlayerTagComponent playerTag, Entity unitEntity) 
+                     in SystemAPI.Query<PlayerTagComponent>().WithNone<OwnerTagComponent>().WithEntityAccess())
+            { 
+                _entityCommandBuffer.AddComponent<OwnerTagComponent>(unitEntity);
             }
             _entityCommandBuffer.Playback(state.EntityManager);
         }

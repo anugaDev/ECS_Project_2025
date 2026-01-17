@@ -1,16 +1,17 @@
 using System.Collections.Generic;
 using System.Linq;
+using Buildings;
 using ElementCommons;
 using ScriptableObjects;
 using Types;
 using UI;
-using Units;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.NetCode;
 using Unity.Transforms;
 
-namespace Buildings
+namespace Units
 {
     [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ThinClientSimulation)]
     public partial class RecruitUnitsQueueSystem : SystemBase
@@ -19,12 +20,16 @@ namespace Buildings
 
         private Dictionary<UnitType, UnitScriptableObject> _unitsConfiguration;
         
-        private Dictionary<UnitType, Entity> _prefabConfiguration;
-
         private List<RecruitmentEntity> _recruitmentList;
+        
+        private List<RecruitmentEntity> _recuritmentQueue;
+
+        private List<RecruitmentEntity> _endRecruitmentUnits;
 
         protected override void OnCreate()
         {
+            RequireForUpdate<UnitsConfigurationComponent>();
+            RequireForUpdate<PlayerTagComponent>();
             _buildingActionsFactory = new BuildingFactoryActionsFactory();
             base.OnCreate();
         }
@@ -33,21 +38,9 @@ namespace Buildings
         {
             _unitsConfiguration = SystemAPI.ManagedAPI.GetSingleton<UnitsConfigurationComponent>().Configuration.GetUnitsDictionary();
             _recruitmentList = new List<RecruitmentEntity>();
-            FillPrefabDictionary();
+            _recuritmentQueue = new List<RecruitmentEntity>();
+            _endRecruitmentUnits = new List<RecruitmentEntity>();
             base.OnStartRunning();
-        }
-
-        private void FillPrefabDictionary()
-        {
-            Entity singletonEntity = SystemAPI.GetSingletonEntity<UnitPrefabComponent>();
-            UnitPrefabComponent unitPrefabComponent = SystemAPI.GetComponent<UnitPrefabComponent>(singletonEntity);
-            _prefabConfiguration = new Dictionary<UnitType, Entity>
-            {
-                {UnitType.Ballista, unitPrefabComponent.Ballista},
-                {UnitType.Worker, unitPrefabComponent.Worker},
-                {UnitType.Warrior, unitPrefabComponent.Warrior},
-                {UnitType.Archer, unitPrefabComponent.Archer}
-            };
         }
 
         protected override void OnUpdate()
@@ -62,6 +55,13 @@ namespace Buildings
             {
                 recruitmentEntity.Update(SystemAPI.Time.DeltaTime);
             }
+
+            foreach (RecruitmentEntity recruitmentEntity in _endRecruitmentUnits)
+            {
+                _recruitmentList.Remove(recruitmentEntity);
+            }
+
+            _endRecruitmentUnits.Clear();
         }
 
         private void CheckRecruitmentActions()
@@ -77,7 +77,7 @@ namespace Buildings
                 StartRecruitment(actionComponent);
                 entityCommandBuffer.RemoveComponent<SetPlayerUIActionComponent>(entity);
             }
-            
+
             entityCommandBuffer.Playback(EntityManager);
             entityCommandBuffer.Dispose();
         }
@@ -120,19 +120,61 @@ namespace Buildings
         private void RecruitUnitAtBuilding(UnitType unitType, Entity entity)
         {
             float recruitmentTime = _unitsConfiguration[unitType].RecruitmentTime;
-            RecruitmentEntity recruitmentEntity = new RecruitmentEntity(recruitmentTime, entity);
+            RecruitmentEntity recruitmentEntity = new RecruitmentEntity(recruitmentTime, entity, unitType);
             recruitmentEntity.OnFinishedAction += OnUnitRecruitmentFinished;
-            _recruitmentList.Add(recruitmentEntity);
+            SetBuildingList(recruitmentEntity);
         }
 
-        private void OnUnitRecruitmentFinished(Entity building, UnitType unit)
+        private void SetBuildingList(RecruitmentEntity recruitmentEntity)
         {
-            //EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            //Entity newBuilding = entityCommandBuffer.Instantiate(_prefabConfiguration[unit]);
-            //LocalTransform buildingTransform = SystemAPI.GetComponent<LocalTransform>(building);
-            //entityCommandBuffer.SetComponent(newBuilding, LocalTransform.FromPosition(buildingTransform.Position));
-            //entityCommandBuffer.SetComponent(newBuilding, new GhostOwner{NetworkId = networkId});
-            //entityCommandBuffer.SetComponent(newBuilding, new ElementTeamComponent{Team = playerTeam});
+            if (_recruitmentList.Any(recruit => recruit.IsSameEntity(recruitmentEntity.Entity)))
+            {
+                _recuritmentQueue.Add(recruitmentEntity);
+            }
+            else
+            { 
+                _recruitmentList.Add(recruitmentEntity);
+            }
+        }
+
+        private void OnUnitRecruitmentFinished(Entity building, UnitType unit, RecruitmentEntity recruitmentEntity)
+        {
+            SetRecruitmentEntityEnd(recruitmentEntity);
+            CheckQueue(recruitmentEntity);
+
+            LocalTransform buildingTransform = EntityManager.GetComponentData<LocalTransform>(building);
+
+            SpawnUnitCommand buildingCommand = GetSpawnUnitCommand(buildingTransform.Position, unit);
+            Entity entity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
+            DynamicBuffer<SpawnUnitCommand> spawnUnitCommands = SystemAPI.GetBuffer<SpawnUnitCommand>(entity);
+            spawnUnitCommands.AddCommandData(buildingCommand);
+        }
+
+        private void CheckQueue(RecruitmentEntity doneEntity)
+        {
+            if (!_recuritmentQueue.Any(recruit => recruit.IsSameEntity(doneEntity.Entity)))
+            {
+                return;
+            }
+            
+            RecruitmentEntity newEntity = _recuritmentQueue.First(recruit => recruit.IsSameEntity(doneEntity.Entity));
+            _recruitmentList.Add(newEntity);
+        }
+
+        private void SetRecruitmentEntityEnd(RecruitmentEntity recruitmentEntity)
+        {
+            recruitmentEntity.OnFinishedAction -= OnUnitRecruitmentFinished;
+            _endRecruitmentUnits.Add(recruitmentEntity);
+        }
+
+        private SpawnUnitCommand GetSpawnUnitCommand(float3 buildingPosition, UnitType unit)
+        {
+            return new SpawnUnitCommand
+            {
+                Tick = SystemAPI.GetSingleton<NetworkTime>().ServerTick,
+                UnitType = unit,
+                BuildingPosition = buildingPosition
+            };
         }
     }
 }

@@ -68,6 +68,12 @@ namespace Server
                 Position = float3.zero,
                 BuildingType = BuildingType.Center
             });
+            _entityCommandBuffer.AddComponent(player, new LastProcessedUnitCommand()
+            {
+                Tick = NetworkTick.Invalid,
+                BuildingPosition = float3.zero,
+                UnitType = UnitType.Worker
+            });
             return player;
         }
 

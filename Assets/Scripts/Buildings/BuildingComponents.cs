@@ -26,6 +26,16 @@ namespace Buildings
         public float3 Position;
         public NetworkTick Tick { get; set; }
     }
+    
+    public struct SpawnUnitCommand : ICommandData
+    {
+        public UnitType UnitType;
+
+        public float3 BuildingPosition;
+
+        public NetworkTick Tick { get; set; }
+    }
+
 
     public struct BuildingPrefabComponent : IComponentData
     {
