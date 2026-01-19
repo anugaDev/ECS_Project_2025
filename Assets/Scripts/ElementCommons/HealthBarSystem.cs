@@ -94,7 +94,7 @@ namespace UI
             ecb.AddComponent(entity, new HealthBarUIReferenceComponent() { Value = elementUI });
         }
 
-        private static void SetSelectionFeedbackSize(LocalTransform transform, PhysicsCollider collider,UnitUIController elementUI)
+        private void SetSelectionFeedbackSize(LocalTransform transform, PhysicsCollider collider,UnitUIController elementUI)
         {
             RigidTransform rigidTransform = new RigidTransform(transform.Rotation, transform.Position);
             Aabb aabb = collider.Value.Value.CalculateAabb(rigidTransform);

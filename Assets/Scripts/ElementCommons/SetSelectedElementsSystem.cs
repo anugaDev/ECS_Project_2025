@@ -55,10 +55,16 @@ namespace Units
             NewSelectionComponent newSelectPosition = selectPosition;
             bool currentSelectionState = _currentSelectionComponent.IsSelected;
             UpdateElementSelection(transform, collider, camera);
-            _currentSelectionComponent.MustUpdateUI = currentSelectionState != _currentSelectionComponent.IsSelected;
-            _currentSelectionComponent.MustEnableFeedback = _currentSelectionComponent.MustUpdateUI;
+            UpdateUIParameters(currentSelectionState);
             entityCommandBuffer.SetComponent(unitEntity, _currentSelectionComponent);
             entityCommandBuffer.SetComponent(unitEntity, newSelectPosition);
+        }
+
+        private void UpdateUIParameters(bool currentSelectionState)
+        {
+            _currentSelectionComponent.MustUpdateUI = currentSelectionState != _currentSelectionComponent.IsSelected;
+            _currentSelectionComponent.MustUpdateGroup = _currentSelectionComponent.MustUpdateUI;
+            _currentSelectionComponent.MustEnableFeedback = _currentSelectionComponent.MustUpdateUI;
         }
 
         private void UpdateElementSelection(RefRW<LocalTransform> transform, RefRO<PhysicsCollider> collider, Camera camera)
@@ -92,7 +98,7 @@ namespace Units
             {
                 _currentSelectionComponent.IsSelected = false;
             }
-            else
+            else if (!(_currentSelectedType.Type is SelectableElementType.Building && _currentNewSelection.MustKeepSelection))
             {
                 _currentSelectionComponent.IsSelected = true;
             }
@@ -100,7 +106,7 @@ namespace Units
 
         private void UpdateNotSelected()
         {
-            if (_currentNewSelection.MustKeepSelection)
+            if (_currentNewSelection.MustKeepSelection && _currentSelectedType.Type != SelectableElementType.Building )
             {
                 return;
             }

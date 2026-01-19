@@ -15,6 +15,8 @@ namespace ElementCommons
         public bool IsSelected;
 
         public bool MustUpdateUI;
+        
+        public bool MustUpdateGroup;
 
         public bool MustEnableFeedback;
     }
