@@ -100,7 +100,6 @@ namespace Server
             Entity newUnit = _entityCommandBuffer.Instantiate(unitEntity);
             _entityCommandBuffer.SetName(newUnit,"BaseUnit");
 
-            // Preserve the original scale from the prefab
             LocalTransform prefabTransform = state.EntityManager.GetComponentData<LocalTransform>(unitEntity);
             float3 spawnPosition = GetUnitPosition(team);
             LocalTransform newTransform = LocalTransform.FromPositionRotationScale(

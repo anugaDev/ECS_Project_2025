@@ -99,7 +99,6 @@ namespace Units
             Entity unitPrefab = _prefabFactory.Get(spawnUnitCommand.UnitType);
             Entity newUnit = _entityCommandBuffer.Instantiate(unitPrefab);
 
-            // Preserve the original scale from the prefab
             LocalTransform prefabTransform = state.EntityManager.GetComponentData<LocalTransform>(unitPrefab);
             LocalTransform newTransform = LocalTransform.FromPositionRotationScale(
                 GetSpawnPosition(spawnUnitCommand.BuildingPosition),
