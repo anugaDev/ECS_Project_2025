@@ -14,7 +14,9 @@ namespace PlayerInputs
     [UpdateInGroup(typeof(GhostInputSystemGroup))]
     public partial class ElementsSelectionInputSystem : SystemBase
     {
-        private const float CLICK_SELECTION_SIZE = 1f;
+        private const float CLICK_SELECTION_SIZE = 5f;
+        private const float CLICK_DISTANCE_THRESHOLD = 10f;
+        private const float CLICK_TIME_THRESHOLD = 0.3f;
 
         private InputActions _inputActionMap;
 
@@ -29,6 +31,8 @@ namespace PlayerInputs
         private bool _isAvailable;
 
         private bool _isDragging;
+
+        private float _selectionStartTime;
 
         private CheckGameplayInteractionPolicy _interactionPolicy;
 
@@ -83,12 +87,8 @@ namespace PlayerInputs
 
             UserInterfaceController.Instance.SelectionBoxController.Enable();
             _startingPosition = GetPointerPosition();
-        }
-
-        private void StartDragging()
-        {
-            bool dragStartedOverUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
-            _isDragging = !dragStartedOverUI;
+            _lastPosition = _startingPosition;
+            _selectionStartTime = UnityEngine.Time.time;
         }
 
         private void UpdateBoxSelection()
@@ -106,8 +106,13 @@ namespace PlayerInputs
         private void EndSelectionBox(InputAction.CallbackContext _)
         {
             _isDragging = false;
+            _lastPosition = GetPointerPosition();
             UserInterfaceController.Instance.SelectionBoxController.Disable();
-            SelectElements();
+
+            if (_interactionPolicy.IsAllowed())
+            {
+                SelectElements();
+            }
         }
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
         private Vector2 GetPointerPosition()
@@ -132,7 +137,11 @@ namespace PlayerInputs
 
         private void NormalizeSelectionClick()
         {
-            _isClickSelection = Vector2.Distance(_startingPosition, _lastPosition) < CLICK_SELECTION_SIZE;
+            float distance = Vector2.Distance(_startingPosition, _lastPosition);
+            float selectionDuration = UnityEngine.Time.time - _selectionStartTime;
+
+            _isClickSelection = distance < CLICK_DISTANCE_THRESHOLD && selectionDuration < CLICK_TIME_THRESHOLD;
+
             if (_isClickSelection)
             {
                 _startingPosition -= Vector2.one * CLICK_SELECTION_SIZE;
