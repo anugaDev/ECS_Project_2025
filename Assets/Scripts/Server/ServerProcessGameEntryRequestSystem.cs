@@ -43,7 +43,7 @@ namespace Server
                 _entityCommandBuffer.AddComponent<NetworkStreamInGame>(requestSource.SourceConnection);
                 int networkId = SystemAPI.GetComponent<NetworkId>(requestSource.SourceConnection).Value;
                 DebugTeam(networkId, teamRequest);
-                InstantiateInitialUnits(unitEntity, networkId, teamRequest, requestSource);
+                InstantiateInitialUnits(unitEntity, networkId, teamRequest, requestSource, ref state);
                 Entity spawnPlayer = SpawnPlayer(networkId, teamRequest, playerPrefab, requestSource);
                 LinkedEntityGroup linkedEntityGroup = new LinkedEntityGroup();
                 linkedEntityGroup.Value = spawnPlayer;
@@ -78,12 +78,12 @@ namespace Server
         }
 
         private void InstantiateInitialUnits(Entity unitEntity, int clientId, TeamRequest teamRequest,
-            ReceiveRpcCommandRequest requestSource)
+            ReceiveRpcCommandRequest requestSource, ref SystemState state)
         {
             for (int i = 0; i < GlobalParameters.INITIAL_UNITS; i++)
             {
                 _currentUnitIndex = i;
-                Entity unit = InstantiateUnit(unitEntity, clientId, teamRequest.Team);
+                Entity unit = InstantiateUnit(unitEntity, clientId, teamRequest.Team, ref state);
                 LinkedEntityGroup linkedEntityGroup = new LinkedEntityGroup();
                 linkedEntityGroup.Value = unit;
                 _entityCommandBuffer.AppendToBuffer(requestSource.SourceConnection, linkedEntityGroup);
@@ -95,14 +95,22 @@ namespace Server
             Debug.Log($"team received {clientId} to the {teamRequest.Team} team");
         }
 
-        private Entity InstantiateUnit(Entity unitEntity, int clientId, TeamType team)
+        private Entity InstantiateUnit(Entity unitEntity, int clientId, TeamType team, ref SystemState state)
         {
             Entity newUnit = _entityCommandBuffer.Instantiate(unitEntity);
             _entityCommandBuffer.SetName(newUnit,"BaseUnit");
-            LocalTransform localTransform = GetUnitPosition(team);
-            _entityCommandBuffer.SetComponent(newUnit, localTransform);
+
+            // Preserve the original scale from the prefab
+            LocalTransform prefabTransform = state.EntityManager.GetComponentData<LocalTransform>(unitEntity);
+            float3 spawnPosition = GetUnitPosition(team);
+            LocalTransform newTransform = LocalTransform.FromPositionRotationScale(
+                spawnPosition,
+                prefabTransform.Rotation,
+                prefabTransform.Scale);
+
+            _entityCommandBuffer.SetComponent(newUnit, newTransform);
             _entityCommandBuffer.SetComponent(newUnit, GetGhostOwner(clientId));
-            _entityCommandBuffer.SetComponent(newUnit, GetTargetPosition(localTransform));
+            _entityCommandBuffer.SetComponent(newUnit, GetTargetPosition(newTransform));
             _entityCommandBuffer.SetComponent(newUnit, GetTeamComponent(team));
             return newUnit;
         }
@@ -128,19 +136,17 @@ namespace Server
             };
         }
 
-        private LocalTransform GetUnitPosition(TeamType team)
+        private float3 GetUnitPosition(TeamType team)
         {
-            float3 unitPosition;
             float unitOffset = _currentUnitIndex * DEFAULT_UNIT_OFFSET;
             if (team is TeamType.Red)
             {
-                unitPosition = new float3(50f + unitOffset, GlobalParameters.DEFAULT_SCENE_HEIGHT, 50 + unitOffset);
+                return new float3(50f + unitOffset, GlobalParameters.DEFAULT_SCENE_HEIGHT, 50 + unitOffset);
             }
             else
             {
-                unitPosition = new float3(-50f - unitOffset, GlobalParameters.DEFAULT_SCENE_HEIGHT, -50- unitOffset);
+                return new float3(-50f - unitOffset, GlobalParameters.DEFAULT_SCENE_HEIGHT, -50- unitOffset);
             }
-            return LocalTransform.FromPosition(unitPosition);
         }
     }
 }

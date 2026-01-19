@@ -8,6 +8,8 @@ using Unity.Mathematics;
 using Unity.NetCode;
 using Unity.Physics;
 using Unity.Transforms;
+using UnityEngine;
+using Random = Unity.Mathematics.Random;
 
 namespace Units
 {
@@ -94,10 +96,17 @@ namespace Units
         private void InstantiateUnit(SpawnUnitCommand spawnUnitCommand, TeamType playerTeam, int networkId,
             SystemState state)
         {
-            Entity buildingEntity = _prefabFactory.Get(spawnUnitCommand.UnitType);
-            Entity newUnit = _entityCommandBuffer.Instantiate(buildingEntity);
-            LocalTransform spawnPosition = LocalTransform.FromPosition(GetSpawnPosition(spawnUnitCommand.BuildingPosition));
-            _entityCommandBuffer.SetComponent(newUnit, spawnPosition);
+            Entity unitPrefab = _prefabFactory.Get(spawnUnitCommand.UnitType);
+            Entity newUnit = _entityCommandBuffer.Instantiate(unitPrefab);
+
+            // Preserve the original scale from the prefab
+            LocalTransform prefabTransform = state.EntityManager.GetComponentData<LocalTransform>(unitPrefab);
+            LocalTransform newTransform = LocalTransform.FromPositionRotationScale(
+                GetSpawnPosition(spawnUnitCommand.BuildingPosition),
+                prefabTransform.Rotation,
+                prefabTransform.Scale);
+
+            _entityCommandBuffer.SetComponent(newUnit, newTransform);
             _entityCommandBuffer.SetComponent(newUnit, new GhostOwner{NetworkId = networkId});
             _entityCommandBuffer.SetComponent(newUnit, new ElementTeamComponent{Team = playerTeam});
         }
