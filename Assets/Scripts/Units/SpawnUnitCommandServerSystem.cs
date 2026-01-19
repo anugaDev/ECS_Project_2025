@@ -88,7 +88,7 @@ namespace Units
                 return false;
 
             int tickDifference = newCommand.Tick.TicksSince(lastCommand.Tick);
-            return tickDifference < 60;
+            return tickDifference < 120;
         }
 
         private void InstantiateUnit(SpawnUnitCommand spawnUnitCommand, TeamType playerTeam, int networkId,
