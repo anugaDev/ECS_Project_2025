@@ -47,8 +47,8 @@ namespace Units
         {
             CheckRecruitmentActions();
             UpdateUnitRecruitment();
-            RemoveEndedRecruitmentUnits();
             CheckRecruitmentQueue();
+            RemoveEndedRecruitmentUnits();
         }
 
         private void UpdateUnitRecruitment()
