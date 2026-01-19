@@ -109,12 +109,8 @@ namespace PlayerInputs
         {
             _isDragging = false;
             _lastPosition = GetPointerPosition();
-            UserInterfaceController.Instance.SelectionBoxController.Disable();
-
-            if (_interactionPolicy.IsAllowed())
-            {
-                SelectElements();
-            }
+            UserInterfaceController.Instance.SelectionBoxController.Disable(); 
+            SelectElements();
         }
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
         private Vector2 GetPointerPosition()
