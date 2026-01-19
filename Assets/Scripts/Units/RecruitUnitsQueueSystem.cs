@@ -116,7 +116,7 @@ namespace Units
 
         private bool IsRecruitmentAvailable()
         {
-            return true; //TODO SET Recruitment Costs
+            return true; //TODO SET Recruitment Costs (resources + population
         }
 
         private void RecruitUnit(UnitType unitType)

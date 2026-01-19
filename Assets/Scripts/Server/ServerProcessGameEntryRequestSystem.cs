@@ -1,3 +1,4 @@
+using Buildings;
 using Client;
 using ElementCommons;
 using PlayerInputs;
@@ -16,16 +17,13 @@ namespace Server
     [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
     public partial struct ServerProcessGameEntryRequestSystem : ISystem
     {
-        private const float DEFAULT_UNIT_OFFSET = 5f;
-
         private EntityCommandBuffer _entityCommandBuffer;
 
-        private int _currentUnitIndex;
-        
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<PlayerPrefabComponent>();
-            state.RequireForUpdate<UnitPrefabComponent>();
+            state.RequireForUpdate<BuildingPrefabComponent>();
+            state.RequireForUpdate<NetworkTime>();
             EntityQueryBuilder builder = new EntityQueryBuilder(Allocator.Temp).WithAll<TeamRequest, ReceiveRpcCommandRequest>();
             state.RequireForUpdate(state.GetEntityQuery(builder));
         }
@@ -33,8 +31,9 @@ namespace Server
         public void OnUpdate(ref SystemState state)
         {
             _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            Entity unitEntity = SystemAPI.GetSingleton<UnitPrefabComponent>().Worker;
+            Entity townCenterPrefab = SystemAPI.GetSingleton<BuildingPrefabComponent>().TownCenter;
             Entity playerPrefab = SystemAPI.GetSingleton<PlayerPrefabComponent>().Entity;
+            NetworkTick serverTick = SystemAPI.GetSingleton<NetworkTime>().ServerTick;
 
             foreach ((TeamRequest teamRequest, ReceiveRpcCommandRequest requestSource, Entity requestEntity)
                      in SystemAPI.Query<TeamRequest, ReceiveRpcCommandRequest>().WithEntityAccess())
@@ -43,8 +42,10 @@ namespace Server
                 _entityCommandBuffer.AddComponent<NetworkStreamInGame>(requestSource.SourceConnection);
                 int networkId = SystemAPI.GetComponent<NetworkId>(requestSource.SourceConnection).Value;
                 DebugTeam(networkId, teamRequest);
-                InstantiateInitialUnits(unitEntity, networkId, teamRequest, requestSource, ref state);
-                Entity spawnPlayer = SpawnPlayer(networkId, teamRequest, playerPrefab, requestSource);
+
+                float3 townCenterPosition = SpawnInitialTownCenter(townCenterPrefab, networkId, teamRequest.Team, ref state);
+
+                Entity spawnPlayer = SpawnPlayer(networkId, teamRequest, playerPrefab, requestSource, townCenterPosition, serverTick);
                 LinkedEntityGroup linkedEntityGroup = new LinkedEntityGroup();
                 linkedEntityGroup.Value = spawnPlayer;
                 _entityCommandBuffer.AppendToBuffer(requestSource.SourceConnection, linkedEntityGroup);
@@ -53,73 +54,75 @@ namespace Server
         }
 
         private Entity SpawnPlayer(int networkId, TeamRequest teamRequest,
-            Entity playerPrefab, ReceiveRpcCommandRequest requestSource)
+            Entity playerPrefab, ReceiveRpcCommandRequest requestSource, float3 townCenterPosition, NetworkTick serverTick)
         {
             Entity connection = requestSource.SourceConnection;
             Entity player = _entityCommandBuffer.Instantiate(playerPrefab);
-            _entityCommandBuffer.SetName(player,"Player");
+            TeamType playerTeam = teamRequest.Team;
+            _entityCommandBuffer.SetName(player,"Player " + playerTeam);
             _entityCommandBuffer.SetComponent(player, LocalTransform.FromPosition(float3.zero));
             _entityCommandBuffer.SetComponent(connection, new CommandTarget{targetEntity = player});
             _entityCommandBuffer.SetComponent(player, GetGhostOwner(networkId));
-            _entityCommandBuffer.SetComponent(player, new PlayerTeamComponent{Team = teamRequest.Team});
-            _entityCommandBuffer.AddComponent(player, new LastProcessedBuildingCommand
+            _entityCommandBuffer.SetComponent(player, new PlayerTeamComponent{Team = playerTeam});
+            _entityCommandBuffer.AddComponent(player, GetLastProcessedBuildingCommand());
+            _entityCommandBuffer.AddComponent(player, GetLastProcessedUnitCommand());
+            DynamicBuffer<SpawnUnitCommand> spawnUnitCommands = _entityCommandBuffer.AddBuffer<SpawnUnitCommand>(player);
+            spawnUnitCommands.AddCommandData(GetSpawnUnitCommand(townCenterPosition, serverTick));
+
+            return player;
+        }
+
+        private static LastProcessedBuildingCommand GetLastProcessedBuildingCommand()
+        {
+            return new LastProcessedBuildingCommand
             {
                 Tick = NetworkTick.Invalid,
                 Position = float3.zero,
                 BuildingType = BuildingType.Center
-            });
-            _entityCommandBuffer.AddComponent(player, new LastProcessedUnitCommand()
+            };
+        }
+
+        private static LastProcessedUnitCommand GetLastProcessedUnitCommand()
+        {
+            return new LastProcessedUnitCommand()
             {
                 Tick = NetworkTick.Invalid,
                 BuildingPosition = float3.zero,
                 UnitType = UnitType.Worker
-            });
-            return player;
+            };
         }
 
-        private void InstantiateInitialUnits(Entity unitEntity, int clientId, TeamRequest teamRequest,
-            ReceiveRpcCommandRequest requestSource, ref SystemState state)
+        private static SpawnUnitCommand GetSpawnUnitCommand(float3 townCenterPosition, NetworkTick serverTick)
         {
-            for (int i = 0; i < GlobalParameters.INITIAL_UNITS; i++)
+            return new SpawnUnitCommand
             {
-                _currentUnitIndex = i;
-                Entity unit = InstantiateUnit(unitEntity, clientId, teamRequest.Team, ref state);
-                LinkedEntityGroup linkedEntityGroup = new LinkedEntityGroup();
-                linkedEntityGroup.Value = unit;
-                _entityCommandBuffer.AppendToBuffer(requestSource.SourceConnection, linkedEntityGroup);
-            }
+                UnitType = UnitType.Worker,
+                BuildingPosition = townCenterPosition,
+                Tick = serverTick
+            };
+        }
+
+        private float3 SpawnInitialTownCenter(Entity townCenterPrefab, int networkId, TeamType team, ref SystemState state)
+        {
+            Entity newBuilding = _entityCommandBuffer.Instantiate(townCenterPrefab);
+
+            float3 buildingPosition = GetTownCenterPosition(team);
+            LocalTransform prefabTransform = state.EntityManager.GetComponentData<LocalTransform>(townCenterPrefab);
+            LocalTransform newTransform = LocalTransform.FromPositionRotationScale(
+                buildingPosition,
+                prefabTransform.Rotation,
+                prefabTransform.Scale);
+
+            _entityCommandBuffer.SetComponent(newBuilding, newTransform);
+            _entityCommandBuffer.SetComponent(newBuilding, new GhostOwner{NetworkId = networkId});
+            _entityCommandBuffer.SetComponent(newBuilding, new ElementTeamComponent{Team = team});
+
+            return buildingPosition;
         }
 
         private void DebugTeam(int clientId, TeamRequest teamRequest)
         {
             Debug.Log($"team received {clientId} to the {teamRequest.Team} team");
-        }
-
-        private Entity InstantiateUnit(Entity unitEntity, int clientId, TeamType team, ref SystemState state)
-        {
-            Entity newUnit = _entityCommandBuffer.Instantiate(unitEntity);
-            _entityCommandBuffer.SetName(newUnit,"BaseUnit");
-
-            LocalTransform prefabTransform = state.EntityManager.GetComponentData<LocalTransform>(unitEntity);
-            float3 spawnPosition = GetUnitPosition(team);
-            LocalTransform newTransform = LocalTransform.FromPositionRotationScale(
-                spawnPosition,
-                prefabTransform.Rotation,
-                prefabTransform.Scale);
-
-            _entityCommandBuffer.SetComponent(newUnit, newTransform);
-            _entityCommandBuffer.SetComponent(newUnit, GetGhostOwner(clientId));
-            _entityCommandBuffer.SetComponent(newUnit, GetTargetPosition(newTransform));
-            _entityCommandBuffer.SetComponent(newUnit, GetTeamComponent(team));
-            return newUnit;
-        }
-
-        private UnitTargetPositionComponent GetTargetPosition(LocalTransform localTransform)
-        {
-            return new UnitTargetPositionComponent
-            {
-                Value = localTransform.Position
-            };
         }
 
         private ElementTeamComponent GetTeamComponent(TeamType team)
@@ -135,16 +138,15 @@ namespace Server
             };
         }
 
-        private float3 GetUnitPosition(TeamType team)
+        private float3 GetTownCenterPosition(TeamType team)
         {
-            float unitOffset = _currentUnitIndex * DEFAULT_UNIT_OFFSET;
             if (team is TeamType.Red)
             {
-                return new float3(50f + unitOffset, GlobalParameters.DEFAULT_SCENE_HEIGHT, 50 + unitOffset);
+                return new float3(50f, GlobalParameters.DEFAULT_SCENE_HEIGHT, 50f);
             }
             else
             {
-                return new float3(-50f - unitOffset, GlobalParameters.DEFAULT_SCENE_HEIGHT, -50- unitOffset);
+                return new float3(-50f, GlobalParameters.DEFAULT_SCENE_HEIGHT, -50f);
             }
         }
     }
