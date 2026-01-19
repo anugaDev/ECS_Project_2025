@@ -30,6 +30,8 @@ namespace Buildings
                 AddComponent<NewBuildingTagComponent>(buildingEntity);
                 AddComponent<ElementTeamComponent>(buildingEntity);
                 AddComponent<ElementSelectionComponent>(buildingEntity);
+                AddComponent<RecruitmentProgressComponent>(buildingEntity);
+                AddBuffer<RecruitmentQueueBufferComponent>(buildingEntity);
                 AddComponent<ElementDisplayDetailsComponent>(buildingEntity);
                 AddComponent(buildingEntity, GetUnitTypeComponent(authoring));
                 AddComponent(buildingEntity, GetSelectableTypeComponent(authoring));

@@ -62,4 +62,16 @@ namespace Buildings
     {
         public BuildingMaterialsConfiguration Configuration;
     }
+    
+    public struct RecruitmentQueueBufferComponent : IBufferElementData
+    {
+        public UnitType unitType;
+    }
+    
+    public struct RecruitmentProgressComponent : IComponentData
+    {
+        public UnitType UnitType;
+
+        public float Value;
+    }
 }

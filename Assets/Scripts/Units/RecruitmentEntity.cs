@@ -20,6 +20,9 @@ namespace Units
         private bool _eventCalled;
 
         public Entity Entity => _entity;
+        
+        public UnitType Unit => _unit;
+
 
         public RecruitmentEntity(float recruitmentTime, Entity entity, UnitType unitType)
         {
@@ -46,6 +49,11 @@ namespace Units
         public bool IsSameEntity(Entity entity)
         {
             return _entity.Index == entity.Index;
+        }
+        
+        public float GetProgress()
+        {
+            return _currentTime / _recruitmentTime;
         }
     }
 }

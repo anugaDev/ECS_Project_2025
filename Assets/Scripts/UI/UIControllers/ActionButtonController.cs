@@ -15,6 +15,9 @@ namespace UI.UIControllers
 
         [SerializeField]
         private TextMeshProUGUI _text;
+        
+        [SerializeField]
+        private Image _image;
 
         [SerializeField]
         private GameObject _parent;
@@ -23,10 +26,11 @@ namespace UI.UIControllers
         
         private SetPlayerUIActionComponent _componentData;
 
-        public void Initialize(SetPlayerUIActionComponent componentData, string name)
+        public void Initialize(SetPlayerUIActionComponent componentData, string elementName, Sprite elementSprite)
         {
             _componentData = componentData;
-            _text.text = name;
+            _text.text = elementName;
+            _image.sprite = elementSprite;
             _button.onClick.AddListener(SendAction);
         }
 

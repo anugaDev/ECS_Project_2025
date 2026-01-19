@@ -31,7 +31,7 @@ namespace UI.UIControllers
             foreach (BuildingScriptableObject building in buildingConfigurations.GetBuildingsDictionary().Values)
             {
                 ActionButtonController actionButton = Instantiate(_actionButtonPrefab, _parent);
-                actionButton.Initialize(GetBuildingActionComponent(building.BuildingType), building.Name);
+                actionButton.Initialize(GetBuildingActionComponent(building.BuildingType), building.Name, building.Sprite);
                 _buttonActions.Add(actionButton);
                 actionButton.OnClick += SendActionComponent;
                 actionButton.Hide();
@@ -43,7 +43,7 @@ namespace UI.UIControllers
             foreach (UnitScriptableObject unit in unitsConfiguration.GetUnitsDictionary().Values)
             {
                 ActionButtonController actionButton = Instantiate(_actionButtonPrefab, _parent);
-                actionButton.Initialize(GetUnitsActionComponent(unit.UnitType), unit.Name);
+                actionButton.Initialize(GetUnitsActionComponent(unit.UnitType), unit.Name, unit.Sprite);
                 _buttonActions.Add(actionButton);
                 actionButton.OnClick += SendActionComponent;
                 actionButton.Hide();

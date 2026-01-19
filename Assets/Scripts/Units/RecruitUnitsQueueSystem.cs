@@ -26,6 +26,8 @@ namespace Units
         private List<RecruitmentEntity> _recuritmentQueue;
 
         private List<RecruitmentEntity> _endRecruitmentUnits;
+        
+        private EntityCommandBuffer _entityCommandBuffer;
 
         protected override void OnCreate()
         {
@@ -46,18 +48,36 @@ namespace Units
 
         protected override void OnUpdate()
         {
+            _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
             CheckRecruitmentActions();
             UpdateUnitRecruitment();
             CheckRecruitmentQueue();
             RemoveEndedRecruitmentUnits();
+            _entityCommandBuffer.Playback(EntityManager);
+            _entityCommandBuffer.Dispose();
         }
 
         private void UpdateUnitRecruitment()
         {
             foreach (RecruitmentEntity recruitmentEntity in _recruitmentList)
             {
-                recruitmentEntity.Update(SystemAPI.Time.DeltaTime);
+                UpdateRecruitment(recruitmentEntity);
             }
+        }
+
+        private void UpdateRecruitment(RecruitmentEntity recruitmentEntity)
+        {
+            recruitmentEntity.Update(SystemAPI.Time.DeltaTime);
+            Entity buildingEntity = recruitmentEntity.Entity;
+            float progress = recruitmentEntity.GetProgress();
+            UnitType recruitmentEntityUnit = recruitmentEntity.Unit;
+            EntityManager.SetComponentData(buildingEntity, new RecruitmentProgressComponent
+            {
+                UnitType = recruitmentEntityUnit,
+                Value = progress
+            });
+
+            SetBuildingUpdateUI(buildingEntity);
         }
 
         private void RemoveEndedRecruitmentUnits()
@@ -72,7 +92,6 @@ namespace Units
 
         private void CheckRecruitmentActions()
         {
-            EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
             foreach ((SetPlayerUIActionComponent actionComponent, Entity entity) in SystemAPI.Query<SetPlayerUIActionComponent>().WithEntityAccess())
             {
                 if (actionComponent.Action != PlayerUIActionType.Recruit)
@@ -81,11 +100,8 @@ namespace Units
                 }
 
                 StartRecruitment(actionComponent);
-                entityCommandBuffer.RemoveComponent<SetPlayerUIActionComponent>(entity);
+                _entityCommandBuffer.RemoveComponent<SetPlayerUIActionComponent>(entity);
             }
-
-            entityCommandBuffer.Playback(EntityManager);
-            entityCommandBuffer.Dispose();
         }
 
         private void StartRecruitment(SetPlayerUIActionComponent actionComponent)
@@ -129,6 +145,18 @@ namespace Units
             RecruitmentEntity recruitmentEntity = new RecruitmentEntity(recruitmentTime, entity, unitType);
             recruitmentEntity.OnFinishedAction += OnUnitRecruitmentFinished;
             SetBuildingList(recruitmentEntity);
+            SetBuildingBuffer(unitType, entity);
+        }
+
+        private void SetBuildingBuffer(UnitType unitType, Entity entity)
+        {
+            DynamicBuffer<RecruitmentQueueBufferComponent> recruitmentBuffer = GetRecruitmentBuffer(entity);
+            recruitmentBuffer.Add(new RecruitmentQueueBufferComponent
+            {
+                unitType = unitType
+            });
+
+            SetBuildingUpdateUI(entity);
         }
 
         private void SetBuildingList(RecruitmentEntity recruitmentEntity)
@@ -178,6 +206,20 @@ namespace Units
         {
             recruitmentEntity.OnFinishedAction -= OnUnitRecruitmentFinished;
             _endRecruitmentUnits.Add(recruitmentEntity);
+            ClearRecruitmentBuffer(recruitmentEntity);
+        }
+
+        private void ClearRecruitmentBuffer(RecruitmentEntity recruitmentEntity)
+        {
+            Entity buildingEntity = recruitmentEntity.Entity;
+            DynamicBuffer<RecruitmentQueueBufferComponent> recruitmentBuffer = GetRecruitmentBuffer(buildingEntity);
+            recruitmentBuffer.RemoveAt(0);
+            SetBuildingUpdateUI(buildingEntity);
+        }
+
+        private DynamicBuffer<RecruitmentQueueBufferComponent> GetRecruitmentBuffer(Entity entity)
+        {
+            return EntityManager.GetBuffer<RecruitmentQueueBufferComponent>(entity);
         }
 
         private SpawnUnitCommand GetSpawnUnitCommand(float3 buildingPosition, UnitType unit)
@@ -188,6 +230,13 @@ namespace Units
                 UnitType = unit,
                 BuildingPosition = buildingPosition
             };
+        }
+
+        public void SetBuildingUpdateUI(Entity entity)
+        {
+            ElementSelectionComponent elementSelectionComponent = EntityManager.GetComponentData<ElementSelectionComponent>(entity);
+            elementSelectionComponent.MustUpdateGroup = true;
+            EntityManager.SetComponentData(entity, elementSelectionComponent);
         }
     }
 }

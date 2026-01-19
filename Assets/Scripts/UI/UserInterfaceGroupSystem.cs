@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using Buildings;
 using ElementCommons;
 using ScriptableObjects;
 using Types;
@@ -18,16 +18,26 @@ namespace UI
     public partial class UserInterfaceGroupSystem : SystemBase
     {
         private const float DEFAULT_FILL_AMOUNT = 0F;
-        
+
         private SelectionActionsDisplayController selectionActionsController;
 
         private List<UnitUIGroupQueue> _trackedElementQueue;
 
         private SelectedGroupDisplayController _selectionGroupsController;
-        
+
         private Dictionary<SelectableElementType, Action<Entity, bool>> _selectableToAction;
-        
+
         private Dictionary<UnitType, int> _currentUnitSelection;
+
+        private SelectableElementType _currentSelection;
+
+        private RecruitmentProgressComponent _currentTrackedRecruitment;
+        
+        private bool _isRecruitmentTracked;
+
+        private bool _anyUnitSelected;
+        
+        private EntityCommandBuffer _entityCommandBuffer;
 
         protected override void OnCreate()
         {
@@ -42,7 +52,7 @@ namespace UI
             _selectableToAction = new Dictionary<SelectableElementType, Action<Entity, bool>>
             {
                 [SelectableElementType.Building] = SetBuildingQueue,
-                [SelectableElementType.Unit] = SetUnitGroup,
+                [SelectableElementType.Unit] = SetUnitGroup
             };
         }
 
@@ -91,8 +101,30 @@ namespace UI
             {
                 return;
             }
-            
-            
+
+            DynamicBuffer<RecruitmentQueueBufferComponent> recruitmentBuffer = EntityManager.GetBuffer<RecruitmentQueueBufferComponent>(entity);
+            _currentTrackedRecruitment = EntityManager.GetComponentData<RecruitmentProgressComponent>(entity);
+            _isRecruitmentTracked = recruitmentBuffer.Length > 0;
+            ResetSelection();
+            updateSelectionToBuffer(recruitmentBuffer);
+        }
+
+        private void updateSelectionToBuffer(DynamicBuffer<RecruitmentQueueBufferComponent> recruitmentBuffer)
+        {
+            foreach (RecruitmentQueueBufferComponent queueComponent in recruitmentBuffer)
+            {
+                _currentUnitSelection[queueComponent.unitType]++;
+            }
+        }
+
+        private void ResetSelection()
+        {
+
+            List<UnitType> keys = new List<UnitType>(_currentUnitSelection.Keys);
+            foreach (UnitType unitType in keys)
+            {
+                _currentUnitSelection[unitType] = 0;
+            }
         }
 
         protected override void OnStartRunning()
@@ -115,28 +147,70 @@ namespace UI
 
         private void GetSelectedElements()
         {
-            EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
+            _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
             foreach ((ElementSelectionComponent selectionComponent, SelectableElementTypeComponent typeComponent, Entity entity) 
                      in SystemAPI.Query<ElementSelectionComponent, SelectableElementTypeComponent>().WithEntityAccess())
             {
-                if (!selectionComponent.MustUpdateGroup)
-                {
-                    continue;
-                }
-
-                ElementSelectionComponent newSelectionComponent = selectionComponent;
-                newSelectionComponent.MustUpdateGroup = false;
-                entityCommandBuffer.SetComponent(entity, newSelectionComponent);
-                _selectableToAction[typeComponent.Type]?.Invoke(entity, selectionComponent.IsSelected);
+                CheckAnyUnitSelected(typeComponent, selectionComponent);
+                SetGroupOnUpdateUI(selectionComponent, entity, typeComponent);
             }
 
-            entityCommandBuffer.Playback(EntityManager);
+            _entityCommandBuffer.Playback(EntityManager);
             UpdateSelectedGroups();
+            UpdateRecruitmentProgress();
+            ResetOnUpdate();
+            _isRecruitmentTracked = false;
+        }
+
+        private void SetGroupOnUpdateUI(ElementSelectionComponent selectionComponent, Entity entity,
+            SelectableElementTypeComponent typeComponent)
+        {
+            if (!selectionComponent.MustUpdateGroup)
+            {
+                return;
+            }
+
+            ElementSelectionComponent newSelectionComponent = selectionComponent;
+            newSelectionComponent.MustUpdateGroup = false;
+            _entityCommandBuffer.SetComponent(entity, newSelectionComponent);
+            _selectableToAction[typeComponent.Type]?.Invoke(entity, selectionComponent.IsSelected);
+        }
+
+        private void CheckAnyUnitSelected(SelectableElementTypeComponent typeComponent, ElementSelectionComponent selectionComponent)
+        {
+            if(_anyUnitSelected)
+            {
+                return;
+            }
+
+            _anyUnitSelected = selectionComponent.IsSelected && typeComponent.Type is SelectableElementType.Unit;
+        }
+
+        private void ResetOnUpdate()
+        {
+            if (_anyUnitSelected)
+            {
+                _anyUnitSelected = false;
+                return;
+            }
+
+            ResetSelection();
+        }
+
+        private void UpdateRecruitmentProgress()
+        {
+            if (!_isRecruitmentTracked)
+            {
+                return;
+            }
+
+            _selectionGroupsController.SetGroupFill(_currentTrackedRecruitment.UnitType, _currentTrackedRecruitment.Value);
         }
 
         private void UpdateSelectedGroups()
         {
-            foreach (UnitType unitType in _currentUnitSelection.Keys)
+            List<UnitType> keys = new List<UnitType>(_currentUnitSelection.Keys);
+            foreach (UnitType unitType in keys)
             {
                 _selectionGroupsController.SetGroupValue(unitType, _currentUnitSelection[unitType]);
                 _selectionGroupsController.SetGroupFill(unitType, DEFAULT_FILL_AMOUNT);
