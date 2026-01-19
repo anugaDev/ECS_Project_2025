@@ -14,10 +14,12 @@ namespace Units
     [UpdateInGroup(typeof(GhostSimulationSystemGroup))]
     [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
     public partial struct SpawnUnitCommandServerSystem : ISystem
-    { 
+    {
+        private const float MAX_SPAWN_DISTANCE = 7F;
+
+        private const float MIN_SPAWN_DISTANCE = 5F;
+
         private const float EXTENTS_MULTIPLIER = 2f;
-        
-        private const float RANDOM_RADIUS_ADDITION = 1f;
         
         private UnitsPrefabEntityFactory _prefabFactory;
 
@@ -103,7 +105,7 @@ namespace Units
         private float3 GetSpawnPosition(float3 buildingPosition)
         {
             float angle = _random.NextFloat(0f, math.PI * EXTENTS_MULTIPLIER);
-            float distance = _random.NextFloat(3f, 5f);
+            float distance = _random.NextFloat(MIN_SPAWN_DISTANCE, MAX_SPAWN_DISTANCE);
 
             float randomXPosition = math.cos(angle) * distance;
             float randomZPosition = math.sin(angle) * distance;

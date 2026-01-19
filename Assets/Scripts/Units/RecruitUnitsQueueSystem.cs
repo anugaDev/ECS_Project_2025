@@ -47,6 +47,8 @@ namespace Units
         {
             CheckRecruitmentActions();
             UpdateUnitRecruitment();
+            RemoveEndedRecruitmentUnits();
+            CheckRecruitmentQueue();
         }
 
         private void UpdateUnitRecruitment()
@@ -55,7 +57,10 @@ namespace Units
             {
                 recruitmentEntity.Update(SystemAPI.Time.DeltaTime);
             }
+        }
 
+        private void RemoveEndedRecruitmentUnits()
+        {
             foreach (RecruitmentEntity recruitmentEntity in _endRecruitmentUnits)
             {
                 _recruitmentList.Remove(recruitmentEntity);
@@ -140,8 +145,6 @@ namespace Units
         private void OnUnitRecruitmentFinished(Entity building, UnitType unit, RecruitmentEntity recruitmentEntity)
         {
             SetRecruitmentEntityEnd(recruitmentEntity);
-            CheckQueue(recruitmentEntity);
-
             LocalTransform buildingTransform = EntityManager.GetComponentData<LocalTransform>(building);
 
             SpawnUnitCommand buildingCommand = GetSpawnUnitCommand(buildingTransform.Position, unit);
@@ -150,15 +153,24 @@ namespace Units
             spawnUnitCommands.AddCommandData(buildingCommand);
         }
 
+        private void CheckRecruitmentQueue()
+        {
+            foreach (RecruitmentEntity endRecruitmentUnit in _endRecruitmentUnits)
+            {
+                CheckQueue(endRecruitmentUnit);
+            }
+        }
         private void CheckQueue(RecruitmentEntity doneEntity)
         {
-            if (!_recuritmentQueue.Any(recruit => recruit.IsSameEntity(doneEntity.Entity)))
+            RecruitmentEntity queuedEntity = _recuritmentQueue.FirstOrDefault(recruit => recruit.IsSameEntity(doneEntity.Entity));
+
+            if (queuedEntity == null)
             {
                 return;
             }
-            
-            RecruitmentEntity newEntity = _recuritmentQueue.First(recruit => recruit.IsSameEntity(doneEntity.Entity));
-            _recruitmentList.Add(newEntity);
+
+            _recuritmentQueue.Remove(queuedEntity);
+            _recruitmentList.Add(queuedEntity);
         }
 
         private void SetRecruitmentEntityEnd(RecruitmentEntity recruitmentEntity)

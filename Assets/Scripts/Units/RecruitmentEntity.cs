@@ -39,10 +39,8 @@ namespace Units
 
         private void FinishedRecruitmentEvent()
         {
-            UnityEngine.Debug.Log($"[RecruitmentEntity] FinishedRecruitmentEvent called! _eventCalled was: {_eventCalled}");
             OnFinishedAction?.Invoke(_entity, _unit, this);
             _eventCalled = true;
-            UnityEngine.Debug.Log($"[RecruitmentEntity] Event invoked, _eventCalled now: {_eventCalled}");
         }
 
         public bool IsSameEntity(Entity entity)

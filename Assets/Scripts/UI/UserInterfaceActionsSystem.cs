@@ -47,7 +47,11 @@ namespace UI
         private void SetPlayerUIActionComponent(SetPlayerUIActionComponent actionComponent)
         {
             Entity uiEntity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
-            EntityManager.AddComponentData(uiEntity, actionComponent);
+
+            if (!EntityManager.HasComponent<SetPlayerUIActionComponent>(uiEntity))
+            {
+                EntityManager.AddComponentData(uiEntity, actionComponent);
+            }
         }
 
         protected override void OnStopRunning()

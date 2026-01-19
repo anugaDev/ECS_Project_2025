@@ -14,8 +14,10 @@ namespace PlayerInputs
     [UpdateInGroup(typeof(GhostInputSystemGroup))]
     public partial class ElementsSelectionInputSystem : SystemBase
     {
-        private const float CLICK_SELECTION_SIZE = 5f;
+        private const float CLICK_SELECTION_SIZE = 3f;
+
         private const float CLICK_DISTANCE_THRESHOLD = 10f;
+
         private const float CLICK_TIME_THRESHOLD = 0.3f;
 
         private InputActions _inputActionMap;

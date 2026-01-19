@@ -168,7 +168,6 @@ namespace PlayerInputs
 
             collisionWorld.OverlapBox(center, rotation, halfExtents, ref hits, filter);
 
-            // Filter out ground plane hits - only count ghost entities (units/buildings)
             int ghostCount = 0;
             for (int i = 0; i < hits.Length; i++)
             {
