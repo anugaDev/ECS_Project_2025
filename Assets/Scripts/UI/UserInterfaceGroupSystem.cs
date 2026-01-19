@@ -4,6 +4,7 @@ using System.Linq;
 using ElementCommons;
 using ScriptableObjects;
 using Types;
+using UI.Entities;
 using UI.UIControllers;
 using Units;
 using Unity.Collections;

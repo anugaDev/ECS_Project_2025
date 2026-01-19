@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Buildings;
 using Types;
 
-namespace UI
+namespace UI.Entities
 {
     public class BuildingFactoryActionsFactory
     {

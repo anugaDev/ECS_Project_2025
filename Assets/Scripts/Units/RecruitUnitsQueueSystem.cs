@@ -5,6 +5,7 @@ using ElementCommons;
 using ScriptableObjects;
 using Types;
 using UI;
+using UI.Entities;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;

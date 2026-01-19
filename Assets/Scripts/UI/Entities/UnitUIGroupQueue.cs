@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Types;
 
-namespace UI.UIControllers
+namespace UI.Entities
 {
     public class UnitUIGroupQueue
     {

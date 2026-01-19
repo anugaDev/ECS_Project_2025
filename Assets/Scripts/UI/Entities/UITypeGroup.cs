@@ -1,4 +1,4 @@
-namespace UI.UIControllers
+namespace UI.Entities
 {
     public class UITypeGroup
     {

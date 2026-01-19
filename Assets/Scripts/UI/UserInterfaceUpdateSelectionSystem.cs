@@ -4,6 +4,7 @@ using System.Linq;
 using Buildings;
 using ElementCommons;
 using Types;
+using UI.Entities;
 using Units;
 using Unity.Collections;
 using Unity.Entities;
