@@ -211,7 +211,7 @@ namespace UI
         {
             if (_currentSelection is SelectableElementType.Building)
             {
-                return _buildingTypesSelected.First().Key.SelectedEntity;
+                return _buildingTypesSelected.First(building => building.Value).Key.SelectedEntity;
             }
 
             if (_unitTypesSelected.Any(unit => unit.Value && unit.Key.Type is (int)UnitType.Worker))
@@ -251,7 +251,7 @@ namespace UI
 
         private void SetBuildingActions()
         {
-            _buildingActionsFactory.Set((BuildingType)_buildingTypesSelected.First().Key.Type);
+            _buildingActionsFactory.Set((BuildingType)_buildingTypesSelected.First(building => building.Value).Key.Type);
             PlayerUIActionType action = _buildingActionsFactory.Get();
             int[] payload = _buildingActionsFactory.GetPayload(action);
             SetActionComponent(action, payload);
