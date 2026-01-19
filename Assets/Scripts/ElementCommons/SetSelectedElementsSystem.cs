@@ -65,6 +65,7 @@ namespace Units
         {
             if (_currentSelectedType.Type is SelectableElementType.Building && !_currentNewSelection.IsClickSelection)
             {
+                _currentSelectionComponent.IsSelected = false;
                 return;
             }
 
