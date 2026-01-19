@@ -30,6 +30,11 @@ namespace UI.UIControllers
             _name.text = name;
         }
 
+        public void SetImage(Sprite sprite)
+        {
+            _unitImage.sprite = sprite;
+        }
+
         public void EnableDetails()
         {
             _gameObject.SetActive(true);

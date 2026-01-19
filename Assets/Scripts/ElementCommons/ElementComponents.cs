@@ -1,6 +1,8 @@
 using Types;
 using Unity.Entities;
 using Unity.NetCode;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace ElementCommons
 {
@@ -36,5 +38,7 @@ namespace ElementCommons
     public class ElementDisplayDetailsComponent : IComponentData
     {
         public string Name;
+
+        public Sprite Sprite;
     }
 }

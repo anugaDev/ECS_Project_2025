@@ -6,6 +6,8 @@ using Types;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace Units
 {
@@ -36,9 +38,11 @@ namespace Units
             BuildingsConfigurationComponent configurationComponent = SystemAPI.ManagedAPI.GetSingleton<BuildingsConfigurationComponent>();
             Dictionary<BuildingType, BuildingScriptableObject> unitScriptableObjects = configurationComponent.Configuration.GetBuildingsDictionary();
             string displayName = unitScriptableObjects[buildingType].Name;
+            Sprite displayImage = unitScriptableObjects[buildingType].Sprite;
             return new ElementDisplayDetailsComponent
             {
-                Name = displayName
+                Name = displayName,
+                Sprite = displayImage
             };
         }
     }

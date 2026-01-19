@@ -16,20 +16,24 @@ MonoBehaviour:
   - _unitType: 0
     _unitPrefab: {fileID: 2147052715152915695, guid: a5aa2e5ab6bf0da4682c82e287d6c279, type: 3}
     _name: Worker
+    _sprite: {fileID: 21300000, guid: 9b8cec15cc15651438d6a3052159efbc, type: 3}
     _description: 
     _recruitmentTime: 10
   - _unitType: 3
     _unitPrefab: {fileID: 919132149155446097, guid: 0c23e85424b2e3746a00c78be983dcde, type: 3}
     _name: Ballista
+    _sprite: {fileID: 0}
     _description: 
     _recruitmentTime: 30
   - _unitType: 1
     _unitPrefab: {fileID: 2147052715152915695, guid: a5aa2e5ab6bf0da4682c82e287d6c279, type: 3}
     _name: Warrior
+    _sprite: {fileID: 0}
     _description: 
     _recruitmentTime: 5
   - _unitType: 2
     _unitPrefab: {fileID: 2147052715152915695, guid: a5aa2e5ab6bf0da4682c82e287d6c279, type: 3}
     _name: Archer
+    _sprite: {fileID: 0}
     _description: 
     _recruitmentTime: 15

@@ -65,6 +65,7 @@ namespace UI
             EntityManager.GetComponentData<ElementDisplayDetailsComponent>(_trackedEntity);
             ElementDisplayDetailsComponent details = EntityManager.GetComponentData<ElementDisplayDetailsComponent>(_trackedEntity);
             _selectionDetailsController.SetName(details.Name);
+            _selectionDetailsController.SetImage(details.Sprite);
         }
     }
 }

@@ -7,6 +7,8 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
 using Unity.Transforms;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace Units
 {
@@ -38,9 +40,11 @@ namespace Units
             UnitsConfigurationComponent configurationComponent = SystemAPI.ManagedAPI.GetSingleton<UnitsConfigurationComponent>();
             Dictionary<UnitType, UnitScriptableObject> unitScriptableObjects = configurationComponent.Configuration.GetUnitsDictionary();
             string displayName = unitScriptableObjects[unitType].Name;
+            Sprite displayImage = unitScriptableObjects[unitType].Sprite;
             return new ElementDisplayDetailsComponent
             {
-                Name = displayName
+                Name = displayName,
+                Sprite = displayImage
             };
         }
 

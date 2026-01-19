@@ -16,6 +16,9 @@ namespace ScriptableObjects
 
         [SerializeField]
         private string _description;
+
+        [SerializeField]
+        private Sprite _sprite;
         
         [SerializeField]
         private GameObject _buildingPrefab;
@@ -30,7 +33,9 @@ namespace ScriptableObjects
         public string Name => _name;
 
         public string Description => _description;
-        
+
+        public Sprite Sprite => _sprite;
+
         public BuildingView BuildingTemplate => _buildingTemplate;
     }
 }

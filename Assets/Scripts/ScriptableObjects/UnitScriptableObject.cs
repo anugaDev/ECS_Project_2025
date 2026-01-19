@@ -1,6 +1,7 @@
 using System;
 using Types;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace ScriptableObjects
 {
@@ -15,6 +16,9 @@ namespace ScriptableObjects
 
         [SerializeField]
         private string _name;
+        
+        [SerializeField]
+        private Sprite _sprite;
 
         [SerializeField]
         private string _description;
@@ -27,6 +31,8 @@ namespace ScriptableObjects
         public GameObject UnitPrefab => _unitPrefab;
 
         public string Name => _name;
+        
+        public Sprite Sprite => _sprite;
 
         public string Description => _description;
 
