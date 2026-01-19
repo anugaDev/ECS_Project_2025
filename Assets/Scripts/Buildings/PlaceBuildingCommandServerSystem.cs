@@ -82,7 +82,14 @@ namespace Buildings
         {
             Entity buildingEntity = _prefabFactory.Get(placeBuildingCommand.BuildingType);
             Entity newBuilding = _entityCommandBuffer.Instantiate(buildingEntity);
-            _entityCommandBuffer.SetComponent(newBuilding, LocalTransform.FromPosition(placeBuildingCommand.Position));
+
+            LocalTransform prefabTransform = state.EntityManager.GetComponentData<LocalTransform>(buildingEntity);
+            LocalTransform newTransform = LocalTransform.FromPositionRotationScale(
+                placeBuildingCommand.Position,
+                prefabTransform.Rotation,
+                prefabTransform.Scale);
+
+            _entityCommandBuffer.SetComponent(newBuilding, newTransform);
             _entityCommandBuffer.SetComponent(newBuilding, new GhostOwner{NetworkId = networkId});
             _entityCommandBuffer.SetComponent(newBuilding, new ElementTeamComponent{Team = playerTeam});
         }
