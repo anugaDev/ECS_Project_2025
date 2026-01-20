@@ -109,7 +109,12 @@ namespace PlayerInputs
         {
             _isDragging = false;
             _lastPosition = GetPointerPosition();
-            UserInterfaceController.Instance.SelectionBoxController.Disable(); 
+            UserInterfaceController.Instance.SelectionBoxController.Disable();
+            if (!_interactionPolicy.IsAllowed())
+            {
+                return;
+            }
+
             SelectElements();
         }
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
