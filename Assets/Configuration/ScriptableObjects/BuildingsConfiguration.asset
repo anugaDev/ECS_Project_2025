@@ -22,7 +22,7 @@ MonoBehaviour:
   - _buildingType: 3
     _name: Barracks
     _description: 
-    _sprite: {fileID: 21300000, guid: eec1330767c2ba940a5442a34898fa2a, type: 3}
+    _sprite: {fileID: 21300000, guid: 5b0d848b2f32b794aa6992924a77f605, type: 3}
     _buildingPrefab: {fileID: 2881682225047266158, guid: 642ba2f3abc04b641b91164b89800a04, type: 3}
     _buildingTemplate: {fileID: 4814117991548696416, guid: a7b4a7287b87cd549b90a006ae626e97, type: 3}
   - _buildingType: 1
@@ -37,3 +37,9 @@ MonoBehaviour:
     _sprite: {fileID: 21300000, guid: 21f74393344d5f740bff61de6188fd3d, type: 3}
     _buildingPrefab: {fileID: 2881682225047266158, guid: 87c07d99fb471f348bdf77bea860c26e, type: 3}
     _buildingTemplate: {fileID: 4064869704507561338, guid: 77f8ff13bbdeee445ab37ee85137f589, type: 3}
+  - _buildingType: 4
+    _name: Tower
+    _description: 
+    _sprite: {fileID: 21300000, guid: eec1330767c2ba940a5442a34898fa2a, type: 3}
+    _buildingPrefab: {fileID: 2881682225047266158, guid: 3b544198aef4a3740a86dedc6f3f8984, type: 3}
+    _buildingTemplate: {fileID: 4814117991548696416, guid: 6ccdcb91d99194749832093a59f19f01, type: 3}

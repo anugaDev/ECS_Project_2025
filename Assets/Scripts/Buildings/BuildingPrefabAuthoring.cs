@@ -55,6 +55,7 @@ namespace Buildings
                     Barracks = GetEntity(unitsDictionary[BuildingType.Barracks].BuildingPrefab, TransformUsageFlags.Dynamic),
                     House = GetEntity(unitsDictionary[BuildingType.House].BuildingPrefab, TransformUsageFlags.Dynamic),
                     Farm = GetEntity(unitsDictionary[BuildingType.Farm].BuildingPrefab, TransformUsageFlags.Dynamic),
+                    Tower = GetEntity(unitsDictionary[BuildingType.Tower].BuildingPrefab, TransformUsageFlags.Dynamic)
                 };
             }
         }

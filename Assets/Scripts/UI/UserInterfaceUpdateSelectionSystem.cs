@@ -245,7 +245,8 @@ namespace UI
                 (int)BuildingType.Barracks,
                 (int)BuildingType.Center,
                 (int)BuildingType.House,
-                (int)BuildingType.Farm
+                (int)BuildingType.Farm,
+                (int)BuildingType.Tower
             };
         }
 

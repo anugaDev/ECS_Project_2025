@@ -19,7 +19,8 @@ namespace UI.Entities
                 [BuildingType.Barracks] = PlayerUIActionType.Recruit,
                 [BuildingType.Center] = PlayerUIActionType.Recruit,
                 [BuildingType.House] = PlayerUIActionType.None,
-                [BuildingType.Farm] = PlayerUIActionType.None
+                [BuildingType.Farm] = PlayerUIActionType.None,
+                [BuildingType.Tower] = PlayerUIActionType.None
             };
 
             _payloadIds = new Dictionary<BuildingType, int[]>

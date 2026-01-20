@@ -22,6 +22,7 @@ public struct BuildingsPrefabEntityFactory
             BuildingType.Barracks => _prefabComponent.Barracks,
             BuildingType.House => _prefabComponent.House,
             BuildingType.Farm => _prefabComponent.Farm,
+            BuildingType.Tower => _prefabComponent.Tower,
             _ => Entity.Null
         };
     }

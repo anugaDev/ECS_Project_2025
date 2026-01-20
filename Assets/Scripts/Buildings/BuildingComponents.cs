@@ -46,6 +46,8 @@ namespace Buildings
         public Entity House;
 
         public Entity Farm;
+        
+        public Entity Tower;
     }
     
     public class BuildingsConfigurationComponent : IComponentData
