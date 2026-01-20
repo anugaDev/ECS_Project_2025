@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 8021318299512552585}
   - component: {fileID: -2272804216922036194}
   - component: {fileID: 4973633876846513523}
+  - component: {fileID: 7906555738584561344}
   m_Layer: 0
   m_Name: Archer
   m_TagString: Untagged
@@ -92,6 +93,9 @@ MonoBehaviour:
   _moveSpeed: 5
   _unitType: 2
   _selectableType: 3
+  _teamMaterials:
+    _redTeamMaterial: {fileID: 2100000, guid: 731c8344c549ae044b79f047098cbcf5, type: 2}
+    _blueTeamMaterial: {fileID: 2100000, guid: 86364c8eaff5eec4f9bd5d5af876ab50, type: 2}
 --- !u!114 &8021318299512552585
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -281,6 +285,20 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &7906555738584561344
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2147052715152915695}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abf2d28e1fa141e0931f89c9c1ae68f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _targetRenderers:
+  - {fileID: 5823207242218459005}
 --- !u!1 &7570868483270595954
 GameObject:
   m_ObjectHideFlags: 0
@@ -375,7 +393,7 @@ PrefabInstance:
     - target: {fileID: -8945070098837960407, guid: 0d06c371f54dc1c4db4afa03df4afe9f, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: c065bf3256d95e243a9dcfdbfd8b9447, type: 2}
+      objectReference: {fileID: 2100000, guid: 731c8344c549ae044b79f047098cbcf5, type: 2}
     - target: {fileID: -8679921383154817045, guid: 0d06c371f54dc1c4db4afa03df4afe9f, type: 3}
       propertyPath: m_LocalScale.x
       value: 1
@@ -428,6 +446,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -4396642182433536433, guid: 0d06c371f54dc1c4db4afa03df4afe9f, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 731c8344c549ae044b79f047098cbcf5, type: 2}
+    - target: {fileID: -259972160606440404, guid: 0d06c371f54dc1c4db4afa03df4afe9f, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 22269593010912854, guid: 0d06c371f54dc1c4db4afa03df4afe9f, type: 3}
       propertyPath: m_LocalScale.x
       value: 1
@@ -460,6 +486,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Poacher
       objectReference: {fileID: 0}
+    - target: {fileID: 1630794972795428178, guid: 0d06c371f54dc1c4db4afa03df4afe9f, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 731c8344c549ae044b79f047098cbcf5, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -468,6 +498,11 @@ PrefabInstance:
       addedObject: {fileID: 5988090333118719616}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0d06c371f54dc1c4db4afa03df4afe9f, type: 3}
+--- !u!137 &5823207242218459005 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -8945070098837960407, guid: 0d06c371f54dc1c4db4afa03df4afe9f, type: 3}
+  m_PrefabInstance: {fileID: 5984309742005274196}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &6090612155623612863 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 0d06c371f54dc1c4db4afa03df4afe9f, type: 3}

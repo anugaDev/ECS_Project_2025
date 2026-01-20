@@ -4,7 +4,6 @@ using Types;
 using Unity.Entities;
 using Unity.Rendering;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Units
 {
@@ -12,18 +11,23 @@ namespace Units
     {
         [SerializeField]
         private float _moveSpeed;
-        
+
         [SerializeField]
         private UnitType _unitType;
 
         [SerializeField]
         private SelectableElementType _selectableType;
 
+        [SerializeField]
+        private UnitTeamMaterials _teamMaterials;
+
         public float MoveSpeed => _moveSpeed;
 
         public UnitType UnitType => _unitType;
 
         public SelectableElementType SelectableType => _selectableType;
+
+        public UnitTeamMaterials TeamMaterials => _teamMaterials;
 
         public class UnitBaker : Baker<UnitAuthoring>
         {
@@ -40,6 +44,7 @@ namespace Units
                 AddComponent(unitEntity, GetUnitTypeComponent(authoring));
                 AddComponent(unitEntity, GetMoveSpeedComponent(authoring));
                 AddComponent(unitEntity, GetSelectableTypeComponent(authoring));
+                AddComponentObject(unitEntity, GetUnitMaterialsComponent(authoring));
             }
 
             private SelectableElementTypeComponent GetSelectableTypeComponent(UnitAuthoring authoring)
@@ -62,6 +67,15 @@ namespace Units
                 return new UnitTypeComponent
                 {
                     Type = authoring.UnitType
+                };
+            }
+
+            private UnitMaterialsComponent GetUnitMaterialsComponent(UnitAuthoring authoring)
+            {
+                return new UnitMaterialsComponent
+                {
+                    RedTeamMaterial = authoring.TeamMaterials?.RedTeamMaterial,
+                    BlueTeamMaterial = authoring.TeamMaterials?.BlueTeamMaterial
                 };
             }
         }
