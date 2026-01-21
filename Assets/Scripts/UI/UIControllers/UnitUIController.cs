@@ -27,7 +27,10 @@ namespace UI
         private RectTransform _selectionTransform; 
 
         [SerializeField]
-        private Image _selectionImage; 
+        private Image _selectionImage;
+        
+        [SerializeField]
+        private Renderer _minimapRenderer;
 
         public void UpdateHealthBar(int curHitPoints, int maxHitPoints)
         {
@@ -45,6 +48,7 @@ namespace UI
         {
             _healthBarImage.color = color;
             _selectionImage.color = color;
+            _minimapRenderer.material.color = color;
         }
 
         public void EnableUI()
