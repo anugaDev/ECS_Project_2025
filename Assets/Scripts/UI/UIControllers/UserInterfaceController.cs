@@ -49,9 +49,10 @@ namespace UI.UIControllers
 
         private void AddListeners()
         {
-            _minimapController.OnMinimapClicked += _cameraController.SetCameraPosition;
             _cameraController.OnPositionUpdated += _minimapController.UpdateCameraIndicatorPosition;
             _cameraController.OnCameraZoomed += _minimapController.UpdateCameraIndicatorSize;
+            _minimapController.OnMinimapClicked += _cameraController.SetCameraPosition;
+            _minimapController.OnMinimapDragged += _cameraController.SetCameraPosition;
         }
 
         private void OnDestroy()
@@ -61,9 +62,10 @@ namespace UI.UIControllers
 
         private void RemoveListeners()
         {
-            _minimapController.OnMinimapClicked -= _cameraController.SetCameraPosition;
             _cameraController.OnPositionUpdated -= _minimapController.UpdateCameraIndicatorPosition;
-            _cameraController.OnCameraZoomed -= _minimapController.UpdateCameraIndicatorSize;        
+            _cameraController.OnCameraZoomed -= _minimapController.UpdateCameraIndicatorSize;
+            _minimapController.OnMinimapClicked -= _cameraController.SetCameraPosition;
+            _minimapController.OnMinimapDragged -= _cameraController.SetCameraPosition;
         }
     }
 }

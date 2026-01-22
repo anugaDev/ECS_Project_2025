@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace UI.UIControllers
 {
-    public class MinimapController : MonoBehaviour, IPointerClickHandler
+    public class MinimapController : MonoBehaviour, IPointerClickHandler, IDragHandler, IBeginDragHandler, IEndDragHandler
     {
         private const float NORMALIZED_MIDDLE_SCREEN = 0.5F;
 
@@ -30,15 +30,41 @@ namespace UI.UIControllers
         [SerializeField] private float _cameraIndicatorSize = 20f;
 
         public event Action<Vector3> OnMinimapClicked;
+        public event Action<Vector3> OnMinimapDragged;
+
+        private bool _isDragging;
 
         public void OnPointerClick(PointerEventData eventData)
+        {
+            if (_minimapRect == null || _isDragging)
+            {
+                return;
+            }
+
+            SetCameraPosition(eventData);
+        }
+
+        public void OnBeginDrag(PointerEventData eventData)
+        {
+            _isDragging = true;
+        }
+
+        public void OnDrag(PointerEventData eventData)
         {
             if (_minimapRect == null)
             {
                 return;
             }
 
-            SetCameraPosition(eventData);
+            Vector2 pointedPosition = GetPointedPosition(eventData);
+            Vector3 worldPosition = MinimapToWorldPosition(pointedPosition);
+            UpdateCameraIndicatorPosition(worldPosition);
+            OnMinimapDragged?.Invoke(worldPosition);
+        }
+
+        public void OnEndDrag(PointerEventData eventData)
+        {
+            _isDragging = false;
         }
 
         private void SetCameraPosition(PointerEventData eventData)
@@ -70,8 +96,8 @@ namespace UI.UIControllers
             Vector2 minimapSize = _minimapRect.rect.size;
             float halfIndicatorSize = _cameraIndicator.sizeDelta.x * NORMALIZED_MIDDLE_SCREEN;
 
-            minimapLocalPos.x = GetClampedAxis(minimapLocalPos, minimapSize.x, halfIndicatorSize);
-            minimapLocalPos.y = GetClampedAxis(minimapLocalPos, minimapSize.y, halfIndicatorSize);
+            minimapLocalPos.x = GetClampedAxis(minimapLocalPos.x, minimapSize.x, halfIndicatorSize);
+            minimapLocalPos.y = GetClampedAxis(minimapLocalPos.y, minimapSize.y, halfIndicatorSize);
             _cameraIndicator.anchoredPosition = minimapLocalPos;
         }
 
@@ -82,9 +108,9 @@ namespace UI.UIControllers
             return WorldToMinimapPosition(cameraPos2D);
         }
 
-        private float GetClampedAxis(Vector2 minimapLocalPos, float axis, float halfIndicatorSize)
+        private float GetClampedAxis(float localPositionAxis, float axis, float halfIndicatorSize)
         {
-            return Mathf.Clamp(minimapLocalPos.x,
+            return Mathf.Clamp(localPositionAxis,
                 -axis * NORMALIZED_MIDDLE_SCREEN + halfIndicatorSize,
                 axis * NORMALIZED_MIDDLE_SCREEN - halfIndicatorSize);
         }
