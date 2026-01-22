@@ -1,5 +1,5 @@
+using PlayerCamera;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace UI.UIControllers
 {
@@ -19,6 +19,12 @@ namespace UI.UIControllers
         [SerializeField]
         private SelectedGroupDisplayController _selectedGroupController;
 
+        [SerializeField]
+        private MinimapController _minimapController;
+        
+        [SerializeField]
+        private CameraController _cameraController;
+
         public SelectionActionsDisplayController SelectionActionsDisplayerController => _selectionActionsDisplayerController;
 
         public SelectedDetailsDisplayController SelectedDetailsController => _selectedDetailsController;
@@ -26,6 +32,7 @@ namespace UI.UIControllers
         public SelectedGroupDisplayController SelectedGroupController => _selectedGroupController;
 
         public SelectionBoxController SelectionBoxController => _selectionBoxController;
+        
 
         private void Awake()
         {
@@ -37,6 +44,26 @@ namespace UI.UIControllers
 
             Instance = this;
             _selectionBoxController.Disable();
+            AddListeners();
+        }
+
+        private void AddListeners()
+        {
+            _minimapController.OnMinimapClicked += _cameraController.SetCameraPosition;
+            _cameraController.OnPositionUpdated += _minimapController.UpdateCameraIndicatorPosition;
+            _cameraController.OnCameraZoomed += _minimapController.UpdateCameraIndicatorSize;
+        }
+
+        private void OnDestroy()
+        {
+            RemoveListeners();
+        }
+
+        private void RemoveListeners()
+        {
+            _minimapController.OnMinimapClicked -= _cameraController.SetCameraPosition;
+            _cameraController.OnPositionUpdated -= _minimapController.UpdateCameraIndicatorPosition;
+            _cameraController.OnCameraZoomed -= _minimapController.UpdateCameraIndicatorSize;        
         }
     }
 }

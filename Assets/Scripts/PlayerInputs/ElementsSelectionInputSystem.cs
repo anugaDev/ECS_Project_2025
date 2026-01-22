@@ -117,7 +117,7 @@ namespace PlayerInputs
 
             SelectElements();
         }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
         private Vector2 GetPointerPosition()
         {
             return _inputActionMap.GameplayMap.PointerPosition.ReadValue<Vector2>();

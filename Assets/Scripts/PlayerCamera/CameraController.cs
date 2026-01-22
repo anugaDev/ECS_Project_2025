@@ -1,3 +1,4 @@
+using System;
 using Cinemachine;
 using Client;
 using ElementCommons;
@@ -59,6 +60,10 @@ namespace PlayerCamera
 
         private bool _cameraSet;
 
+        public event Action<Vector3> OnPositionUpdated;
+
+        public event Action<float> OnCameraZoomed;
+
         private void Awake()
         {
             _transposer = _cinemachineVirtualCamera.GetCinemachineComponent<CinemachineFramingTransposer>();
@@ -92,6 +97,8 @@ namespace PlayerCamera
             if (team != TeamType.AutoAssign)
             {
                 _cameraSet = true;
+                SetOnPositionUpdated();
+                SetOnCameraZoomed();
             }
         }
 
@@ -116,28 +123,45 @@ namespace PlayerCamera
         {
             if (Input.GetKey(KeyCode.A))
             {
-                transform.position += Vector3.left * (_camSpeed * Time.deltaTime);
+                UpdateCameraPosition(Vector3.left);
             }
 
             if (Input.GetKey(KeyCode.D))
             {
-                transform.position += Vector3.right * (_camSpeed * Time.deltaTime);
+                UpdateCameraPosition(Vector3.right);
             }
 
             if (Input.GetKey(KeyCode.S))
             {
-                transform.position += Vector3.back * (_camSpeed * Time.deltaTime);
+                UpdateCameraPosition(Vector3.back);
             }
 
             if (Input.GetKey(KeyCode.W))
             {
-                transform.position += Vector3.forward * (_camSpeed * Time.deltaTime);
+                UpdateCameraPosition(Vector3.forward);
             }
 
             if (!_cameraBounds.Contains(transform.position))
             {
-                transform.position = _cameraBounds.ClosestPoint(transform.position);
+                SetCameraToBounds();
             }
+        }
+
+        private void SetCameraToBounds()
+        {
+            transform.position = _cameraBounds.ClosestPoint(transform.position);
+            SetOnPositionUpdated();
+        }
+
+        private void SetOnPositionUpdated()
+        {
+            OnPositionUpdated?.Invoke(transform.position);
+        }
+
+        private void UpdateCameraPosition(Vector3 direction)
+        {
+            transform.position += direction * (_camSpeed * Time.deltaTime);
+            SetOnPositionUpdated();
         }
 
         private void ZoomCamera()
@@ -146,9 +170,22 @@ namespace PlayerCamera
             {
                 return;
             }
+
+            UpdateCameraZoom();
+        }
+
+        private void UpdateCameraZoom()
+        {
             _transposer.m_CameraDistance -= Input.mouseScrollDelta.y * _zoomSpeed * Time.deltaTime;
             _transposer.m_CameraDistance =
                 Mathf.Clamp(_transposer.m_CameraDistance, _minZoomDistance, _maxZoomDistance);
+            SetOnCameraZoomed();
+        }
+
+        private void SetOnCameraZoomed()
+        {
+            float zoomCameraDistance = _transposer != null ? _transposer.m_CameraDistance : 0f;
+            OnCameraZoomed?.Invoke(zoomCameraDistance);
         }
 
         private void SetCameraForAutoAssignTeam()
@@ -159,9 +196,16 @@ namespace PlayerCamera
             }
 
             TeamType team = _entityManager.GetComponentData<ElementTeamComponent>(localUnit).Team;
+            SetInitialCameraPosition(team);
+        }
+
+        private void SetInitialCameraPosition(TeamType team)
+        {
             Vector3 cameraPosition = GetCameraPosition(team);
             transform.position = cameraPosition;
             _cameraSet = true;
+            SetOnPositionUpdated();
+            SetOnCameraZoomed();
         }
 
         private void OnDrawGizmos()
@@ -171,5 +215,11 @@ namespace PlayerCamera
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireCube(_cameraBounds.center, _cameraBounds.size);
         }
+
+        public void SetCameraPosition(Vector3 position)
+        {
+            transform.position = position;
+        }
+
     }
 }

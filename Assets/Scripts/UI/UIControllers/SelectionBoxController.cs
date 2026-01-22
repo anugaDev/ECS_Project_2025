@@ -4,7 +4,10 @@ namespace UI.UIControllers
 {
     public class SelectionBoxController : MonoBehaviour
     {
-        private const float DEFAULT_BOX_SCALE = 1;
+        private const float SIZE_MULTIPLIER = 0.5F;
+
+        [SerializeField]
+        private RectTransform _parentTransform;
         
         [SerializeField]
         private RectTransform _boxTransform;
@@ -24,27 +27,28 @@ namespace UI.UIControllers
 
         public void UpdateBoxSize(Vector2 startingPosition, Vector2 currentPosition)
         {
-            Vector2 size = currentPosition - startingPosition;
-            _boxTransform.anchoredPosition = startingPosition;
+            Vector2 convertedStartingPosition = GetConvertedPosition(startingPosition);
+            Vector2 convertedCurrentPosition = GetConvertedPosition(currentPosition);
+            Vector2 size = convertedCurrentPosition - convertedStartingPosition;
+            _boxTransform.anchoredPosition = GetAnchoredPosition(convertedStartingPosition, size);
             _boxTransform.sizeDelta = new Vector2(Mathf.Abs(size.x), Mathf.Abs(size.y));
-            FlipBoxIfNeeded(size);
         }
 
-        private void FlipBoxIfNeeded(Vector2 size)
+        private Vector2 GetAnchoredPosition(Vector2 convertedStartingPosition, Vector2 size)
         {
-            float newSizeX = GetFlippedAxis(size.x);
-            float newSizeY = GetFlippedAxis(size.y);
-            _boxTransform.localScale = new Vector3(newSizeX, newSizeY, DEFAULT_BOX_SCALE);
+            return convertedStartingPosition + size * SIZE_MULTIPLIER;
         }
 
-        private float GetFlippedAxis(float axis)
+        private Vector2 GetConvertedPosition(Vector2 startingPosition)
         {
-            if (axis < 0)
-            {
-                return -DEFAULT_BOX_SCALE;
-            }
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                _parentTransform,
+                startingPosition,
+                null,
+                out Vector2 localPoint
+            );
 
-            return DEFAULT_BOX_SCALE;
+            return localPoint;
         }
     }
 }
