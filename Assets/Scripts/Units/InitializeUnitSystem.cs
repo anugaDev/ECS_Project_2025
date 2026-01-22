@@ -3,14 +3,9 @@ using Types;
 using Units;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Rendering;
-using Unity.Transforms;
-using UnityEngine;
-using System.Collections.Generic;
 using UnityEngine.Rendering;
-using Utils;
 using Material = UnityEngine.Material;
 
 namespace Server

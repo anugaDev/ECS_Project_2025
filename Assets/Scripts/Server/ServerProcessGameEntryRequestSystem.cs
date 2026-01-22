@@ -72,7 +72,7 @@ namespace Server
             return player;
         }
 
-        private static LastProcessedBuildingCommand GetLastProcessedBuildingCommand()
+        private LastProcessedBuildingCommand GetLastProcessedBuildingCommand()
         {
             return new LastProcessedBuildingCommand
             {
@@ -82,7 +82,7 @@ namespace Server
             };
         }
 
-        private static LastProcessedUnitCommand GetLastProcessedUnitCommand()
+        private LastProcessedUnitCommand GetLastProcessedUnitCommand()
         {
             return new LastProcessedUnitCommand()
             {
@@ -92,7 +92,7 @@ namespace Server
             };
         }
 
-        private static SpawnUnitCommand GetSpawnUnitCommand(float3 townCenterPosition, NetworkTick serverTick)
+        private SpawnUnitCommand GetSpawnUnitCommand(float3 townCenterPosition, NetworkTick serverTick)
         {
             return new SpawnUnitCommand
             {

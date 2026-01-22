@@ -87,7 +87,7 @@ Transform:
   m_GameObject: {fileID: 3336410967953908418}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 8, z: 0.0000009238719}
+  m_LocalPosition: {x: 0, y: 0, z: 0.0000009238719}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -281,6 +281,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5617939677209781337}
     m_Modifications:
+    - target: {fileID: 767712265345608757, guid: 92b59f9193e1877439190d2298da7b41, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2437271104078609728, guid: 92b59f9193e1877439190d2298da7b41, type: 3}
       propertyPath: m_Color.b
       value: 0
@@ -293,12 +297,20 @@ PrefabInstance:
       propertyPath: m_Color.r
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2437271104078609728, guid: 92b59f9193e1877439190d2298da7b41, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3347823832458425704, guid: 92b59f9193e1877439190d2298da7b41, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3347823832458425704, guid: 92b59f9193e1877439190d2298da7b41, type: 3}
       propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6012739619884274136, guid: 92b59f9193e1877439190d2298da7b41, type: 3}
+      propertyPath: m_RaycastTarget
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6246730936639062891, guid: 92b59f9193e1877439190d2298da7b41, type: 3}

@@ -23,12 +23,12 @@ namespace Units
         public void OnUpdate(ref SystemState state)
         {
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            foreach ((LocalTransform transform, UnitTagComponent _, UnitTypeComponent UnitTypeComponent, Entity entity) 
+            foreach ((LocalTransform transform, UnitTagComponent _, UnitTypeComponent unitTypeComponent, Entity entity)
                      in SystemAPI.Query<LocalTransform, UnitTagComponent, UnitTypeComponent>().WithAll<GhostOwnerIsLocal>().WithNone<OwnerTagComponent>().WithEntityAccess())
             {
                 entityCommandBuffer.AddComponent<OwnerTagComponent>(entity);
                 entityCommandBuffer.SetComponent(entity, GetTargetPositionComponent(transform));
-                entityCommandBuffer.SetComponent(entity, GetDetailsComponent(UnitTypeComponent));
+                entityCommandBuffer.SetComponent(entity, GetDetailsComponent(unitTypeComponent));
             }
 
             entityCommandBuffer.Playback(state.EntityManager);

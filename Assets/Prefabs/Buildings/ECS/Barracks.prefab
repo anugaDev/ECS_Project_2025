@@ -220,6 +220,7 @@ MonoBehaviour:
   _buildingType: 3
   _selectableType: 2
   _buildingView: {fileID: 4814117991548696416}
+  _obstacleSize: {x: 5, y: 5, z: 5}
 --- !u!114 &4814117991548696416
 MonoBehaviour:
   m_ObjectHideFlags: 0

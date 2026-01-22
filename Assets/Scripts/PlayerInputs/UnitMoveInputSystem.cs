@@ -151,6 +151,15 @@ namespace PlayerInputs
             _anySelected = true;
             _unitTargetPositionComponent = GetUnitPositionComponent(closestHit);
             EntityManager.SetComponentData(entity, _unitTargetPositionComponent);
+
+            PathComponent pathComp = EntityManager.GetComponentData<PathComponent>(entity);
+            pathComp.HasPath = false;
+            pathComp.CurrentWaypointIndex = 0;
+            pathComp.LastTargetPosition = float3.zero;
+            EntityManager.SetComponentData(entity, pathComp);
+
+            DynamicBuffer<PathWaypointBuffer> pathBuffer = EntityManager.GetBuffer<PathWaypointBuffer>(entity);
+            pathBuffer.Clear();
         }
 
         private UnitTargetPositionComponent GetUnitPositionComponent(RaycastHit closestHit)

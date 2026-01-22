@@ -1,5 +1,6 @@
 using Types;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.NetCode;
 using UnityEngine;
 
@@ -23,13 +24,27 @@ namespace Units
         public UnitType Type;
     }
 
-    /// <summary>
-    /// Stores the team materials for a unit. Each unit can have its own materials.
-    /// </summary>
     public class UnitMaterialsComponent : IComponentData
     {
         public Material RedTeamMaterial;
-
         public Material BlueTeamMaterial;
     }
+    
+    public struct PathComponent : IComponentData
+    {
+        public bool HasPath;
+        public int CurrentWaypointIndex;
+        public float3 LastTargetPosition;
+    }
+
+    public struct PathWaypointBuffer : IBufferElementData
+    {
+        public float3 Position;
+    }
+
+    public struct VelocityComponent : IComponentData
+    {
+        public float3 Value;
+    }
+
 }

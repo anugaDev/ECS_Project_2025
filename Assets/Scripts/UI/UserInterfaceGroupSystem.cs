@@ -75,7 +75,7 @@ namespace UI
             _currentUnitSelection[unitType] = currentSelectionCount;
         }
 
-        private static int GetCurrentSelectionCount(int currentSelectionCount, bool isSelected)
+        private int GetCurrentSelectionCount(int currentSelectionCount, bool isSelected)
         {
             if (!isSelected)
             {
@@ -85,7 +85,7 @@ namespace UI
             return currentSelectionCount + 1;
         }
 
-        private static int GetNegativeSelectionCount(int currentSelectionCount)
+        private int GetNegativeSelectionCount(int currentSelectionCount)
         {
             if(currentSelectionCount <= 0)
             {

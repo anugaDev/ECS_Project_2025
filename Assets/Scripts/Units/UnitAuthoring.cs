@@ -9,9 +9,11 @@ namespace Units
 {
     public class UnitAuthoring : MonoBehaviour
     {
+        [Header("Movement")]
         [SerializeField]
-        private float _moveSpeed;
+        private float _moveSpeed = 5f;
 
+        [Header("Unit Properties")]
         [SerializeField]
         private UnitType _unitType;
 
@@ -24,9 +26,7 @@ namespace Units
         public float MoveSpeed => _moveSpeed;
 
         public UnitType UnitType => _unitType;
-
         public SelectableElementType SelectableType => _selectableType;
-
         public UnitTeamMaterials TeamMaterials => _teamMaterials;
 
         public class UnitBaker : Baker<UnitAuthoring>
@@ -34,7 +34,9 @@ namespace Units
             public override void Bake(UnitAuthoring authoring)
             {
                 Entity unitEntity = GetEntity(TransformUsageFlags.Dynamic);
+                AddComponent<PathComponent>(unitEntity);
                 AddComponent<UnitTagComponent>(unitEntity);
+                AddComponent<VelocityComponent>(unitEntity);
                 AddComponent<NewUnitTagComponent>(unitEntity);
                 AddComponent<ElementTeamComponent>(unitEntity);
                 AddComponent<URPMaterialPropertyBaseColor>(unitEntity);
@@ -45,6 +47,7 @@ namespace Units
                 AddComponent(unitEntity, GetMoveSpeedComponent(authoring));
                 AddComponent(unitEntity, GetSelectableTypeComponent(authoring));
                 AddComponentObject(unitEntity, GetUnitMaterialsComponent(authoring));
+                AddBuffer<PathWaypointBuffer>(unitEntity);
             }
 
             private SelectableElementTypeComponent GetSelectableTypeComponent(UnitAuthoring authoring)

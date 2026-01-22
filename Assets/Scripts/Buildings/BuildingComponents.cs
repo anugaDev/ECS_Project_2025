@@ -13,6 +13,11 @@ namespace Buildings
     public struct NewBuildingTagComponent : IComponentData
     {
     }
+
+    public struct BuildingObstacleSizeComponent : IComponentData
+    {
+        public float3 Size;
+    }
     
     public struct BuildingTypeComponent : IComponentData
     {
