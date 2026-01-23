@@ -52,7 +52,8 @@ namespace UI
             _selectableToAction = new Dictionary<SelectableElementType, Action<Entity, bool>>
             {
                 [SelectableElementType.Building] = SetBuildingQueue,
-                [SelectableElementType.Unit] = SetUnitGroup
+                [SelectableElementType.Unit] = SetUnitGroup,
+                [SelectableElementType.Resource] = SetResourceGroup
             };
         }
 
@@ -73,6 +74,10 @@ namespace UI
             int currentSelectionCount = _currentUnitSelection[unitType];
             currentSelectionCount = GetCurrentSelectionCount(currentSelectionCount, isSelected);
             _currentUnitSelection[unitType] = currentSelectionCount;
+        }
+        private void SetResourceGroup(Entity entity, bool isSelected)
+        {
+            return;
         }
 
         private int GetCurrentSelectionCount(int currentSelectionCount, bool isSelected)
@@ -106,10 +111,10 @@ namespace UI
             _currentTrackedRecruitment = EntityManager.GetComponentData<RecruitmentProgressComponent>(entity);
             _isRecruitmentTracked = recruitmentBuffer.Length > 0;
             ResetSelection();
-            updateSelectionToBuffer(recruitmentBuffer);
+            UpdateSelectionToBuffer(recruitmentBuffer);
         }
 
-        private void updateSelectionToBuffer(DynamicBuffer<RecruitmentQueueBufferComponent> recruitmentBuffer)
+        private void UpdateSelectionToBuffer(DynamicBuffer<RecruitmentQueueBufferComponent> recruitmentBuffer)
         {
             foreach (RecruitmentQueueBufferComponent queueComponent in recruitmentBuffer)
             {
