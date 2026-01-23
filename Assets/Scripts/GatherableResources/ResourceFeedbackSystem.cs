@@ -10,6 +10,8 @@ namespace GatherableResources
     [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
     public partial struct ResourceFeedbackSystem : ISystem
     {
+        private const float DEFAULT_Y_SPAWN_POSITION = 1F;
+
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<EndSimulationEntityCommandBufferSystem.Singleton>();
@@ -40,7 +42,9 @@ namespace GatherableResources
         {
             GameObject uiPrefab = SystemAPI.ManagedAPI.GetSingleton<UIPrefabs>().ResourceUI;
             float3 spawnPosition = transform.Position;
+            spawnPosition.y = DEFAULT_Y_SPAWN_POSITION;
             GameObject elementUI = Object.Instantiate(uiPrefab, spawnPosition, Quaternion.identity);
+            elementUI.transform.localScale = new Vector3(transform.Scale, transform.Scale, transform.Scale);
             ecb.AddComponent(entity, new ResourceUIReferenceComponent() { Instance = elementUI });
         }
 
