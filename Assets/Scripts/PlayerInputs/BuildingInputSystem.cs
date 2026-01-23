@@ -24,8 +24,6 @@ namespace PlayerInputs
 
         private const uint RAYCAST_GROUP = 1 << 5;
 
-        private const uint GHOST_ELEMENTS_GROUP = ~(GROUNDPLANE_GROUP | RAYCAST_GROUP);
-
         private const float DEFAULT_Z_POSITION = 100f; 
         
         private Dictionary<BuildingType, BuildingScriptableObject> _buildingConfiguration;
@@ -52,12 +50,8 @@ namespace PlayerInputs
         
         private Vector3 _lastPosition;
 
-        private EntityQuery _pendingNetworkIdQuery;
-
         protected override void OnCreate()
         {
-            EntityQueryBuilder builder = new EntityQueryBuilder(Allocator.Temp).WithAll<NetworkId>().WithNone<NetworkStreamInGame>();
-            _pendingNetworkIdQuery = GetEntityQuery(builder);
             _interactionPolicy = new CheckGameplayInteractionPolicy();
             _buildingTemplates = new Dictionary<BuildingType, BuildingView>();
             _inputActionMap = new InputActions();
@@ -172,8 +166,7 @@ namespace PlayerInputs
             for (int i = 0; i < hits.Length; i++)
             {
                 Entity hitEntity = hits[i].Entity;
-                if (EntityManager.HasComponent<UnitTagComponent>(hitEntity) ||
-                    EntityManager.HasComponent<BuildingComponents>(hitEntity))
+                if (EntityManager.HasComponent<SelectableElementTypeComponent>(hitEntity))
                 {
                     ghostCount++;
                 }

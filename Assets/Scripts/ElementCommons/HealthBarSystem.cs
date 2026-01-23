@@ -1,5 +1,6 @@
 ﻿using Combat;
 using ElementCommons;
+using GatherableResources;
 using Types;
 using Units;
 using Unity.Entities;
@@ -7,7 +8,6 @@ using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Transforms;
 using UnityEngine;
-using RaycastHit = Unity.Physics.RaycastHit;
 
 namespace UI
 {

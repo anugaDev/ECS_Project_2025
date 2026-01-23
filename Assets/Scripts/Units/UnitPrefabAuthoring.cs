@@ -15,8 +15,13 @@ namespace Units
         
         [SerializeField] 
         private UnitUIController _unitUIPrefab;
+
+        [SerializeField] 
+        private GameObject _resourceUIPrefab;
         
         public UnitUIController UnitUIPrefab => _unitUIPrefab;
+        
+        public GameObject ResourceUIPrefab => _resourceUIPrefab;
         
         public UnitsScriptableObject UnitsConfiguration => _unitsConfiguration;
 
@@ -27,12 +32,11 @@ namespace Units
                 Entity prefabContainerEntity = GetEntity(TransformUsageFlags.None);
                 Entity unitContainer = GetEntity(TransformUsageFlags.None);
                 AddComponent(unitContainer, GetUnitComponent(prefabAuthoring));
-                AddComponentObject(prefabContainerEntity, GetUIPrefabs(prefabAuthoring));
                 AddComponentObject(prefabContainerEntity, GetUnitsConfiguration(prefabAuthoring));
-                AddComponentObject(prefabContainerEntity, GetUITeamColors(prefabAuthoring));
+                AddComponentObject(prefabContainerEntity, GetUITeamColors());
             }
 
-            private UITeamColors GetUITeamColors(UnitPrefabAuthoring prefabAuthoring)
+            private UITeamColors GetUITeamColors()
             {
                 return new UITeamColors
                 {
@@ -41,13 +45,6 @@ namespace Units
                 };
             }
 
-            private UIPrefabs GetUIPrefabs(UnitPrefabAuthoring prefabAuthoring)
-            {
-                return new UIPrefabs
-                {
-                    UnitUI =  prefabAuthoring.UnitUIPrefab
-                };
-            }
             private UnitsConfigurationComponent GetUnitsConfiguration(UnitPrefabAuthoring prefabAuthoring)
             {
                 return new UnitsConfigurationComponent

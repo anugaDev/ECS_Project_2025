@@ -18,15 +18,12 @@ namespace Units
         private UnitType _unitType;
 
         [SerializeField]
-        private SelectableElementType _selectableType;
-
-        [SerializeField]
         private UnitTeamMaterials _teamMaterials;
 
         public float MoveSpeed => _moveSpeed;
 
         public UnitType UnitType => _unitType;
-        public SelectableElementType SelectableType => _selectableType;
+
         public UnitTeamMaterials TeamMaterials => _teamMaterials;
 
         public class UnitBaker : Baker<UnitAuthoring>
@@ -45,16 +42,16 @@ namespace Units
                 AddComponent<ElementDisplayDetailsComponent>(unitEntity);
                 AddComponent(unitEntity, GetUnitTypeComponent(authoring));
                 AddComponent(unitEntity, GetMoveSpeedComponent(authoring));
-                AddComponent(unitEntity, GetSelectableTypeComponent(authoring));
+                AddComponent(unitEntity, GetSelectableTypeComponent());
                 AddComponentObject(unitEntity, GetUnitMaterialsComponent(authoring));
                 AddBuffer<PathWaypointBuffer>(unitEntity);
             }
 
-            private SelectableElementTypeComponent GetSelectableTypeComponent(UnitAuthoring authoring)
+            private SelectableElementTypeComponent GetSelectableTypeComponent()
             {
                 return new SelectableElementTypeComponent
                 {
-                    Type = authoring.SelectableType
+                    Type = SelectableElementType.Unit
                 };
             }
 

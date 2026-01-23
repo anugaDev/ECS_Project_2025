@@ -1,8 +1,6 @@
 using ElementCommons;
 using Types;
 using Unity.Entities;
-using Unity.NetCode;
-using Unity.Rendering;
 using UnityEngine;
 
 namespace Buildings
@@ -50,7 +48,7 @@ namespace Buildings
             private SelectableElementTypeComponent GetSelectableTypeComponent(BuildingAuthoring authoring)
             {
                 return new SelectableElementTypeComponent
-                {
+                { 
                     Type = authoring.SelectableType
                 };
             }

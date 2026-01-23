@@ -19,11 +19,6 @@ namespace Units
 
     }
 
-    public class UIPrefabs : IComponentData
-    {
-        public UnitUIController UnitUI;
-    }
-
     public class UITeamColors : IComponentData
     {
         public Color RedColor;

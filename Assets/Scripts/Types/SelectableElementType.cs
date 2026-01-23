@@ -5,6 +5,7 @@ namespace Types
         Empty,
         None,
         Building,
-        Unit
+        Unit,
+        Resource
     }
 }
