@@ -15,7 +15,20 @@ namespace Units.MovementSystems
     public partial struct AntiStackingSystem : ISystem
     {
         private const float STACKING_THRESHOLD = 1.5f;
+
         private const float PUSH_DISTANCE = 3.0f;
+
+        private EntityCommandBuffer _entityCommandBuffer;
+
+        private NativeList<float3> _stationaryPositions;
+
+        private NativeList<Entity> _stationaryUnits;
+
+        private NativeList<int> _stationaryTeams;
+
+        private bool _isPositionFree;
+
+        private float3 _candidatePos;
 
         [BurstCompile]
         public void OnCreate(ref SystemState state)
@@ -26,59 +39,108 @@ namespace Units.MovementSystems
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            NativeList<Entity> stationaryUnits = new NativeList<Entity>(Allocator.Temp);
-            NativeList<float3> stationaryPositions = new NativeList<float3>(Allocator.Temp);
-            NativeList<int> stationaryTeams = new NativeList<int>(Allocator.Temp);
+            InitializeLists();
 
             foreach ((RefRO<LocalTransform> transform, RefRO<PathComponent> pathComponent, RefRO<ElementTeamComponent> team, Entity entity)
                      in SystemAPI.Query<RefRO<LocalTransform>, RefRO<PathComponent>, RefRO<ElementTeamComponent>>()
                          .WithAll<UnitTagComponent, Simulate>()
                          .WithEntityAccess())
             {
-                if (!pathComponent.ValueRO.HasPath)
-                {
-                    stationaryUnits.Add(entity);
-                    stationaryPositions.Add(transform.ValueRO.Position);
-                    stationaryTeams.Add((int)team.ValueRO.Team);
-                }
+                AddUnitToList(pathComponent, entity, transform, team);
             }
 
-            if (stationaryUnits.Length < 2)
+            if (_stationaryUnits.Length < 2)
             {
-                stationaryUnits.Dispose();
-                stationaryPositions.Dispose();
-                stationaryTeams.Dispose();
+                _stationaryUnits.Dispose();
+                _stationaryPositions.Dispose();
+                _stationaryTeams.Dispose();
                 return;
             }
 
-            EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
+            _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
+            SetStationaryUnitsTargetPosition();
+            _entityCommandBuffer.Playback(state.EntityManager);
+            _entityCommandBuffer.Dispose();
+            DisposeLists();
+        }
 
-            for (int i = 0; i < stationaryUnits.Length; i++)
+        private void AddUnitToList(RefRO<PathComponent> pathComponent, Entity entity, RefRO<LocalTransform> transform, RefRO<ElementTeamComponent> team)
+        {
+            if (pathComponent.ValueRO.HasPath)
             {
-                for (int j = i + 1; j < stationaryUnits.Length; j++)
-                {
-                    if (stationaryTeams[i] != stationaryTeams[j]) continue;
-
-                    float distance = math.distance(stationaryPositions[i], stationaryPositions[j]);
-
-                    if (distance < STACKING_THRESHOLD)
-                    {
-                        float3 newPosition = FindFreePosition(stationaryPositions[j], stationaryPositions, j, stationaryUnits.Length);
-
-                        ecb.SetComponent(stationaryUnits[j], new UnitTargetPositionComponent
-                        {
-                            Value = newPosition,
-                            MustMove = true
-                        });
-                    }
-                }
+                return;
             }
 
-            ecb.Playback(state.EntityManager);
-            ecb.Dispose();
-            stationaryUnits.Dispose();
-            stationaryPositions.Dispose();
-            stationaryTeams.Dispose();
+            _stationaryUnits.Add(entity);
+            _stationaryPositions.Add(transform.ValueRO.Position);
+            _stationaryTeams.Add((int)team.ValueRO.Team);
+        }
+
+        private void InitializeLists()
+        {
+            _stationaryUnits = new NativeList<Entity>(Allocator.Temp);
+            _stationaryPositions = new NativeList<float3>(Allocator.Temp);
+            _stationaryTeams = new NativeList<int>(Allocator.Temp);
+        }
+
+        private void DisposeLists()
+        {
+            _stationaryUnits.Dispose();
+            _stationaryPositions.Dispose();
+            _stationaryTeams.Dispose();
+        }
+
+        private void SetStationaryUnitsTargetPosition()
+        {
+            for (int unitIndexRow = 0; unitIndexRow < _stationaryUnits.Length; unitIndexRow++)
+            {
+                CheckUnitRow(unitIndexRow);
+            }
+        }
+
+        private void CheckUnitRow(int unitIndexRow)
+        {
+            for (int unitIndexColumn = unitIndexRow + 1; unitIndexColumn < _stationaryUnits.Length; unitIndexColumn++)
+            {
+                CheckUnitColumn(unitIndexRow, unitIndexColumn);
+            }
+        }
+
+        private void CheckUnitColumn(int unitIndexRow, int unitIndexColumn)
+        {
+            if (_stationaryTeams[unitIndexRow] != _stationaryTeams[unitIndexColumn])
+            { 
+                return;
+            }
+
+            SetStationaryUnitTargetPosition(unitIndexRow, unitIndexColumn);
+        }
+
+        private void SetStationaryUnitTargetPosition(int unitIndexRow, int unitIndexColumn)
+        {
+            float distance = math.distance(_stationaryPositions[unitIndexRow], _stationaryPositions[unitIndexColumn]);
+
+            if (!(distance < STACKING_THRESHOLD))
+            {
+                return;
+            }
+
+            SetTargetPosition(unitIndexColumn);
+        }
+
+        private void SetTargetPosition(int unitIndexColumn)
+        {
+            float3 newPosition = FindFreePosition(_stationaryPositions[unitIndexColumn], _stationaryPositions, unitIndexColumn, _stationaryUnits.Length);
+            _entityCommandBuffer.SetComponent(_stationaryUnits[unitIndexColumn], GetTargetPositionComponent(newPosition));
+        }
+
+        private static UnitTargetPositionComponent GetTargetPositionComponent(float3 newPosition)
+        {
+            return new UnitTargetPositionComponent
+            {
+                Value = newPosition,
+                MustMove = true
+            };
         }
 
         [BurstCompile]
@@ -87,32 +149,52 @@ namespace Units.MovementSystems
             int attempts = 8;
             float angleStep = 360.0f / attempts;
 
-            for (int i = 0; i < attempts; i++)
+            for (int attemptIndex = 0; attemptIndex < attempts; attemptIndex++)
             {
-                float angle = math.radians(angleStep * i);
-                float3 offset = new float3(math.cos(angle) * PUSH_DISTANCE, 0, math.sin(angle) * PUSH_DISTANCE);
-                float3 candidatePos = currentPos + offset;
-                bool isFree = true;
+                SetFindFreePositionAttempt(currentPos, allPositions, skipIndex, totalUnits, angleStep, attemptIndex);
 
-                for (int j = 0; j < totalUnits; j++)
+                if (_isPositionFree)
                 {
-                    if (j == skipIndex) continue;
-
-                    if (math.distance(candidatePos, allPositions[j]) < STACKING_THRESHOLD)
-                    {
-                        isFree = false;
-                        break;
-                    }
-                }
-
-                if (isFree)
-                {
-                    return candidatePos;
+                    return _candidatePos;
                 }
             }
 
             float randomAngle = math.radians(UnityEngine.Random.Range(0f, 360f));
             return currentPos + new float3(math.cos(randomAngle) * PUSH_DISTANCE, 0, math.sin(randomAngle) * PUSH_DISTANCE);
+        }
+
+        private void SetFindFreePositionAttempt(float3 currentPos, NativeList<float3> allPositions, int skipIndex, int totalUnits,
+            float angleStep, int attemptIndex)
+        {
+            SetCandidatePosition(currentPos, angleStep, attemptIndex);
+            for (int unitIndex = 0; unitIndex < totalUnits; unitIndex++)
+            {
+                if (unitIndex == skipIndex)
+                {
+                    continue;
+                }
+
+                if (!IsPositionAllowed(allPositions, unitIndex))
+                {
+                    continue;
+                }
+
+                _isPositionFree = false;
+                break;
+            }
+        }
+
+        private void SetCandidatePosition(float3 currentPos, float angleStep, int attemptIndex)
+        {
+            float angle = math.radians(angleStep * attemptIndex);
+            float3 offset = new float3(math.cos(angle) * PUSH_DISTANCE, 0, math.sin(angle) * PUSH_DISTANCE);
+            _candidatePos = currentPos + offset;
+            _isPositionFree = true;
+        }
+
+        private bool IsPositionAllowed(NativeList<float3> allPositions, int unitIndex)
+        {
+            return (math.distance(_candidatePos, allPositions[unitIndex]) < STACKING_THRESHOLD);
         }
     }
 }

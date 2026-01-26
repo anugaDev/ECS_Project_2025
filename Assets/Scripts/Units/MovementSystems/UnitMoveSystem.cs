@@ -12,80 +12,123 @@ namespace Units.MovementSystems
     [BurstCompile]
     public partial struct UnitMoveSystem : ISystem
     {
-        private const float WAYPOINT_THRESHOLD = 0.5f;
         private const float FINAL_POSITION_THRESHOLD = 0.1f;
-        private const float MAX_SPEED_MULTIPLIER = 1.5f;
+
+        private const float WAYPOINT_THRESHOLD = 0.5f;
+        
+        private RefRW<UnitTargetPositionComponent> _currentTargetPositionComponent;
+
+        private DynamicBuffer<PathWaypointBuffer> _currentPathBuffer;
+        
+        private RefRO<UnitMoveSpeedComponent> _currentMoveSpeed;
+        
+        private RefRW<PathComponent> _currentPathComponent;
+        
+        private RefRW<LocalTransform> _currentTransform;
+        
+        private float3 _desiredDirection;
+        
+        private float3 _desiredVelocity;
+        
+        private float _currentDeltaTime;
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            float deltaTime = SystemAPI.Time.DeltaTime;
+            _currentDeltaTime = SystemAPI.Time.DeltaTime;
 
-            foreach ((RefRW<LocalTransform> transform, RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRW<VelocityComponent> velocity, RefRO<UnitMoveSpeedComponent> moveSpeed)
+            foreach ((RefRW<LocalTransform> transform, RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRO<UnitMoveSpeedComponent> moveSpeed)
                      in SystemAPI.Query<RefRW<LocalTransform>, RefRW<UnitTargetPositionComponent>,
-                         RefRW<PathComponent>, DynamicBuffer<PathWaypointBuffer>, RefRW<VelocityComponent>,
+                         RefRW<PathComponent>, DynamicBuffer<PathWaypointBuffer>,
                          RefRO<UnitMoveSpeedComponent>>()
                          .WithAll<Simulate, UnitTagComponent>())
             {
-                if (!targetPosition.ValueRO.MustMove || !pathComponent.ValueRO.HasPath)
-                {
-                    velocity.ValueRW.Value = float3.zero;
-                    continue;
-                }
-
-                if (pathComponent.ValueRO.CurrentWaypointIndex >= pathBuffer.Length)
-                {
-                    targetPosition.ValueRW.MustMove = false;
-                    pathComponent.ValueRW.HasPath = false;
-                    velocity.ValueRW.Value = float3.zero;
-                    continue;
-                }
-
-                float3 currentWaypoint = pathBuffer[pathComponent.ValueRO.CurrentWaypointIndex].Position;
-                currentWaypoint.y = transform.ValueRO.Position.y;
-                float distanceToWaypoint = math.distance(transform.ValueRO.Position, currentWaypoint);
-                bool isLastWaypoint = pathComponent.ValueRO.CurrentWaypointIndex == pathBuffer.Length - 1;
-                float threshold = isLastWaypoint ? FINAL_POSITION_THRESHOLD : WAYPOINT_THRESHOLD;
-
-                if (distanceToWaypoint < threshold)
-                {
-                    if (isLastWaypoint)
-                    {
-                        targetPosition.ValueRW.MustMove = false;
-                        pathComponent.ValueRW.HasPath = false;
-                        velocity.ValueRW.Value = float3.zero;
-                        continue;
-                    }
-                    else
-                    {
-                        pathComponent.ValueRW.CurrentWaypointIndex++;
-                        continue;
-                    }
-                }
-
-                float3 toWaypoint = currentWaypoint - transform.ValueRO.Position;
-                toWaypoint.y = 0;
-
-                if (math.lengthsq(toWaypoint) < 0.001f)
-                {
-                    velocity.ValueRW.Value = float3.zero;
-                    continue;
-                }
-
-                float3 desiredDirection = math.normalize(toWaypoint);
-                float3 desiredVelocity = desiredDirection * moveSpeed.ValueRO.Speed;
-
-                float3 newPosition = transform.ValueRO.Position;
-                newPosition.x += desiredVelocity.x * deltaTime;
-                newPosition.z += desiredVelocity.z * deltaTime;
-                transform.ValueRW.Position = newPosition;
-                velocity.ValueRW.Value = desiredVelocity;
-
-                if (math.lengthsq(desiredVelocity) > 0.01f)
-                {
-                    transform.ValueRW.Rotation = quaternion.LookRotationSafe(desiredDirection, math.up());
-                }
+                _currentTargetPositionComponent = targetPosition;
+                _currentPathComponent = pathComponent;
+                _currentPathBuffer = pathBuffer;
+                _currentTransform = transform;
+                _currentMoveSpeed = moveSpeed;
+                SetUnitPosition();
             }
+        }
+
+        private void SetUnitPosition()
+        {
+            if (!_currentTargetPositionComponent.ValueRO.MustMove || !_currentPathComponent.ValueRO.HasPath)
+            {
+                return;
+            }
+
+            if (_currentPathComponent.ValueRO.CurrentWaypointIndex >= _currentPathBuffer.Length)
+            {
+                _currentTargetPositionComponent.ValueRW.MustMove = false;
+                _currentPathComponent.ValueRW.HasPath = false;
+                return;
+            }
+
+            UpdateUnitPosition();
+        }
+
+        private void UpdateUnitPosition()
+        {
+            float3 currentWaypoint = _currentPathBuffer[_currentPathComponent.ValueRO.CurrentWaypointIndex].Position;
+            currentWaypoint.y = _currentTransform.ValueRO.Position.y;
+            float distanceToWaypoint = math.distance(_currentTransform.ValueRO.Position, currentWaypoint);
+            bool isLastWaypoint = _currentPathComponent.ValueRO.CurrentWaypointIndex == _currentPathBuffer.Length - 1;
+            float threshold = isLastWaypoint ? FINAL_POSITION_THRESHOLD : WAYPOINT_THRESHOLD;
+
+            if (distanceToWaypoint < threshold)
+            {
+                if (isLastWaypoint)
+                {
+                    _currentTargetPositionComponent.ValueRW.MustMove = false;
+                    _currentPathComponent.ValueRW.HasPath = false;
+                    return;
+                }
+
+                _currentPathComponent.ValueRW.CurrentWaypointIndex++;
+                return;
+            }
+
+            float3 toWaypoint = currentWaypoint - _currentTransform.ValueRO.Position;
+            toWaypoint.y = 0;
+            SetUnitMovement(toWaypoint);
+        }
+
+        private void SetUnitMovement(float3 toWaypoint)
+        {
+            if (math.lengthsq(toWaypoint) < 0.001f)
+            {
+                return;
+            }
+
+            _desiredDirection = math.normalize(toWaypoint);
+            _desiredVelocity = _desiredDirection * _currentMoveSpeed.ValueRO.Speed;
+            SetTargetPosition();
+            SetRotation();
+        }
+
+        private void SetTargetPosition()
+        {
+            float3 newPosition = _currentTransform.ValueRO.Position;
+            newPosition.x += _desiredVelocity.x * _currentDeltaTime;
+            newPosition.z += _desiredVelocity.z * _currentDeltaTime;
+            _currentTransform.ValueRW.Position = newPosition;
+        }
+
+        private void SetRotation()
+        {
+            if (!IsRotationNeeded())
+            {
+                return;
+            }
+
+            _currentTransform.ValueRW.Rotation = quaternion.LookRotationSafe(_desiredDirection, math.up());
+        }
+
+        private bool IsRotationNeeded()
+        {
+            return (math.lengthsq(_desiredVelocity) > 0.01f);
         }
     }
 }

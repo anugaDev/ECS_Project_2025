@@ -8,6 +8,8 @@ namespace Player
 {
     public class PlayerAuthoring : MonoBehaviour
     {
+        private const int STARTING_POPULATION = 1;
+
         [SerializeField]
         private int _startingFood;
         
@@ -61,7 +63,7 @@ namespace Player
                 return new CurrentPopulationComponent
                 {
                     MaxPopulation = playerAuthoring.StartingMaxPopulation,
-                    CurrentPopulation = 0
+                    CurrentPopulation = STARTING_POPULATION
                 };
             }
         }

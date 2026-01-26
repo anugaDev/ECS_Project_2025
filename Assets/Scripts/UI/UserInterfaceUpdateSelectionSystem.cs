@@ -42,6 +42,7 @@ namespace UI
             _selectableToAction = new Dictionary<SelectableElementType, Action>
             {
                 [SelectableElementType.Building] = SetBuildingActions,
+                [SelectableElementType.Resource] = SetNoneSelected,
                 [SelectableElementType.Unit] = SetUnitActions,
                 [SelectableElementType.None] = SetNoneSelected
             };

@@ -32,19 +32,16 @@ namespace Units
     
     public struct PathComponent : IComponentData
     {
-        public bool HasPath;
-        public int CurrentWaypointIndex;
         public float3 LastTargetPosition;
+
+        public int CurrentWaypointIndex;
+
+        public bool HasPath;
+
     }
 
     public struct PathWaypointBuffer : IBufferElementData
     {
         public float3 Position;
     }
-
-    public struct VelocityComponent : IComponentData
-    {
-        public float3 Value;
-    }
-
 }

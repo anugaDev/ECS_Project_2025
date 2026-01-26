@@ -33,7 +33,6 @@ namespace Units
                 Entity unitEntity = GetEntity(TransformUsageFlags.Dynamic);
                 AddComponent<PathComponent>(unitEntity);
                 AddComponent<UnitTagComponent>(unitEntity);
-                AddComponent<VelocityComponent>(unitEntity);
                 AddComponent<NewUnitTagComponent>(unitEntity);
                 AddComponent<ElementTeamComponent>(unitEntity);
                 AddComponent<URPMaterialPropertyBaseColor>(unitEntity);
