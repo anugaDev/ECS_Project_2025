@@ -100,18 +100,28 @@ namespace UI
     
     public struct CurrentPopulationComponent : IComponentData
     {
+        [GhostField]
         public int MaxPopulation;
 
+        [GhostField]
         public int CurrentPopulation;
     }
 
     public struct CurrentWoodComponent : IComponentData
     {
+        [GhostField]
         public int Value;
     }
-    
+
     public struct CurrentFoodComponent : IComponentData
     {
+        [GhostField]
         public int Value;
+    }
+
+    public struct FoodGenerationComponent : IComponentData
+    {
+        [GhostField]
+        public int FoodPerSecond;
     }
 }

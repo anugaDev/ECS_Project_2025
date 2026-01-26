@@ -31,18 +31,17 @@ namespace Buildings
 
         protected override void OnUpdate()
         {
-            EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
+            EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
 
             foreach ((ElementTeamComponent buildingTeam, DynamicBuffer<LinkedEntityGroup> linkedEntities, Entity buildingEntity)
                      in SystemAPI.Query<ElementTeamComponent, DynamicBuffer<LinkedEntityGroup>>()
                          .WithAll<NewBuildingTagComponent>().WithEntityAccess())
             {
-                SetTeamMaterialOnChildren(linkedEntities, buildingTeam.Team, ecb);
-                ecb.RemoveComponent<NewBuildingTagComponent>(buildingEntity);
+                SetTeamMaterialOnChildren(linkedEntities, buildingTeam.Team, entityCommandBuffer);
             }
 
-            ecb.Playback(EntityManager);
-            ecb.Dispose();
+            entityCommandBuffer.Playback(EntityManager);
+            entityCommandBuffer.Dispose();
         }
 
         private void SetTeamMaterialOnChildren(DynamicBuffer<LinkedEntityGroup> linkedEntities, TeamType team, EntityCommandBuffer ecb)

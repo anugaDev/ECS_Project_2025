@@ -42,6 +42,7 @@ namespace Player
                 AddComponent(entity, GetCurrentWoodComponent(playerAuthoring));
                 AddComponent(entity, GetCurrentFoodComponent(playerAuthoring));
                 AddComponent(entity, GetCurrentPopulationComponent(playerAuthoring));
+                AddComponent(entity, new FoodGenerationComponent { FoodPerSecond = 0 });
             }
 
             private CurrentFoodComponent GetCurrentFoodComponent(PlayerAuthoring playerAuthoring)
