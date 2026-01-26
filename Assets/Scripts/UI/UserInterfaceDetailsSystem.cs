@@ -60,7 +60,7 @@ namespace UI
             _selectionDetailsController.UpdateHitPoints(currentHitPoints, maxHitPoints);
         }
 
-        private void SetName()           
+        private void SetName()
         {
             EntityManager.GetComponentData<ElementDisplayDetailsComponent>(_trackedEntity);
             ElementDisplayDetailsComponent details = EntityManager.GetComponentData<ElementDisplayDetailsComponent>(_trackedEntity);

@@ -1,7 +1,9 @@
 using ElementCommons;
+using Player;
 using PlayerCamera;
 using PlayerInputs;
 using Types;
+using UI;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
@@ -25,20 +27,31 @@ namespace Units
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<MainCameraTagComponent>();
+            state.RequireForUpdate<OwnerTagComponent>();
             _screenRectCalculator = new ElementScreenRectCalculator();
         }
 
         public void OnUpdate(ref SystemState state)
         {
+            TeamType clientTeam = GetClientTeam(ref state);
+
             Entity cameraEntity = SystemAPI.GetSingletonEntity<MainCameraTagComponent>();
             Camera camera = state.EntityManager
                 .GetComponentObject<MainCameraComponentData>(cameraEntity) .Camera;
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            foreach ((RefRW<LocalTransform> transform, NewSelectionComponent newSelection, ElementSelectionComponent selection, 
-                         SelectableElementTypeComponent selectedType, RefRO<PhysicsCollider> collider, Entity selectableEntity)
-                     in SystemAPI.Query<RefRW<LocalTransform>, NewSelectionComponent, ElementSelectionComponent, SelectableElementTypeComponent, RefRO<PhysicsCollider>>
+            foreach ((RefRW<LocalTransform> transform, NewSelectionComponent newSelection, ElementSelectionComponent selection,
+                         SelectableElementTypeComponent selectedType, RefRO<PhysicsCollider> collider,
+                         ElementTeamComponent elementTeam, Entity selectableEntity)
+                     in SystemAPI.Query<RefRW<LocalTransform>, NewSelectionComponent, ElementSelectionComponent,
+                                        SelectableElementTypeComponent, RefRO<PhysicsCollider>, ElementTeamComponent>
                              ().WithEntityAccess().WithAll<Simulate>())
             {
+                if (elementTeam.Team != clientTeam)
+                {
+                    entityCommandBuffer.RemoveComponent<NewSelectionComponent>(selectableEntity);
+                    continue;
+                }
+
                 _currentSelectedType = selectedType;
                 _currentNewSelection = newSelection;
                 _currentSelectionComponent = selection;
@@ -47,6 +60,17 @@ namespace Units
             }
 
             entityCommandBuffer.Playback(state.EntityManager);
+        }
+
+        private TeamType GetClientTeam(ref SystemState state)
+        {
+            foreach (PlayerTeamComponent playerTeam in
+                     SystemAPI.Query<PlayerTeamComponent>().WithAll<OwnerTagComponent>())
+            {
+                return playerTeam.Team;
+            }
+
+            return TeamType.Red;
         }
 
         private void UpdateSelection(NewSelectionComponent selectPosition, RefRW<LocalTransform> transform,

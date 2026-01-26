@@ -1,5 +1,7 @@
 using Buildings;
 using ElementCommons;
+using Player;
+using Types;
 using UI;
 using UI.UIControllers;
 using Unity.Collections;
@@ -128,14 +130,34 @@ namespace PlayerInputs
             NormalizeSelectionClick();
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
 
-            foreach ((RefRO<SelectableElementTypeComponent> _, Entity entity) in 
-                     SystemAPI.Query<RefRO<SelectableElementTypeComponent>>().WithEntityAccess())
+            // Get the client's team
+            TeamType clientTeam = GetClientTeam();
+
+            foreach ((RefRO<SelectableElementTypeComponent> _, ElementTeamComponent elementTeam, Entity entity) in
+                     SystemAPI.Query<RefRO<SelectableElementTypeComponent>, ElementTeamComponent>().WithEntityAccess())
             {
-                entityCommandBuffer.AddComponent(entity, GetUnitPositionComponent());
+                // Only add selection component to elements that belong to the client's team
+                if (elementTeam.Team == clientTeam)
+                {
+                    entityCommandBuffer.AddComponent(entity, GetUnitPositionComponent());
+                }
             }
 
             entityCommandBuffer.Playback(EntityManager);
             entityCommandBuffer.Dispose();
+        }
+
+        private TeamType GetClientTeam()
+        {
+            // Get team from the player entity with OwnerTagComponent
+            foreach (PlayerTeamComponent playerTeam in
+                     SystemAPI.Query<PlayerTeamComponent>().WithAll<OwnerTagComponent>())
+            {
+                return playerTeam.Team;
+            }
+
+            // Default to Red if no player found (shouldn't happen)
+            return TeamType.Red;
         }
 
         private void NormalizeSelectionClick()
