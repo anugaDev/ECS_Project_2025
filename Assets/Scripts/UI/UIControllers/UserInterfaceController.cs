@@ -11,6 +11,9 @@ namespace UI.UIControllers
         private SelectionBoxController _selectionBoxController;
 
         [SerializeField]
+        private ResourcesPanelController _resourcesPanelController;
+
+        [SerializeField]
         private SelectionActionsDisplayController _selectionActionsDisplayerController;
 
         [SerializeField]
@@ -30,6 +33,8 @@ namespace UI.UIControllers
         public SelectedDetailsDisplayController SelectedDetailsController => _selectedDetailsController;
 
         public SelectedGroupDisplayController SelectedGroupController => _selectedGroupController;
+
+        public ResourcesPanelController ResourcesPanelController => _resourcesPanelController;
 
         public SelectionBoxController SelectionBoxController => _selectionBoxController;
         

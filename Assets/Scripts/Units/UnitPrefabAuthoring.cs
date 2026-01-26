@@ -1,10 +1,8 @@
 using System.Collections.Generic;
 using ScriptableObjects;
 using Types;
-using UI;
 using Unity.Entities;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Units
 {
@@ -12,17 +10,7 @@ namespace Units
     { 
         [SerializeField] 
         private UnitsScriptableObject _unitsConfiguration;
-        
-        [SerializeField] 
-        private UnitUIController _unitUIPrefab;
 
-        [SerializeField] 
-        private GameObject _resourceUIPrefab;
-        
-        public UnitUIController UnitUIPrefab => _unitUIPrefab;
-        
-        public GameObject ResourceUIPrefab => _resourceUIPrefab;
-        
         public UnitsScriptableObject UnitsConfiguration => _unitsConfiguration;
 
         public class UnitPrefabBaker : Baker<UnitPrefabAuthoring>

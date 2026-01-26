@@ -8,6 +8,21 @@ namespace Player
 {
     public class PlayerAuthoring : MonoBehaviour
     {
+        [SerializeField]
+        private int _startingFood;
+        
+        [SerializeField]
+        private int _startingWood;
+
+        [SerializeField]
+        private int _startingMaxPopulation;
+
+        public int StartingFood => _startingFood;
+
+        public int StartingWood => _startingWood;
+
+        public int StartingMaxPopulation => _startingMaxPopulation;
+
         public class PlayerBaker : Baker<PlayerAuthoring>
         {
             public override void Bake(PlayerAuthoring playerAuthoring)
@@ -18,7 +33,36 @@ namespace Player
                 AddBuffer<SpawnUnitCommand>(entity);
                 AddComponent<OwnerTagComponent>(entity);
                 AddComponent<PlayerTeamComponent>(entity);
+                AddComponent<UpdateResourcesPanelTag>(entity);
                 AddComponent(entity, new PlayerTagComponent());
+                AddComponent(entity, GetCurrentWoodComponent(playerAuthoring));
+                AddComponent(entity, GetCurrentFoodComponent(playerAuthoring));
+                AddComponent(entity, GetCurrentPopulationComponent(playerAuthoring));
+            }
+
+            private CurrentFoodComponent GetCurrentFoodComponent(PlayerAuthoring playerAuthoring)
+            {
+                return new CurrentFoodComponent
+                {
+                    Value = playerAuthoring.StartingFood
+                };
+            }
+
+            private CurrentWoodComponent GetCurrentWoodComponent(PlayerAuthoring playerAuthoring)
+            {
+                return new CurrentWoodComponent
+                {
+                    Value = playerAuthoring.StartingWood
+                };
+            }
+
+            private CurrentPopulationComponent GetCurrentPopulationComponent(PlayerAuthoring playerAuthoring)
+            {
+                return new CurrentPopulationComponent
+                {
+                    MaxPopulation = playerAuthoring.StartingMaxPopulation,
+                    CurrentPopulation = 0
+                };
             }
         }
     }

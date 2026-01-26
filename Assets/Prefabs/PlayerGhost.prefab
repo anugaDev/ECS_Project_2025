@@ -261,3 +261,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8bbd4da2d04c4421aa25eb8426c07bbf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _startingFood: 25
+  _startingWood: 50
+  _startingMaxPopulation: 8

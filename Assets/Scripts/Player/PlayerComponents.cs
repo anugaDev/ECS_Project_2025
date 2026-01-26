@@ -90,4 +90,25 @@ namespace UI
     public struct SetEmptyDetailsComponent : IComponentData
     {
     }
+
+    public struct UpdateResourcesPanelTag : IComponentData
+    {
+    }
+    
+    public struct CurrentPopulationComponent : IComponentData
+    {
+        public int MaxPopulation;
+
+        public int CurrentPopulation;
+    }
+
+    public struct CurrentWoodComponent : IComponentData
+    {
+        public int Value;
+    }
+    
+    public struct CurrentFoodComponent : IComponentData
+    {
+        public int Value;
+    }
 }
