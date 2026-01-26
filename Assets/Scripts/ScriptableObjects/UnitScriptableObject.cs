@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using GatherableResources;
 using Types;
 using UnityEngine;
 using UnityEngine.UI;
@@ -25,6 +27,9 @@ namespace ScriptableObjects
 
         [SerializeField] 
         private float _recruitmentTime;
+        
+        [SerializeField]
+        private List<ResourceCostEntity> _recruitmentCost;
 
         public UnitType UnitType => _unitType;
 
@@ -37,5 +42,7 @@ namespace ScriptableObjects
         public string Description => _description;
 
         public float RecruitmentTime => _recruitmentTime;
+
+        public List<ResourceCostEntity> RecruitmentCost => _recruitmentCost;
     }
 }

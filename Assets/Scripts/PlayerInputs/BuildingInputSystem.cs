@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using Buildings;
 using ElementCommons;
+using GatherableResources;
 using PlayerCamera;
 using ScriptableObjects;
 using Types;
@@ -47,8 +49,12 @@ namespace PlayerInputs
         private bool _isPositionAvailable;
 
         private bool _lastAvailable;
-        
+
         private Vector3 _lastPosition;
+
+        private ElementResourceCostPolicy _elementResourceCostPolicy;
+
+        private EntityCommandBuffer _entityCommandBuffer;
 
         protected override void OnCreate()
         {
@@ -62,6 +68,8 @@ namespace PlayerInputs
                 BelongsTo = RAYCAST_GROUP,
                 CollidesWith = GROUNDPLANE_GROUP
             };
+            _elementResourceCostPolicy = new ElementResourceCostPolicy();
+
             base.OnCreate();
         }
 
@@ -93,19 +101,25 @@ namespace PlayerInputs
 
         protected override void OnUpdate()
         {
+            _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
+
             if (_isBuilding)
             {
                 UpdateBuilding();
-                return;
+            }
+            else
+            {
+                CheckBuilding();
             }
 
-            CheckBuilding();
+            _entityCommandBuffer.Playback(EntityManager);
+            _entityCommandBuffer.Dispose();
         }
 
         private void UpdateBuilding()
         {
             CollisionWorld collisionWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld;
-            var selectionInput = GetRaycastInput(collisionWorld);
+            RaycastInput selectionInput = GetRaycastInput(collisionWorld);
 
             if (!collisionWorld.CastRay(selectionInput, out var closestHit))
             { 
@@ -199,19 +213,20 @@ namespace PlayerInputs
 
         private void CheckBuilding()
         {
-            foreach ((SetPlayerUIActionComponent playerUIActionComponent, PlayerTagComponent playerTag) in SystemAPI.Query<SetPlayerUIActionComponent, PlayerTagComponent>())
+            foreach ((SetPlayerUIActionComponent playerUIActionComponent, Entity entity) in SystemAPI.Query<SetPlayerUIActionComponent>().WithEntityAccess())
             {
                 if (playerUIActionComponent.Action != PlayerUIActionType.Build)
                 {
                     continue;
                 }
 
-                CheckBuildingStatus(playerUIActionComponent);
+                CheckBuildingStatus(playerUIActionComponent, entity);
             }
         }
 
-        private void CheckBuildingStatus(SetPlayerUIActionComponent playerUIActionComponent)
+        private void CheckBuildingStatus(SetPlayerUIActionComponent playerUIActionComponent, Entity entity)
         {
+            UpdateCosts(entity);
             if (!IsBuildingAvailable(playerUIActionComponent.PayloadID))
             {
                 EndBuilding();
@@ -221,9 +236,22 @@ namespace PlayerInputs
             StartBuilding(playerUIActionComponent);
         }
 
+        private void UpdateCosts(Entity playerEntity)
+        {
+            int currentWood = SystemAPI.GetComponent<CurrentWoodComponent>(playerEntity).Value;
+            int currentFood = SystemAPI.GetComponent<CurrentWoodComponent>(playerEntity).Value;
+            int currentPopulation = SystemAPI.GetComponent<CurrentWoodComponent>(playerEntity).Value;
+            _elementResourceCostPolicy.UpdateCost(currentWood, currentFood, currentPopulation);
+        }
+
         private bool IsBuildingAvailable(int payloadID)
         {
-            return true; //TODO CHECK IF RESOURCES AVAILABLE
+            return _buildingConfiguration[(BuildingType)payloadID].ConstructionCost.All(IsCostAffordable);
+        }
+
+        private bool IsCostAffordable(ResourceCostEntity cost)
+        {
+            return _elementResourceCostPolicy.Get(cost);
         }
 
         private void StartBuilding(SetPlayerUIActionComponent playerUIActionComponent)
@@ -268,8 +296,48 @@ namespace PlayerInputs
                 return;
             }
 
+            SetUpdatedCosts();
             SetBuildingComponent();
             EndBuilding();
+        }
+
+        private void SetUpdatedCosts()
+        {
+            EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
+            _buildingConfiguration[_currentBuildingType].ConstructionCost
+                .ForEach(_elementResourceCostPolicy.AddCost);
+            Entity entity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
+            UpdateWoodResource(entity);
+            UpdateFoodResource(entity);
+            UpdatePopulation(entity);
+            entityCommandBuffer.AddComponent<UpdateResourcesPanelTag>(entity);
+            entityCommandBuffer.Playback(EntityManager);
+        }
+
+        private void UpdatePopulation(Entity entity)
+        {
+            CurrentPopulationComponent populationComponent = SystemAPI.GetComponent<CurrentPopulationComponent>(entity);
+            SystemAPI.SetComponent(entity, new CurrentPopulationComponent
+            {
+                MaxPopulation = populationComponent.MaxPopulation,
+                CurrentPopulation = _elementResourceCostPolicy.CurrentResources[ResourceType.Population]
+            });
+        }
+
+        private void UpdateFoodResource(Entity entity)
+        {
+            SystemAPI.SetComponent(entity, new CurrentFoodComponent
+            {
+                Value = _elementResourceCostPolicy.CurrentResources[ResourceType.Food]
+            });
+        }
+
+        private void UpdateWoodResource(Entity entity)
+        {
+            SystemAPI.SetComponent(entity, new CurrentWoodComponent
+            {
+                Value = _elementResourceCostPolicy.CurrentResources[ResourceType.Wood]
+            });
         }
 
         private bool IsBuildingPlacingAvailable()
@@ -279,14 +347,11 @@ namespace PlayerInputs
 
         private void SetBuildingComponent()
         {
-            EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
             PlaceBuildingCommand buildingCommand = GetBuildingComponent();
             Entity entity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
             DynamicBuffer<PlaceBuildingCommand> placeBuildingCommands = SystemAPI.GetBuffer<PlaceBuildingCommand>(entity);
             placeBuildingCommands.AddCommandData(buildingCommand);
-            entityCommandBuffer.Playback(EntityManager);
         }
-
 
         private PlaceBuildingCommand GetBuildingComponent()
         {
@@ -302,8 +367,20 @@ namespace PlayerInputs
         {
             _isBuilding = false;
             _currentBuildingTemplate.GameObject.SetActive(false);
+
             Entity entity = SystemAPI.GetSingletonEntity<SetPlayerUIActionComponent>();
-            EntityManager.RemoveComponent<SetPlayerUIActionComponent>(entity);
+
+            if (_entityCommandBuffer.IsCreated)
+            {
+                _entityCommandBuffer.RemoveComponent<SetPlayerUIActionComponent>(entity);
+            }
+            else
+            {
+                EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
+                ecb.RemoveComponent<SetPlayerUIActionComponent>(entity);
+                ecb.Playback(EntityManager);
+                ecb.Dispose();
+            }
         }
     }
 }

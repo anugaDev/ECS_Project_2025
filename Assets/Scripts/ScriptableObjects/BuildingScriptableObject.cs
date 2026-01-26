@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Buildings;
+using GatherableResources;
 using Types;
 using UnityEngine;
 
@@ -21,6 +23,9 @@ namespace ScriptableObjects
         private Sprite _sprite;
         
         [SerializeField]
+        private List<ResourceCostEntity> _constructionCost;
+        
+        [SerializeField]
         private GameObject _buildingPrefab;
         
         [SerializeField]
@@ -35,6 +40,8 @@ namespace ScriptableObjects
         public string Description => _description;
 
         public Sprite Sprite => _sprite;
+        
+        public List<ResourceCostEntity> ConstructionCost => _constructionCost;
 
         public BuildingView BuildingTemplate => _buildingTemplate;
     }

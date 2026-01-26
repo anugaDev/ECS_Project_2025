@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Buildings;
 using ElementCommons;
+using GatherableResources;
 using ScriptableObjects;
 using Types;
 using UI;
@@ -28,12 +29,15 @@ namespace Units
         private List<RecruitmentEntity> _endRecruitmentUnits;
         
         private EntityCommandBuffer _entityCommandBuffer;
+        
+        private ElementResourceCostPolicy _elementResourceCostPolicy;
 
         protected override void OnCreate()
         {
             RequireForUpdate<UnitsConfigurationComponent>();
             RequireForUpdate<PlayerTagComponent>();
             _buildingActionsFactory = new BuildingFactoryActionsFactory();
+            _elementResourceCostPolicy = new ElementResourceCostPolicy();
             base.OnCreate();
         }
 
@@ -55,6 +59,14 @@ namespace Units
             RemoveEndedRecruitmentUnits();
             _entityCommandBuffer.Playback(EntityManager);
             _entityCommandBuffer.Dispose();
+        }
+
+        private void UpdatePolicy(Entity playerEntity)
+        {
+            int currentWood = SystemAPI.GetComponent<CurrentWoodComponent>(playerEntity).Value;
+            int currentFood = SystemAPI.GetComponent<CurrentWoodComponent>(playerEntity).Value;
+            int currentPopulation = SystemAPI.GetComponent<CurrentWoodComponent>(playerEntity).Value;
+            _elementResourceCostPolicy.UpdateCost(currentWood, currentFood, currentPopulation);
         }
 
         private void UpdateUnitRecruitment()
@@ -99,6 +111,7 @@ namespace Units
                     continue;
                 }
 
+                UpdatePolicy(entity);
                 StartRecruitment(actionComponent);
                 _entityCommandBuffer.RemoveComponent<SetPlayerUIActionComponent>(entity);
             }
@@ -106,17 +119,61 @@ namespace Units
 
         private void StartRecruitment(SetPlayerUIActionComponent actionComponent)
         {
-            if (!IsRecruitmentAvailable())
+            UnitType unitType = (UnitType) actionComponent.PayloadID;
+            if (!IsRecruitmentAvailable(unitType))
             {
                 return;
             }
 
-            RecruitUnit((UnitType) actionComponent.PayloadID);
+            SetUpdatedCosts(unitType);
+            RecruitUnit(unitType);
         }
 
-        private bool IsRecruitmentAvailable()
+        private void SetUpdatedCosts(UnitType unitType)
         {
-            return true; //TODO SET Recruitment Costs (resources + population
+            _unitsConfiguration[unitType].RecruitmentCost
+                .ForEach(_elementResourceCostPolicy.AddCost);
+            Entity entity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
+            UpdateWoodResource(entity);
+            UpdateFoodResource(entity);
+            UpdatePopulation(entity);
+            _entityCommandBuffer.AddComponent<UpdateResourcesPanelTag>(entity);
+        }
+
+        private void UpdatePopulation(Entity entity)
+        {
+            CurrentPopulationComponent populationComponent = SystemAPI.GetComponent<CurrentPopulationComponent>(entity);
+            SystemAPI.SetComponent(entity, new CurrentPopulationComponent
+            {
+                MaxPopulation = populationComponent.MaxPopulation,
+                CurrentPopulation = _elementResourceCostPolicy.CurrentResources[ResourceType.Population]
+            });
+        }
+
+        private void UpdateFoodResource(Entity entity)
+        {
+            SystemAPI.SetComponent(entity, new CurrentFoodComponent
+            {
+                Value = _elementResourceCostPolicy.CurrentResources[ResourceType.Food]
+            });
+        }
+
+        private void UpdateWoodResource(Entity entity)
+        {
+            SystemAPI.SetComponent(entity, new CurrentWoodComponent
+            {
+                Value = _elementResourceCostPolicy.CurrentResources[ResourceType.Wood]
+            });
+        }
+
+        private bool IsRecruitmentAvailable(UnitType unitType)
+        {
+            return _unitsConfiguration[unitType].RecruitmentCost.All(IsCostAffordable);
+        }
+
+        private bool IsCostAffordable(ResourceCostEntity costEntity)
+        {
+            return _elementResourceCostPolicy.Get(costEntity);
         }
 
         private void RecruitUnit(UnitType unitType)
