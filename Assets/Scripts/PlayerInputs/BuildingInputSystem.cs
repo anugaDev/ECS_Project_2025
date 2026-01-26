@@ -239,8 +239,8 @@ namespace PlayerInputs
         private void UpdateCosts(Entity playerEntity)
         {
             int currentWood = SystemAPI.GetComponent<CurrentWoodComponent>(playerEntity).Value;
-            int currentFood = SystemAPI.GetComponent<CurrentWoodComponent>(playerEntity).Value;
-            int currentPopulation = SystemAPI.GetComponent<CurrentWoodComponent>(playerEntity).Value;
+            int currentFood = SystemAPI.GetComponent<CurrentFoodComponent>(playerEntity).Value;
+            int currentPopulation = SystemAPI.GetComponent<CurrentPopulationComponent>(playerEntity).CurrentPopulation;
             _elementResourceCostPolicy.UpdateCost(currentWood, currentFood, currentPopulation);
         }
 
