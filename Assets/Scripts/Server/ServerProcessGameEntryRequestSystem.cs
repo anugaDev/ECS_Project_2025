@@ -66,10 +66,16 @@ namespace Server
             _entityCommandBuffer.SetComponent(player, new PlayerTeamComponent{Team = playerTeam});
             _entityCommandBuffer.AddComponent(player, GetLastProcessedBuildingCommand());
             _entityCommandBuffer.AddComponent(player, GetLastProcessedUnitCommand());
+            _entityCommandBuffer.AddComponent(player, GetTestEnemyTeamComponent(teamRequest.Team));
             DynamicBuffer<SpawnUnitCommand> spawnUnitCommands = _entityCommandBuffer.AddBuffer<SpawnUnitCommand>(player);
             spawnUnitCommands.AddCommandData(GetSpawnUnitCommand(townCenterPosition, serverTick));
 
             return player;
+        }
+
+        private SpawnTestEnemyTeamTag GetTestEnemyTeamComponent(TeamType teamRequestTeam)
+        {
+            return new SpawnTestEnemyTeamTag { PlayerTeam = teamRequestTeam };
         }
 
         private LastProcessedBuildingCommand GetLastProcessedBuildingCommand()

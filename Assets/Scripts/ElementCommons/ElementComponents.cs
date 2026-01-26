@@ -37,6 +37,11 @@ namespace ElementCommons
     {
     }
 
+    public struct SpawnTestEnemyTeamTag : IComponentData
+    {
+        public TeamType PlayerTeam;
+    }
+
     public class ElementDisplayDetailsComponent : IComponentData
     {
         public string Name;
