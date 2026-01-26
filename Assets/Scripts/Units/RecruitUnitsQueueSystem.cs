@@ -65,8 +65,10 @@ namespace Units
         {
             int currentWood = SystemAPI.GetComponent<CurrentWoodComponent>(playerEntity).Value;
             int currentFood = SystemAPI.GetComponent<CurrentFoodComponent>(playerEntity).Value;
-            int currentPopulation = SystemAPI.GetComponent<CurrentPopulationComponent>(playerEntity).CurrentPopulation;
-            _elementResourceCostPolicy.UpdateCost(currentWood, currentFood, currentPopulation);
+            CurrentPopulationComponent populationComponent = SystemAPI.GetComponent<CurrentPopulationComponent>(playerEntity);
+            int currentPopulation = populationComponent.CurrentPopulation;
+            int maxPopulation = populationComponent.MaxPopulation;
+            _elementResourceCostPolicy.UpdateCost(currentWood, currentFood, currentPopulation, maxPopulation);
         }
 
         private void UpdateUnitRecruitment()

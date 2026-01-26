@@ -7,6 +7,8 @@ namespace GatherableResources
     {
         private Dictionary<ResourceType, int> _currentResources;
 
+        private int _maxPopulation;
+
         public Dictionary<ResourceType, int> CurrentResources => _currentResources;
 
         public ElementResourceCostPolicy()
@@ -19,11 +21,12 @@ namespace GatherableResources
             };
         }
 
-        public void UpdateCost(int woodCost, int foodCost, int populationCost)
+        public void UpdateCost(int woodCost, int foodCost, int populationCost, int maxPopulation)
         {
             _currentResources[ResourceType.Wood] = woodCost;
             _currentResources[ResourceType.Food] = foodCost;
             _currentResources[ResourceType.Population] = populationCost;
+            _maxPopulation = maxPopulation;
         }
  
         public bool Get(ResourceCostEntity resourceCost)
@@ -33,7 +36,20 @@ namespace GatherableResources
                 return true;
             }
 
-            return _currentResources[resourceCost.ResourceType] >= resourceCost.Cost;
+            return IsAvailableResource(resourceCost);
+        }
+
+        private bool IsAvailableResource(ResourceCostEntity resourceCost)
+        {
+            if (resourceCost.ResourceType == ResourceType.Population)
+            {
+                return _currentResources[resourceCost.ResourceType] + resourceCost.Cost <= _maxPopulation;
+            }
+            else
+            { 
+                return _currentResources[resourceCost.ResourceType] >= resourceCost.Cost;
+            }
+
         }
 
         public void AddCost(ResourceCostEntity resourceCost)
