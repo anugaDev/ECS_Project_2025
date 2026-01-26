@@ -33,6 +33,8 @@ namespace Player
                 AddBuffer<UpdateUIActionPayload>(entity);
                 AddBuffer<PlaceBuildingCommand>(entity);
                 AddBuffer<SpawnUnitCommand>(entity);
+                AddBuffer<EnableUIActionBuffer>(entity);
+                AddBuffer<DisableUIActionBuffer>(entity);
                 AddComponent<OwnerTagComponent>(entity);
                 AddComponent<PlayerTeamComponent>(entity);
                 AddComponent<UpdateResourcesPanelTag>(entity);

@@ -313,6 +313,7 @@ namespace PlayerInputs
             UpdateFoodResource(entity);
             UpdatePopulation(entity);
             entityCommandBuffer.AddComponent<UpdateResourcesPanelTag>(entity);
+            entityCommandBuffer.AddComponent<ValidateUIActionsTag>(entity);
             entityCommandBuffer.Playback(EntityManager);
         }
 

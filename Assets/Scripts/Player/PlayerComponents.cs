@@ -35,14 +35,14 @@ namespace UI
         public int PayloadID;
     }
 
-    public struct EnableUIActionComponent : IComponentData
+    public struct EnableUIActionBuffer : IBufferElementData
     {
         public PlayerUIActionType Action;
 
         public int PayloadID;
     }
 
-    public struct DisableUIActionComponent : IComponentData
+    public struct DisableUIActionBuffer : IBufferElementData
     {
         public PlayerUIActionType Action;
 
@@ -57,6 +57,9 @@ namespace UI
     }
 
     public struct UpdateUIActionTag : IComponentData
+    {
+    }
+    public struct ValidateUIActionsTag : IComponentData
     {
     }
 

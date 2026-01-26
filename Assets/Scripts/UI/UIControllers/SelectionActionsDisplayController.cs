@@ -100,19 +100,19 @@ namespace UI.UIControllers
             }
         }
 
-        public void EnableAction(EnableUIActionComponent enableComponent)
+        public void EnableAction(EnableUIActionBuffer enableComponent)
         {
-            foreach (ActionButtonController actionButton in 
-                     _buttonActions.Where(actionButton => enableComponent.PayloadID == actionButton.GetPayloadId() 
+            foreach (ActionButtonController actionButton in
+                     _buttonActions.Where(actionButton => enableComponent.PayloadID == actionButton.GetPayloadId()
                          && actionButton.GetActionType() == enableComponent.Action))
             {
                 actionButton.Enable();
             }
         }
-        public void DisableAction(DisableUIActionComponent enableComponent)
+        public void DisableAction(DisableUIActionBuffer enableComponent)
         {
-            foreach (ActionButtonController actionButton in 
-                     _buttonActions.Where(actionButton => enableComponent.PayloadID == actionButton.GetPayloadId() 
+            foreach (ActionButtonController actionButton in
+                     _buttonActions.Where(actionButton => enableComponent.PayloadID == actionButton.GetPayloadId()
                          && actionButton.GetActionType() == enableComponent.Action))
             {
                 actionButton.Disable();

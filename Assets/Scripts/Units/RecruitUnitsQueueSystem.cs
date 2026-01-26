@@ -140,6 +140,7 @@ namespace Units
             UpdateFoodResource(entity);
             UpdatePopulation(entity);
             _entityCommandBuffer.AddComponent<UpdateResourcesPanelTag>(entity);
+            _entityCommandBuffer.AddComponent<ValidateUIActionsTag>(entity);
         }
 
         private void UpdatePopulation(Entity entity)

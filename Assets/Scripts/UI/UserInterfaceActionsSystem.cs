@@ -10,6 +10,7 @@ using Unity.Transforms;
 namespace UI
 {
     [UpdateAfter(typeof(TransformSystemGroup))]
+    [UpdateAfter(typeof(UserInterfaceActionValidateSystem))]
     [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
     public partial class UserInterfaceActionsSystem : SystemBase
     {
@@ -63,18 +64,25 @@ namespace UI
         protected override void OnUpdate()
         {
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            foreach ((EnableUIActionComponent enableComponent, Entity entity) 
-                in SystemAPI.Query<EnableUIActionComponent>().WithEntityAccess())
+
+            foreach ((DynamicBuffer<EnableUIActionBuffer> enableBuffer, Entity entity)
+                in SystemAPI.Query<DynamicBuffer<EnableUIActionBuffer>>().WithEntityAccess())
             {
-                _selectionActionsController.EnableAction(enableComponent);
-                entityCommandBuffer.RemoveComponent<EnableUIActionComponent>(entity);
+                foreach (EnableUIActionBuffer enableAction in enableBuffer)
+                {
+                    _selectionActionsController.EnableAction(enableAction);
+                }
+                enableBuffer.Clear();
             }
 
-            foreach ((DisableUIActionComponent disableComponent, Entity entity) 
-                     in SystemAPI.Query<DisableUIActionComponent>().WithEntityAccess())
+            foreach ((DynamicBuffer<DisableUIActionBuffer> disableBuffer, Entity entity)
+                     in SystemAPI.Query<DynamicBuffer<DisableUIActionBuffer>>().WithEntityAccess())
             {
-                _selectionActionsController.DisableAction(disableComponent);
-                entityCommandBuffer.RemoveComponent<DisableUIActionComponent>(entity);
+                foreach (DisableUIActionBuffer disableAction in disableBuffer)
+                {
+                    _selectionActionsController.DisableAction(disableAction);
+                }
+                disableBuffer.Clear();
             }
 
             foreach ((RefRO<UpdateUIActionTag> updateUIActionTag, DynamicBuffer<UpdateUIActionPayload> buffer, Entity entity) in
