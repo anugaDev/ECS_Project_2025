@@ -41,8 +41,6 @@ namespace Server
                 _entityCommandBuffer.DestroyEntity(requestEntity);
                 _entityCommandBuffer.AddComponent<NetworkStreamInGame>(requestSource.SourceConnection);
                 int networkId = SystemAPI.GetComponent<NetworkId>(requestSource.SourceConnection).Value;
-                DebugTeam(networkId, teamRequest);
-
                 float3 townCenterPosition = SpawnInitialTownCenter(townCenterPrefab, networkId, teamRequest.Team, ref state);
 
                 Entity spawnPlayer = SpawnPlayer(networkId, teamRequest, playerPrefab, requestSource, townCenterPosition, serverTick);
@@ -66,9 +64,11 @@ namespace Server
             _entityCommandBuffer.SetComponent(player, new PlayerTeamComponent{Team = playerTeam});
             _entityCommandBuffer.AddComponent(player, GetLastProcessedBuildingCommand());
             _entityCommandBuffer.AddComponent(player, GetLastProcessedUnitCommand());
+            _entityCommandBuffer.AddComponent(player, GetLastProcessedQueueCommand());
             _entityCommandBuffer.AddComponent(player, GetTestEnemyTeamComponent(teamRequest.Team));
             DynamicBuffer<SpawnUnitCommand> spawnUnitCommands = _entityCommandBuffer.AddBuffer<SpawnUnitCommand>(player);
             spawnUnitCommands.AddCommandData(GetSpawnUnitCommand(townCenterPosition, serverTick));
+            _entityCommandBuffer.AddBuffer<QueueUnitCommand>(player);
 
             return player;
         }
@@ -92,20 +92,35 @@ namespace Server
         {
             return new LastProcessedUnitCommand()
             {
-                Tick = NetworkTick.Invalid,
-                BuildingPosition = float3.zero,
-                UnitType = UnitType.Worker
+                CommandId = -1
+            };
+        }
+
+        private LastProcessedQueueCommand GetLastProcessedQueueCommand()
+        {
+            return new LastProcessedQueueCommand()
+            {
+                CommandId = -1
             };
         }
 
         private SpawnUnitCommand GetSpawnUnitCommand(float3 townCenterPosition, NetworkTick serverTick)
         {
+
             return new SpawnUnitCommand
             {
                 UnitType = UnitType.Worker,
                 BuildingPosition = townCenterPosition,
-                Tick = serverTick
+                Tick = serverTick,
+                CommandId = GetCommandId(townCenterPosition, serverTick)
             };
+        }
+
+        private static int GetCommandId(float3 townCenterPosition, NetworkTick serverTick)
+        {
+            int positionHash = (int)(townCenterPosition.x * 1000 + townCenterPosition.z * 100);
+            int commandId = (int)serverTick.TickIndexForValidTick * 10000 + (int)UnitType.Worker * 100 + (positionHash % 100);
+            return commandId;
         }
 
         private float3 SpawnInitialTownCenter(Entity townCenterPrefab, int networkId, TeamType team, ref SystemState state)
@@ -124,11 +139,6 @@ namespace Server
             _entityCommandBuffer.SetComponent(newBuilding, new ElementTeamComponent{Team = team});
 
             return buildingPosition;
-        }
-
-        private void DebugTeam(int clientId, TeamRequest teamRequest)
-        {
-            Debug.Log($"team received {clientId} to the {teamRequest.Team} team");
         }
 
         private ElementTeamComponent GetTeamComponent(TeamType team)

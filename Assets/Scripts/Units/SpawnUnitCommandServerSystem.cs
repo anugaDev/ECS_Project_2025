@@ -6,9 +6,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.NetCode;
-using Unity.Physics;
 using Unity.Transforms;
-using UnityEngine;
 using Random = Unity.Mathematics.Random;
 
 namespace Units
@@ -22,7 +20,7 @@ namespace Units
         private const float MIN_SPAWN_DISTANCE = 5F;
 
         private const float EXTENTS_MULTIPLIER = 2f;
-        
+
         private UnitsPrefabEntityFactory _prefabFactory;
 
         private EntityCommandBuffer _entityCommandBuffer;
@@ -65,32 +63,18 @@ namespace Units
             if (!command.Tick.IsValid)
                 return;
 
-            if (IsDuplicateCommand(command, lastProcessedCommand.ValueRO))
+            // Check if we've already processed this command ID
+            if (command.CommandId == lastProcessedCommand.ValueRO.CommandId)
                 return;
 
+            // Resources are deducted when unit is queued (QueueUnitCommandServerSystem), not when spawned
+            InstantiateUnit(command, playerTeam, networkId, state);
+
+            // Update last processed command ID
             lastProcessedCommand.ValueRW = new LastProcessedUnitCommand()
             {
-                Tick = command.Tick,
-                BuildingPosition = command.BuildingPosition,
-                UnitType = command.UnitType
+                CommandId = command.CommandId
             };
-
-            InstantiateUnit(command, playerTeam, networkId, state);
-        }
-
-        private bool IsDuplicateCommand(SpawnUnitCommand newCommand, LastProcessedUnitCommand lastCommand)
-        {
-            if (!lastCommand.Tick.IsValid)
-                return false;
-
-            bool sameBuilding = math.distancesq(newCommand.BuildingPosition, lastCommand.BuildingPosition) < 0.01f;
-            bool sameUnitType = newCommand.UnitType == lastCommand.UnitType;
-
-            if (!sameBuilding || !sameUnitType)
-                return false;
-
-            int tickDifference = newCommand.Tick.TicksSince(lastCommand.Tick);
-            return tickDifference < 120;
         }
 
         private void InstantiateUnit(SpawnUnitCommand spawnUnitCommand, TeamType playerTeam, int networkId,

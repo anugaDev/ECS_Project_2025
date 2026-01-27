@@ -25,18 +25,19 @@ namespace PlayerInputs
         private InputActions _inputActionMap;
 
         private Vector2 _startingPosition;
-
+        
         private Vector2 _lastPosition;
+
+        private float _selectionStartTime;
 
         private bool _mustKeepSelection;
 
         private bool _isClickSelection;
-
+        
         private bool _isAvailable;
 
         private bool _isDragging;
 
-        private float _selectionStartTime;
 
         private CheckGameplayInteractionPolicy _interactionPolicy;
 
@@ -129,14 +130,11 @@ namespace PlayerInputs
         {
             NormalizeSelectionClick();
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-
-            // Get the client's team
             TeamType clientTeam = GetClientTeam();
 
             foreach ((RefRO<SelectableElementTypeComponent> _, ElementTeamComponent elementTeam, Entity entity) in
                      SystemAPI.Query<RefRO<SelectableElementTypeComponent>, ElementTeamComponent>().WithEntityAccess())
             {
-                // Only add selection component to elements that belong to the client's team
                 if (elementTeam.Team == clientTeam)
                 {
                     entityCommandBuffer.AddComponent(entity, GetUnitPositionComponent());
@@ -149,14 +147,12 @@ namespace PlayerInputs
 
         private TeamType GetClientTeam()
         {
-            // Get team from the player entity with OwnerTagComponent
             foreach (PlayerTeamComponent playerTeam in
                      SystemAPI.Query<PlayerTeamComponent>().WithAll<OwnerTagComponent>())
             {
                 return playerTeam.Team;
             }
 
-            // Default to Red if no player found (shouldn't happen)
             return TeamType.Red;
         }
 

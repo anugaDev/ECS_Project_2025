@@ -27,5 +27,4 @@ namespace GatherableResources
     {
         public GameObject Instance;
     }
-
 }

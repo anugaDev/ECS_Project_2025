@@ -135,38 +135,6 @@ namespace Units
         {
             _unitsConfiguration[unitType].RecruitmentCost
                 .ForEach(_elementResourceCostPolicy.AddCost);
-            Entity entity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
-            UpdateWoodResource(entity);
-            UpdateFoodResource(entity);
-            UpdatePopulation(entity);
-            _entityCommandBuffer.AddComponent<UpdateResourcesPanelTag>(entity);
-            _entityCommandBuffer.AddComponent<ValidateUIActionsTag>(entity);
-        }
-
-        private void UpdatePopulation(Entity entity)
-        {
-            CurrentPopulationComponent populationComponent = SystemAPI.GetComponent<CurrentPopulationComponent>(entity);
-            SystemAPI.SetComponent(entity, new CurrentPopulationComponent
-            {
-                MaxPopulation = populationComponent.MaxPopulation,
-                CurrentPopulation = _elementResourceCostPolicy.CurrentResources[ResourceType.Population]
-            });
-        }
-
-        private void UpdateFoodResource(Entity entity)
-        {
-            SystemAPI.SetComponent(entity, new CurrentFoodComponent
-            {
-                Value = _elementResourceCostPolicy.CurrentResources[ResourceType.Food]
-            });
-        }
-
-        private void UpdateWoodResource(Entity entity)
-        {
-            SystemAPI.SetComponent(entity, new CurrentWoodComponent
-            {
-                Value = _elementResourceCostPolicy.CurrentResources[ResourceType.Wood]
-            });
         }
 
         private bool IsRecruitmentAvailable(UnitType unitType)
@@ -201,6 +169,8 @@ namespace Units
 
         private void RecruitUnitAtBuilding(UnitType unitType, Entity entity)
         {
+            SendQueueCommand(unitType);
+
             float recruitmentTime = _unitsConfiguration[unitType].RecruitmentTime;
             RecruitmentEntity recruitmentEntity = new RecruitmentEntity(recruitmentTime, entity, unitType);
             recruitmentEntity.OnFinishedAction += OnUnitRecruitmentFinished;
@@ -284,12 +254,42 @@ namespace Units
 
         private SpawnUnitCommand GetSpawnUnitCommand(float3 buildingPosition, UnitType unit)
         {
+            NetworkTick tick = SystemAPI.GetSingleton<NetworkTime>().ServerTick;
+
             return new SpawnUnitCommand
             {
-                Tick = SystemAPI.GetSingleton<NetworkTime>().ServerTick,
+                Tick = tick,
                 UnitType = unit,
-                BuildingPosition = buildingPosition
+                BuildingPosition = buildingPosition,
+                CommandId = GetCommandId(buildingPosition, unit, tick)
             };
+        }
+
+        private static int GetCommandId(float3 buildingPosition, UnitType unit, NetworkTick tick)
+        {
+            // Generate unique command ID using tick, unit type, and building position hash
+            int positionHash = (int)(buildingPosition.x * 1000 + buildingPosition.z * 100);
+            int commandId = (int)tick.TickIndexForValidTick * 10000 + (int)unit * 100 + (positionHash % 100);
+            return commandId;
+        }
+
+        private void SendQueueCommand(UnitType unitType)
+        {
+            Entity playerEntity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
+            DynamicBuffer<QueueUnitCommand> queueCommands = SystemAPI.GetBuffer<QueueUnitCommand>(playerEntity);
+            NetworkTick tick = SystemAPI.GetSingleton<NetworkTime>().ServerTick;
+
+            queueCommands.AddCommandData(new QueueUnitCommand
+            {
+                Tick = tick,
+                UnitType = unitType,
+                CommandId = GetCommandId(unitType, tick)
+            });
+        }
+
+        private static int GetCommandId(UnitType unitType, NetworkTick tick)
+        {
+            return (int)tick.TickIndexForValidTick * 1000 + (int)unitType;
         }
 
         public void SetBuildingUpdateUI(Entity entity)

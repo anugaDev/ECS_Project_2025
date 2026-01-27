@@ -37,6 +37,7 @@ namespace Units
                 AddComponent<ElementTeamComponent>(unitEntity);
                 AddComponent<URPMaterialPropertyBaseColor>(unitEntity);
                 AddComponent<UnitTargetPositionComponent>(unitEntity);
+                AddComponent<UnitSelectedTargetComponent>(unitEntity);
                 AddComponent<ElementSelectionComponent>(unitEntity);
                 AddComponent<ElementDisplayDetailsComponent>(unitEntity);
                 AddComponent(unitEntity, GetUnitTypeComponent(authoring));

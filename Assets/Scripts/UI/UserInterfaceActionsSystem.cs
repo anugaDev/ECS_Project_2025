@@ -90,7 +90,6 @@ namespace UI
                          .WithEntityAccess())
             {
                 _selectionActionsController.SetActionsActive(buffer);
-                buffer.Clear();
                 entityCommandBuffer.RemoveComponent<UpdateUIActionTag>(entity);
             }
 

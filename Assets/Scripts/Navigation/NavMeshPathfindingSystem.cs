@@ -1,3 +1,4 @@
+using ElementCommons;
 using PlayerInputs;
 using Units;
 using Unity.Entities;
@@ -27,28 +28,28 @@ namespace Navigation
         {
             const float TARGET_CHANGE_THRESHOLD = 0.1f;
 
-            foreach ((RefRO<LocalTransform> transform, RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, DynamicBuffer<PathWaypointBuffer> pathBuffer, Entity entity)
-                     in SystemAPI.Query<RefRO<LocalTransform>, RefRW<UnitTargetPositionComponent>, RefRW<PathComponent>, DynamicBuffer<PathWaypointBuffer>>()
+            foreach ((RefRO<LocalTransform> transform, RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRO<ElementSelectionComponent> selection, Entity entity)
+                     in SystemAPI.Query<RefRO<LocalTransform>, RefRW<UnitTargetPositionComponent>, RefRW<PathComponent>, DynamicBuffer<PathWaypointBuffer>, RefRO<ElementSelectionComponent>>()
                          .WithAll<Simulate, UnitTagComponent>()
                          .WithEntityAccess())
             {
-                UpdateUnitPathfinding(targetPosition, pathComponent, TARGET_CHANGE_THRESHOLD, pathBuffer, transform);
+                UpdateUnitPathfinding(targetPosition, pathComponent, TARGET_CHANGE_THRESHOLD, pathBuffer, transform, selection.ValueRO.IsSelected, entity);
             }
         }
 
         private void UpdateUnitPathfinding(RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, float TARGET_CHANGE_THRESHOLD,
-            DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRO<LocalTransform> transform)
+            DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRO<LocalTransform> transform, bool isSelected, Entity entity)
         {
             if (!targetPosition.ValueRO.MustMove)
             {
                 return;
             }
 
-            CheckUnitTarget(targetPosition, pathComponent, TARGET_CHANGE_THRESHOLD, pathBuffer, transform);
+            CheckUnitTarget(targetPosition, pathComponent, TARGET_CHANGE_THRESHOLD, pathBuffer, transform, isSelected, entity);
         }
 
         private void CheckUnitTarget(RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, float TARGET_CHANGE_THRESHOLD,
-            DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRO<LocalTransform> transform)
+            DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRO<LocalTransform> transform, bool isSelected, Entity entity)
         {
             float3 currentTarget = targetPosition.ValueRO.Value;
             bool isTargetChanged = GetIsTargetChanged(pathComponent, TARGET_CHANGE_THRESHOLD, currentTarget);
@@ -58,11 +59,11 @@ namespace Navigation
                 return;
             }
 
-            SetUnitPath(targetPosition, pathComponent, pathBuffer, transform, currentTarget);
+            SetUnitPath(targetPosition, pathComponent, pathBuffer, transform, currentTarget, isSelected, entity);
         }
 
         private void SetUnitPath(RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRO<LocalTransform> transform,
-            float3 currentTarget)
+            float3 currentTarget, bool isSelected, Entity entity)
         {
             pathBuffer.Clear();
             pathComponent.ValueRW.CurrentWaypointIndex = 0;
@@ -71,15 +72,15 @@ namespace Navigation
             Vector3 startPos = transform.ValueRO.Position;
             Vector3 endPos = currentTarget;
 
-            SetUnitPathfinding(targetPosition, pathComponent, pathBuffer, startPos, endPos, currentTarget);
+            SetUnitPathfinding(targetPosition, pathComponent, pathBuffer, startPos, endPos, currentTarget, isSelected, entity);
         }
 
         private void SetUnitPathfinding(RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, DynamicBuffer<PathWaypointBuffer> pathBuffer, Vector3 startPos,
-            Vector3 endPos, float3 currentTarget)
+            Vector3 endPos, float3 currentTarget, bool isSelected, Entity entity)
         {
             if (NavMesh.CalculatePath(startPos, endPos, _walkableAreaMask, _reusablePath))
             {
-                OnPathCalculated(targetPosition, pathComponent, pathBuffer, currentTarget);
+                OnPathCalculated(targetPosition, pathComponent, pathBuffer, currentTarget, isSelected, entity);
             }
             else
             {
@@ -87,11 +88,11 @@ namespace Navigation
             }
         }
 
-        private void OnPathCalculated(RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, DynamicBuffer<PathWaypointBuffer> pathBuffer, float3 currentTarget)
+        private void OnPathCalculated(RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, DynamicBuffer<PathWaypointBuffer> pathBuffer, float3 currentTarget, bool isSelected, Entity entity)
         {
             if (_reusablePath.status == NavMeshPathStatus.PathComplete)
             {
-                CompletePath(pathBuffer, pathComponent, currentTarget);
+                CompletePath(pathBuffer, pathComponent, currentTarget, isSelected, entity);
             }
             else
             {
@@ -127,7 +128,7 @@ namespace Navigation
             pathComponent.ValueRW.LastTargetPosition = currentTarget;
         }
 
-        private void CompletePath(DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRW<PathComponent> pathComponent, float3 currentTarget)
+        private void CompletePath(DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRW<PathComponent> pathComponent, float3 currentTarget, bool isSelected, Entity entity)
         {
             pathBuffer.Clear();
 

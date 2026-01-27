@@ -1,3 +1,4 @@
+using ElementCommons;
 using PlayerInputs;
 using Unity.Burst;
 using Unity.Entities;
@@ -32,15 +33,14 @@ namespace Units.MovementSystems
         
         private float _currentDeltaTime;
 
-        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             _currentDeltaTime = SystemAPI.Time.DeltaTime;
 
-            foreach ((RefRW<LocalTransform> transform, RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRO<UnitMoveSpeedComponent> moveSpeed)
+            foreach ((RefRW<LocalTransform> transform, RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRO<UnitMoveSpeedComponent> moveSpeed, RefRO<ElementSelectionComponent> selection)
                      in SystemAPI.Query<RefRW<LocalTransform>, RefRW<UnitTargetPositionComponent>,
                          RefRW<PathComponent>, DynamicBuffer<PathWaypointBuffer>,
-                         RefRO<UnitMoveSpeedComponent>>()
+                         RefRO<UnitMoveSpeedComponent>, RefRO<ElementSelectionComponent>>()
                          .WithAll<Simulate, UnitTagComponent>())
             {
                 _currentTargetPositionComponent = targetPosition;
@@ -48,11 +48,11 @@ namespace Units.MovementSystems
                 _currentPathBuffer = pathBuffer;
                 _currentTransform = transform;
                 _currentMoveSpeed = moveSpeed;
-                SetUnitPosition();
+                SetUnitPosition(selection.ValueRO.IsSelected);
             }
         }
 
-        private void SetUnitPosition()
+        private void SetUnitPosition(bool isSelected)
         {
             if (!_currentTargetPositionComponent.ValueRO.MustMove || !_currentPathComponent.ValueRO.HasPath)
             {

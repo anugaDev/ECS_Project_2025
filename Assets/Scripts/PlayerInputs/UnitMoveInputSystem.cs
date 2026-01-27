@@ -18,27 +18,37 @@ namespace PlayerInputs
     [UpdateInGroup(typeof(GhostInputSystemGroup))]
     public partial class UnitMoveInputSystem : SystemBase
     {
-        private const uint GROUNDPLANE_GROUP = 1 << 0; 
-        
-        private const uint RAYCAST_GROUP = 1 << 5; 
-        
-        private const float DEFAULT_Z_POSITION = 100f; 
-        
+        private const uint GROUNDPLANE_GROUP = 1 << 0;
+
+        private const uint RAYCAST_GROUP = 1 << 5;
+
+        private const uint UNITS_GROUP = 1 << 1;
+
+        private const uint BUILDINGS_GROUP = 1 << 2;
+
+        private const uint RESOURCES_GROUP = 1 << 5;
+
+        private const float DEFAULT_Z_POSITION = 100f;
+
         private UnitTargetPositionComponent _unitTargetPositionComponent;
+        private UnitSelectedTargetComponent _unitSelectedTargetComponent;
 
         private CheckGameplayInteractionPolicy _interactionPolicy;
-        
+
         private MoveIndicatorController _moveIndicator;
-        
+
         private CollisionFilter _selectionFilter;
-        
+        private CollisionFilter _targetSelectionFilter;
+
         private InputActions _inputActionMap;
-        
+
         private bool _indicatorIsSet;
-        
+
         private bool _isAvailable;
-        
+
         private bool _anySelected;
+
+        private bool _inputReceived;
 
         protected override void OnCreate()
         {
@@ -49,7 +59,13 @@ namespace PlayerInputs
                 BelongsTo = RAYCAST_GROUP,
                 CollidesWith = GROUNDPLANE_GROUP
             };
-            
+
+            _targetSelectionFilter = new CollisionFilter
+            {
+                BelongsTo = RAYCAST_GROUP,
+                CollidesWith = UNITS_GROUP | BUILDINGS_GROUP | RESOURCES_GROUP
+            };
+
             RequireForUpdate<OwnerTagComponent>();
             RequireForUpdate<MoveIndicatorPrefabComponent>();
         }
@@ -75,25 +91,20 @@ namespace PlayerInputs
 
         private void OnSelectMovePosition(InputAction.CallbackContext obj)
         {
-            CheckInteractionAvailable();
-            if (!_isAvailable)
-            {
-                return;
-            }
-
-            SelectTargetPosition();
+            _inputReceived = true;
         }
 
         private void CheckInteractionAvailable()
         {
             foreach (SetPlayerUIActionComponent playerUIActionComponent in SystemAPI.Query<SetPlayerUIActionComponent>())
             {
-                if (playerUIActionComponent.Action == PlayerUIActionType.Build)
+                if (playerUIActionComponent.Action != PlayerUIActionType.Build)
                 {
-                    _isAvailable = false;
+                    continue;
                 }
-            }
 
+                _isAvailable = false;
+            }
             _isAvailable = _interactionPolicy.IsAllowed();
         }
 
@@ -102,21 +113,28 @@ namespace PlayerInputs
             CollisionWorld collisionWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld;
             Entity cameraEntity = SystemAPI.GetSingletonEntity<MainCameraTagComponent>();
             Camera mainCamera = EntityManager.GetComponentObject<MainCameraComponentData>(cameraEntity).Camera;
-            RaycastInput selectionInput = GetRaycastInput(mainCamera);
-            SetUnitPosition(collisionWorld, selectionInput);
+            RaycastInput targetInput = GetRaycastInput(mainCamera, _targetSelectionFilter);
+            RaycastInput groundInput = GetRaycastInput(mainCamera, _selectionFilter);
+
+            SetUnitPosition(collisionWorld, targetInput, groundInput);
         }
 
-        private void SetUnitPosition(CollisionWorld collisionWorld, RaycastInput selectionInput)
+        private void SetUnitPosition(CollisionWorld collisionWorld, RaycastInput targetInput, RaycastInput groundInput)
         {
-            if (!collisionWorld.CastRay(selectionInput, out var closestHit))
-            { 
+            bool hitTarget = collisionWorld.CastRay(targetInput, out var targetHit);
+            Entity targetEntity = hitTarget ? targetHit.Entity : Entity.Null;
+
+            if (!collisionWorld.CastRay(groundInput, out var groundHit))
+            {
                 return;
             }
 
-            foreach ((RefRO<OwnerTagComponent> _, UnitTypeComponent unitType, Entity entity) in 
+            RaycastHit positionHit = hitTarget ? targetHit : groundHit;
+
+            foreach ((RefRO<OwnerTagComponent> _, UnitTypeComponent unitType, Entity entity) in
                      SystemAPI.Query<RefRO<OwnerTagComponent>, UnitTypeComponent>().WithEntityAccess())
             {
-                SetSelectedUnitPosition(closestHit, entity);
+                SetSelectedUnitPosition(positionHit, targetEntity, entity);
             }
 
             SetMovePositionIndicator();
@@ -139,7 +157,7 @@ namespace PlayerInputs
             _anySelected = false;
         }
 
-        private void SetSelectedUnitPosition(RaycastHit closestHit, Entity entity)
+        private void SetSelectedUnitPosition(RaycastHit closestHit, Entity targetEntity, Entity entity)
         {
             ElementSelectionComponent selectedPositionComponent = EntityManager.GetComponentData<ElementSelectionComponent>(entity);
 
@@ -149,8 +167,19 @@ namespace PlayerInputs
             }
 
             _anySelected = true;
+
             _unitTargetPositionComponent = GetUnitPositionComponent(closestHit);
             EntityManager.SetComponentData(entity, _unitTargetPositionComponent);
+
+            bool hasTarget = targetEntity != Entity.Null &&
+                           EntityManager.Exists(targetEntity) &&
+                           EntityManager.HasComponent<SelectableElementTypeComponent>(targetEntity);
+            _unitSelectedTargetComponent = new UnitSelectedTargetComponent
+            {
+                TargetEntity = hasTarget ? targetEntity : Entity.Null,
+                IsFollowingTarget = hasTarget
+            };
+            EntityManager.SetComponentData(entity, _unitSelectedTargetComponent);
 
             PathComponent pathComp = EntityManager.GetComponentData<PathComponent>(entity);
             pathComp.HasPath = false;
@@ -171,7 +200,7 @@ namespace PlayerInputs
             };
         }
 
-        private RaycastInput GetRaycastInput(Camera mainCamera)
+        private RaycastInput GetRaycastInput(Camera mainCamera, CollisionFilter filter)
         {
             Vector3 mousePosition = Input.mousePosition;
             mousePosition.z = DEFAULT_Z_POSITION;
@@ -181,12 +210,26 @@ namespace PlayerInputs
             {
                 Start = mainCamera.transform.position,
                 End = worldPosition,
-                Filter = _selectionFilter,
+                Filter = filter,
             };
         }
 
         protected override void OnUpdate()
         {
+            if (!_inputReceived)
+            {
+                return;
+            }
+
+            _inputReceived = false;
+
+            CheckInteractionAvailable();
+            if (!_isAvailable)
+            {
+                return;
+            }
+
+            SelectTargetPosition();
         }
     }
 }

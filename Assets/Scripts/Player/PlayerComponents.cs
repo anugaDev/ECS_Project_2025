@@ -83,13 +83,14 @@ namespace UI
 
     public struct LastProcessedUnitCommand : IComponentData
     {
-        public NetworkTick Tick;
-
-        public float3 BuildingPosition;
-
-        public UnitType UnitType;
+        public int CommandId;
     }
-    
+
+    public struct LastProcessedQueueCommand : IComponentData
+    {
+        public int CommandId;
+    }
+
     public struct SetEmptyDetailsComponent : IComponentData
     {
     }

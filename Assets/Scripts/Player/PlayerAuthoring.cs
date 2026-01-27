@@ -35,6 +35,7 @@ namespace Player
                 AddBuffer<SpawnUnitCommand>(entity);
                 AddBuffer<EnableUIActionBuffer>(entity);
                 AddBuffer<DisableUIActionBuffer>(entity);
+                AddBuffer<QueueUnitCommand>(entity);
                 AddComponent<OwnerTagComponent>(entity);
                 AddComponent<PlayerTeamComponent>(entity);
                 AddComponent<UpdateResourcesPanelTag>(entity);

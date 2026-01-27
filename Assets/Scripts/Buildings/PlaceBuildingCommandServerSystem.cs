@@ -1,4 +1,8 @@
+using System;
+using System.Collections.Generic;
 using ElementCommons;
+using GatherableResources;
+using ScriptableObjects;
 using Types;
 using UI;
 using Unity.Collections;
@@ -11,21 +15,39 @@ namespace Buildings
 {
     [UpdateInGroup(typeof(GhostSimulationSystemGroup))]
     [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
-    public partial struct PlaceBuildingCommandServerSystem : ISystem
+    public partial class PlaceBuildingCommandServerSystem : SystemBase
     {
         private BuildingsPrefabEntityFactory _prefabFactory;
 
         private EntityCommandBuffer _entityCommandBuffer;
 
-        public void OnCreate(ref SystemState state)
+        private Dictionary<ResourceType, Action<Entity, int>> _resourceDeductionActions;
+
+        protected override void OnCreate()
         {
             _prefabFactory = new BuildingsPrefabEntityFactory();
-            state.RequireForUpdate<PlayerTagComponent>();
-            state.RequireForUpdate<BuildingPrefabComponent>();
-            state.RequireForUpdate<NetworkTime>();
+
+            InitializeResourceDeductionActions();
+
+            RequireForUpdate<PlayerTagComponent>();
+            RequireForUpdate<BuildingPrefabComponent>();
+            RequireForUpdate<NetworkTime>();
+            RequireForUpdate<BuildingsConfigurationComponent>();
+
+            base.OnCreate();
         }
 
-        public void OnUpdate(ref SystemState state)
+        private void InitializeResourceDeductionActions()
+        {
+            _resourceDeductionActions = new Dictionary<ResourceType, Action<Entity, int>>
+            {
+                [ResourceType.Wood] = DeductWood,
+                [ResourceType.Food] = DeductFood,
+                [ResourceType.Population] = DeductPopulation
+            };
+        }
+
+        protected override void OnUpdate()
         {
             InitializeFactory();
             _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
@@ -33,20 +55,21 @@ namespace Buildings
             NetworkTick serverTick = SystemAPI.GetSingleton<NetworkTime>().ServerTick;
 
             foreach ((DynamicBuffer<PlaceBuildingCommand> buildingCommands, RefRW<LastProcessedBuildingCommand> lastProcessedCommand,
-                         PlayerTeamComponent playerTeam, GhostOwner ghostOwner)
+                         PlayerTeamComponent playerTeam, GhostOwner ghostOwner, Entity playerEntity)
                      in SystemAPI.Query<DynamicBuffer<PlaceBuildingCommand>, RefRW<LastProcessedBuildingCommand>, PlayerTeamComponent, GhostOwner>()
-                               .WithAll<PlayerTagComponent>())
+                               .WithAll<PlayerTagComponent>().WithEntityAccess())
             {
-                ProcessBuildingCommands(buildingCommands, serverTick, lastProcessedCommand, playerTeam.Team, ghostOwner.NetworkId, state);
+                ProcessBuildingCommands(buildingCommands, serverTick, lastProcessedCommand, playerTeam.Team, ghostOwner.NetworkId, playerEntity);
             }
 
-            _entityCommandBuffer.Playback(state.EntityManager);
+            _entityCommandBuffer.Playback(EntityManager);
+            _entityCommandBuffer.Dispose();
         }
 
         private void ProcessBuildingCommands(DynamicBuffer<PlaceBuildingCommand> buildingCommands,
             NetworkTick serverTick,
             RefRW<LastProcessedBuildingCommand> lastProcessedCommand, TeamType playerTeam, int networkId,
-            SystemState state)
+            Entity playerEntity)
         {
             buildingCommands.GetDataAtTick(serverTick, out PlaceBuildingCommand command);
 
@@ -63,7 +86,8 @@ namespace Buildings
                 BuildingType = command.BuildingType
             };
 
-            InstantiateBuilding(command, playerTeam, networkId, state);
+            DeductBuildingCost(command.BuildingType, playerEntity);
+            InstantiateBuilding(command, playerTeam, networkId);
         }
 
         private bool IsDuplicateCommand(PlaceBuildingCommand newCommand, LastProcessedBuildingCommand lastCommand)
@@ -77,13 +101,12 @@ namespace Buildings
             return samePosition && sameType;
         }
 
-        private void InstantiateBuilding(PlaceBuildingCommand placeBuildingCommand, TeamType playerTeam, int networkId,
-            SystemState state)
+        private void InstantiateBuilding(PlaceBuildingCommand placeBuildingCommand, TeamType playerTeam, int networkId)
         {
             Entity buildingEntity = _prefabFactory.Get(placeBuildingCommand.BuildingType);
             Entity newBuilding = _entityCommandBuffer.Instantiate(buildingEntity);
 
-            LocalTransform prefabTransform = state.EntityManager.GetComponentData<LocalTransform>(buildingEntity);
+            LocalTransform prefabTransform = EntityManager.GetComponentData<LocalTransform>(buildingEntity);
             LocalTransform newTransform = LocalTransform.FromPositionRotationScale(
                 placeBuildingCommand.Position,
                 prefabTransform.Rotation,
@@ -103,6 +126,68 @@ namespace Buildings
 
             BuildingPrefabComponent prefabComponent = SystemAPI.GetSingleton<BuildingPrefabComponent>();
             _prefabFactory.Set(prefabComponent);
+        }
+
+        private void DeductBuildingCost(BuildingType buildingType, Entity playerEntity)
+        {
+            BuildingsConfigurationComponent config = SystemAPI.ManagedAPI.GetSingleton<BuildingsConfigurationComponent>();
+            BuildingScriptableObject buildingConfig = config.Configuration.GetBuildingsDictionary()[buildingType];
+
+            if (buildingConfig == null || buildingConfig.ConstructionCost == null)
+            {
+                return;
+            }
+
+            DeductCosts(playerEntity, buildingConfig);
+        }
+
+        private void DeductCosts(Entity playerEntity, BuildingScriptableObject buildingConfig)
+        {
+            foreach (var cost in buildingConfig.ConstructionCost)
+            {
+                if (_resourceDeductionActions.TryGetValue(cost.ResourceType, out var deductAction))
+                {
+                    deductAction(playerEntity, cost.Cost);
+                }
+            }
+
+            _entityCommandBuffer.AddComponent<UpdateResourcesPanelTag>(playerEntity);
+        }
+
+        private void DeductWood(Entity playerEntity, int cost)
+        {
+            if (!EntityManager.HasComponent<CurrentWoodComponent>(playerEntity))
+            {
+                return;
+            }
+
+            CurrentWoodComponent wood = EntityManager.GetComponentData<CurrentWoodComponent>(playerEntity);
+            wood.Value -= cost;
+            _entityCommandBuffer.SetComponent(playerEntity, wood);
+        }
+
+        private void DeductFood(Entity playerEntity, int cost)
+        {
+            if (!EntityManager.HasComponent<CurrentFoodComponent>(playerEntity))
+            {
+                return;
+            }
+
+            CurrentFoodComponent food = EntityManager.GetComponentData<CurrentFoodComponent>(playerEntity);
+            food.Value -= cost;
+            _entityCommandBuffer.SetComponent(playerEntity, food);
+        }
+
+        private void DeductPopulation(Entity playerEntity, int cost)
+        {
+            if (!EntityManager.HasComponent<CurrentPopulationComponent>(playerEntity))
+            {
+                return;
+            }
+
+            CurrentPopulationComponent population = EntityManager.GetComponentData<CurrentPopulationComponent>(playerEntity);
+            population.CurrentPopulation += cost;
+            _entityCommandBuffer.SetComponent(playerEntity, population);
         }
     }
 }

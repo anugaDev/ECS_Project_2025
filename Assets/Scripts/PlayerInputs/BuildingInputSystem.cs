@@ -305,42 +305,13 @@ namespace PlayerInputs
 
         private void SetUpdatedCosts()
         {
-            EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
+            // NOTE: Resource deduction is now handled on the server in PlaceBuildingCommandServerSystem
+            // We only update the local policy for UI validation purposes
             _buildingConfiguration[_currentBuildingType].ConstructionCost
                 .ForEach(_elementResourceCostPolicy.AddCost);
-            Entity entity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
-            UpdateWoodResource(entity);
-            UpdateFoodResource(entity);
-            UpdatePopulation(entity);
-            entityCommandBuffer.AddComponent<UpdateResourcesPanelTag>(entity);
-            entityCommandBuffer.AddComponent<ValidateUIActionsTag>(entity);
-            entityCommandBuffer.Playback(EntityManager);
-        }
 
-        private void UpdatePopulation(Entity entity)
-        {
-            CurrentPopulationComponent populationComponent = SystemAPI.GetComponent<CurrentPopulationComponent>(entity);
-            SystemAPI.SetComponent(entity, new CurrentPopulationComponent
-            {
-                MaxPopulation = populationComponent.MaxPopulation,
-                CurrentPopulation = _elementResourceCostPolicy.CurrentResources[ResourceType.Population]
-            });
-        }
-
-        private void UpdateFoodResource(Entity entity)
-        {
-            SystemAPI.SetComponent(entity, new CurrentFoodComponent
-            {
-                Value = _elementResourceCostPolicy.CurrentResources[ResourceType.Food]
-            });
-        }
-
-        private void UpdateWoodResource(Entity entity)
-        {
-            SystemAPI.SetComponent(entity, new CurrentWoodComponent
-            {
-                Value = _elementResourceCostPolicy.CurrentResources[ResourceType.Wood]
-            });
+            // The server will update the actual resource components and trigger UpdateResourcesPanelTag
+            // No need to modify components here - they are GhostFields and server is authoritative
         }
 
         private bool IsBuildingPlacingAvailable()

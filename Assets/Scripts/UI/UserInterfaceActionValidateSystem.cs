@@ -13,6 +13,7 @@ namespace UI
 {
     [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
     [UpdateBefore(typeof(UserInterfaceUpdateSelectionSystem))]
+    [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
     public partial class UserInterfaceActionValidateSystem : SystemBase
     {
         private Dictionary<BuildingType, BuildingScriptableObject> _buildingConfiguration;
@@ -33,6 +34,7 @@ namespace UI
             RequireForUpdate<BuildingsConfigurationComponent>();
             RequireForUpdate<UnitsConfigurationComponent>();
             _resourceCostPolicy = new ElementResourceCostPolicy();
+            _currentActions = new HashSet<UpdateUIActionPayload>();
             base.OnCreate();
         }
 
@@ -100,9 +102,11 @@ namespace UI
 
         private void CheckUpdateActionTags()
         {
-            foreach ((ValidateUIActionsTag tag, Entity entity) in SystemAPI.Query<ValidateUIActionsTag>().WithEntityAccess())
-            { 
+            foreach ((ValidateUIActionsTag tag, DynamicBuffer<UpdateUIActionPayload> buffer, Entity entity)
+                     in SystemAPI.Query<ValidateUIActionsTag, DynamicBuffer<UpdateUIActionPayload>>().WithEntityAccess())
+            {
                 _entityCommandBuffer.RemoveComponent<ValidateUIActionsTag>(entity);
+                FillActionsHashSet(buffer);
                 ValidatePlayerActions(entity);
             }
         }
@@ -136,10 +140,13 @@ namespace UI
 
         private void ValidateActions(Entity playerEntity)
         {
+            if (_currentActions == null || _currentActions.Count == 0)
+                return;
+
             foreach (UpdateUIActionPayload payload in _currentActions)
             {
                 bool isAffordable = CheckActionAffordability(payload);
-                
+
                 if (isAffordable)
                 {
                     AddEnableActionComponent(playerEntity, payload);

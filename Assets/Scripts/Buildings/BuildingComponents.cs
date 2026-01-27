@@ -38,6 +38,17 @@ namespace Buildings
 
         public float3 BuildingPosition;
 
+        public int CommandId;
+
+        public NetworkTick Tick { get; set; }
+    }
+
+    public struct QueueUnitCommand : ICommandData
+    {
+        public UnitType UnitType;
+
+        public int CommandId;
+
         public NetworkTick Tick { get; set; }
     }
 

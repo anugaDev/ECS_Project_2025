@@ -23,6 +23,7 @@ namespace Player
                          .WithEntityAccess())
             {
                 entityCommandBuffer.AddComponent<UpdateResourcesPanelTag>(playerEntity);
+                entityCommandBuffer.AddComponent<ValidateUIActionsTag>(playerEntity);
             }
 
             foreach ((RefRO<CurrentFoodComponent> food, Entity playerEntity) in
@@ -32,6 +33,7 @@ namespace Player
                          .WithEntityAccess())
             {
                 entityCommandBuffer.AddComponent<UpdateResourcesPanelTag>(playerEntity);
+                entityCommandBuffer.AddComponent<ValidateUIActionsTag>(playerEntity);
             }
 
             foreach ((RefRO<CurrentWoodComponent> wood, Entity playerEntity) in
@@ -41,6 +43,7 @@ namespace Player
                          .WithEntityAccess())
             {
                 entityCommandBuffer.AddComponent<UpdateResourcesPanelTag>(playerEntity);
+                entityCommandBuffer.AddComponent<ValidateUIActionsTag>(playerEntity);
             }
 
             foreach ((RefRO<FoodGenerationComponent> foodGen, Entity playerEntity) in
@@ -50,6 +53,7 @@ namespace Player
                          .WithEntityAccess())
             {
                 entityCommandBuffer.AddComponent<UpdateResourcesPanelTag>(playerEntity);
+                entityCommandBuffer.AddComponent<ValidateUIActionsTag>(playerEntity);
             }
 
             entityCommandBuffer.Playback(state.EntityManager);

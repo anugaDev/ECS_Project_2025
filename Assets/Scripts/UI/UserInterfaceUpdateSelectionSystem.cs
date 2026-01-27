@@ -18,7 +18,7 @@ namespace UI
         private SelectableElementType _currentSelection;
 
         private Dictionary<SelectionEntity, bool> _unitTypesSelected;
-        
+
         private Dictionary<SelectionEntity, bool> _buildingTypesSelected;
 
         private BuildingFactoryActionsFactory _buildingActionsFactory;
@@ -26,6 +26,10 @@ namespace UI
         private Dictionary<SelectableElementType, Action> _selectableToAction;
 
         private EntityCommandBuffer _entityCommandBuffer;
+
+        private DynamicBuffer<UpdateUIActionPayload> _payloadActionsBuffer;
+
+        private Entity _UIUpdateEntity;
 
         protected override void OnCreate()
         {
@@ -172,6 +176,9 @@ namespace UI
                 return;
             }
 
+            _UIUpdateEntity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
+            _payloadActionsBuffer = EntityManager.GetBuffer<UpdateUIActionPayload>(_UIUpdateEntity);
+            _payloadActionsBuffer.Clear();
             SetUISelectionBySelected();
         }
 
@@ -190,14 +197,13 @@ namespace UI
             }
 
             Entity detailsEntity = GetDetailsEntity();
-            Entity UIUpdateEntity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
-            _entityCommandBuffer.AddComponent(UIUpdateEntity, GetDetailsComponent(detailsEntity));
+            _UIUpdateEntity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
+            _entityCommandBuffer.AddComponent(_UIUpdateEntity, GetDetailsComponent(detailsEntity));
         }
 
         private void SendEmptyDetails()
         {
-            Entity UIUpdateEntity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
-            _entityCommandBuffer.AddComponent(UIUpdateEntity, new SetEmptyDetailsComponent());
+            _entityCommandBuffer.AddComponent(_UIUpdateEntity, new SetEmptyDetailsComponent());
         }
 
         private SetUIDisplayDetailsComponent GetDetailsComponent(Entity detailsEntity)
@@ -270,12 +276,9 @@ namespace UI
             Entity UIUpdateEntity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
             _entityCommandBuffer.AddComponent(UIUpdateEntity, new UpdateUIActionTag());
 
-            DynamicBuffer<UpdateUIActionPayload> updateUIActionPayloads =
-                EntityManager.GetBuffer<UpdateUIActionPayload>(UIUpdateEntity);
-
             foreach (int payloadId in payload)
             {
-                updateUIActionPayloads.Add(GetUpdateUIActioNPayload(action, payloadId));
+                _payloadActionsBuffer.Add(GetUpdateUIActioNPayload(action, payloadId));
             }
         }
 
