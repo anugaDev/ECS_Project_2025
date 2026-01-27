@@ -90,43 +90,56 @@ namespace Units
 
             foreach (ResourceCostEntity cost in unitConfig.RecruitmentCost)
             {
-                if (_resourceDeductionActions.TryGetValue(cost.ResourceType, out var deductAction))
-                {
-                    deductAction(playerEntity, cost.Cost);
-                }
+                SetDeductAction(playerEntity, cost);
             }
 
             _entityCommandBuffer.AddComponent<UpdateResourcesPanelTag>(playerEntity);
         }
 
+        private void SetDeductAction(Entity playerEntity, ResourceCostEntity cost)
+        {
+            if (!_resourceDeductionActions.TryGetValue(cost.ResourceType, out Action<Entity, int> deductAction))
+            {
+                return;
+            }
+
+            deductAction(playerEntity, cost.Cost);
+        }
+
         private void DeductWood(Entity playerEntity, int cost)
         {
-            if (EntityManager.HasComponent<CurrentWoodComponent>(playerEntity))
+            if (!EntityManager.HasComponent<CurrentWoodComponent>(playerEntity))
             {
-                CurrentWoodComponent wood = EntityManager.GetComponentData<CurrentWoodComponent>(playerEntity);
-                wood.Value -= cost;
-                _entityCommandBuffer.SetComponent(playerEntity, wood);
+                return;
             }
+
+            CurrentWoodComponent wood = EntityManager.GetComponentData<CurrentWoodComponent>(playerEntity);
+            wood.Value -= cost;
+            _entityCommandBuffer.SetComponent(playerEntity, wood);
         }
 
         private void DeductFood(Entity playerEntity, int cost)
         {
-            if (EntityManager.HasComponent<CurrentFoodComponent>(playerEntity))
+            if (!EntityManager.HasComponent<CurrentFoodComponent>(playerEntity))
             {
-                CurrentFoodComponent food = EntityManager.GetComponentData<CurrentFoodComponent>(playerEntity);
-                food.Value -= cost;
-                _entityCommandBuffer.SetComponent(playerEntity, food);
+                return;
             }
+
+            CurrentFoodComponent food = EntityManager.GetComponentData<CurrentFoodComponent>(playerEntity);
+            food.Value -= cost;
+            _entityCommandBuffer.SetComponent(playerEntity, food);
         }
 
         private void DeductPopulation(Entity playerEntity, int cost)
         {
-            if (EntityManager.HasComponent<CurrentPopulationComponent>(playerEntity))
+            if (!EntityManager.HasComponent<CurrentPopulationComponent>(playerEntity))
             {
-                CurrentPopulationComponent population = EntityManager.GetComponentData<CurrentPopulationComponent>(playerEntity);
-                population.CurrentPopulation += cost;
-                _entityCommandBuffer.SetComponent(playerEntity, population);
+                return;
             }
+
+            CurrentPopulationComponent population = EntityManager.GetComponentData<CurrentPopulationComponent>(playerEntity);
+            population.CurrentPopulation += cost;
+            _entityCommandBuffer.SetComponent(playerEntity, population);
         }
     }
 }

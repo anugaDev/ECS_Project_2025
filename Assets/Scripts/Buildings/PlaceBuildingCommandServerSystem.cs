@@ -145,13 +145,20 @@ namespace Buildings
         {
             foreach (var cost in buildingConfig.ConstructionCost)
             {
-                if (_resourceDeductionActions.TryGetValue(cost.ResourceType, out var deductAction))
-                {
-                    deductAction(playerEntity, cost.Cost);
-                }
+                SetDeductAction(playerEntity, cost);
             }
 
             _entityCommandBuffer.AddComponent<UpdateResourcesPanelTag>(playerEntity);
+        }
+
+        private void SetDeductAction(Entity playerEntity, ResourceCostEntity cost)
+        {
+            if (!_resourceDeductionActions.TryGetValue(cost.ResourceType, out var deductAction))
+            {
+                return;
+            }
+
+            deductAction(playerEntity, cost.Cost);
         }
 
         private void DeductWood(Entity playerEntity, int cost)

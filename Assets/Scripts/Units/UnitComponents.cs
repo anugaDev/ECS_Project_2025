@@ -37,11 +37,16 @@ namespace Units
         public int CurrentWaypointIndex;
 
         public bool HasPath;
-
     }
 
     public struct PathWaypointBuffer : IBufferElementData
     {
         public float3 Position;
+    }
+    
+    public struct UnitAttackingTagComponent : IComponentData
+    {
+        [GhostField]
+        public Entity AttackingEntity;
     }
 }

@@ -92,4 +92,11 @@ namespace Buildings
 
         public float Value;
     }
+    
+    public struct BuildingConstructionProgressComponent : IComponentData
+    {
+        public BuildingType BuildingType;
+
+        public float Value;
+    }
 }

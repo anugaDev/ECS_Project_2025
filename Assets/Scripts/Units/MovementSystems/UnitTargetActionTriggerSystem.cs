@@ -1,13 +1,14 @@
 using Buildings;
-using Combat;
 using ElementCommons;
 using GatherableResources;
 using PlayerInputs;
 using Types;
+using Units.Worker;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
+using CurrentResourceQuantityComponent = GatherableResources.CurrentResourceQuantityComponent;
 
 namespace Units.MovementSystems
 {
@@ -16,13 +17,19 @@ namespace Units.MovementSystems
     public partial struct UnitTargetActionTriggerSystem : ISystem
     {
         private ComponentLookup<ElementTeamComponent> _teamLookup;
-        
+
         private ComponentLookup<ResourceTypeComponent> _resourceLookup;
-        
+
         private ComponentLookup<BuildingComponents> _buildingLookup;
-        
+
         private ComponentLookup<UnitTagComponent> _unitLookup;
+
+        private ComponentLookup<BuildingTypeComponent> _buildingTypeLookup;
+
+        private ComponentLookup<CurrentResourceQuantityComponent> _currentResourceQuantityLookup;
         
+        private ComponentLookup<BuildingConstructionProgressComponent> _constructionProgressLookup;
+
         private EntityCommandBuffer _entityCommandBuffer;
 
         [BurstCompile]
@@ -32,6 +39,8 @@ namespace Units.MovementSystems
             _resourceLookup = state.GetComponentLookup<ResourceTypeComponent>(true);
             _buildingLookup = state.GetComponentLookup<BuildingComponents>(true);
             _unitLookup = state.GetComponentLookup<UnitTagComponent>(true);
+            _buildingTypeLookup = state.GetComponentLookup<BuildingTypeComponent>(true);
+            _currentResourceQuantityLookup = state.GetComponentLookup<CurrentResourceQuantityComponent>(true);
         }
 
         [BurstCompile]
@@ -42,6 +51,8 @@ namespace Units.MovementSystems
             _resourceLookup.Update(ref state);
             _buildingLookup.Update(ref state);
             _unitLookup.Update(ref state);
+            _buildingTypeLookup.Update(ref state);
+            _currentResourceQuantityLookup.Update(ref state);
 
             foreach ((RefRO<UnitTargetPositionComponent> targetPosition, RefRW<UnitSelectedTargetComponent> selectedTarget,
                      RefRO<UnitTypeComponent> unitType, RefRO<ElementTeamComponent> unitTeam,
@@ -123,13 +134,11 @@ namespace Units.MovementSystems
             if (_resourceLookup.HasComponent(targetEntity))
             {
                 SetWorkerGatheringResource(selectedTarget, unitEntity);
-                return;
             }
 
             if (_buildingLookup.HasComponent(targetEntity))
             {
-                SetWorkerInBuildingProcess(unitEntity, selectedTarget, unitTeam);
-                return;
+                SetWorkerProcess(unitEntity, targetEntity, selectedTarget, unitTeam);
             }
 
             SetUnitTargetOff(unitEntity, selectedTarget);
@@ -139,32 +148,76 @@ namespace Units.MovementSystems
         {
             selectedTarget.IsFollowingTarget = false;
             selectedTarget.TargetEntity = Entity.Null;
-            _entityCommandBuffer.SetComponent(unitEntity, selectedTarget);
+            _entityCommandBuffer.AddComponent(unitEntity, selectedTarget);
         }
 
-        private void SetWorkerInBuildingProcess(Entity unitEntity, UnitSelectedTargetComponent selectedTarget,
+        private void SetWorkerProcess(Entity unitEntity, Entity targetEntity, UnitSelectedTargetComponent selectedTarget,
             TeamType unitTeam)
         {
-            //if()TODO Building is in progress and same team
-            SetWorkerBuildingMode(selectedTarget, unitEntity);
-            //else TODO Worker is carrying and building is center and same team
-            SetWorkerStoreResources();
+            TeamType buildingTeam = _teamLookup[targetEntity].Team;
+            if (buildingTeam != unitTeam)
+            {
+                return;
+            }
+
+            if (_constructionProgressLookup.HasComponent(targetEntity))
+            { 
+                SetWorkerBuildingMode(selectedTarget, unitEntity);
+                return;
+            }
+            
+            if (IsWorkerStoreResourcesAvailable(targetEntity, unitEntity))
+            { 
+                SetWorkerStoreResources(unitEntity, targetEntity);
+            }            
+            
         }
 
-        private void SetWorkerStoreResources()
+        private void SetWorkerStoreResources(Entity unitEntity, Entity targetEntity)
         {
-            //TODO Implement resource storing
+            
+            _entityCommandBuffer.AddComponent(unitEntity, GetStoringComponent(targetEntity));
+        }
+
+        private WorkerStoringTagComponent GetStoringComponent(Entity targetEntity)
+        {
+            return new WorkerStoringTagComponent
+            {
+                BuildingEntity = targetEntity
+            };
+        }
+
+        private bool IsWorkerStoreResourcesAvailable(Entity targetEntity, Entity unitEntity)
+        {
+            CurrentResourceQuantityComponent resourceQuantity = _currentResourceQuantityLookup[unitEntity];
+            BuildingTypeComponent buildingType = _buildingTypeLookup[targetEntity];
+            return resourceQuantity.Value > 0 && buildingType.Type == BuildingType.Center;
         }
 
         private void SetWorkerGatheringResource(UnitSelectedTargetComponent selectedTarget, Entity unitEntity)
         {
-            // TODO: Implement resource gathering
+            _entityCommandBuffer.AddComponent(unitEntity, GetGatheringComponent(selectedTarget.TargetEntity));
+        }
+
+        private WorkerGatheringTagComponent GetGatheringComponent(Entity selectedTargetTargetEntity)
+        {
+            return new WorkerGatheringTagComponent
+            {
+                ResourceEntity = selectedTargetTargetEntity
+            };
         }
 
         private void SetWorkerBuildingMode(UnitSelectedTargetComponent selectedTarget, Entity unitEntity)
         {
-            // TODO: Check if building is under construction
-            // TODO: Implement building construction
+            _entityCommandBuffer.AddComponent(unitEntity, GetBuildingComponent(selectedTarget.TargetEntity));
+        }
+
+        private WorkerConstructionTagComponent GetBuildingComponent(Entity selectedTargetTargetEntity)
+        {
+            return new WorkerConstructionTagComponent
+            {
+                BuildingEntity = selectedTargetTargetEntity
+            };
         }
     }
 }
