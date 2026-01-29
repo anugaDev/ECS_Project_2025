@@ -1,4 +1,5 @@
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.NetCode;
 
 namespace Combat
@@ -10,7 +11,8 @@ namespace Combat
 
     public struct CurrentHitPointsComponent : IComponentData
     {
-        [GhostField] public int Value;
+        [GhostField] 
+        public int Value;
     }
 
     [GhostComponent(PrefabType = GhostPrefabType.AllPredicted)]
@@ -25,5 +27,28 @@ namespace Combat
         public NetworkTick Tick { get; set; }
 
         public int Value;
+    }
+
+    public struct DestroyOnTimer : IComponentData
+    {
+        public float Value;
+    }
+
+    public struct DestroyAtTick : IComponentData
+    {
+        [GhostField] 
+        public NetworkTick Value;
+    }
+    
+    public struct DestroyEntityTag : IComponentData {}
+
+    public struct DamageOnTrigger : IComponentData
+    {
+        public int Value;
+    }
+
+    public struct AlreadyDamagedEntity : IBufferElementData
+    {
+        public Entity Value;
     }
 }

@@ -1,0 +1,47 @@
+using Units.MovementSystems;
+using Unity.Entities;
+using Unity.NetCode;
+using UnityEngine;
+
+namespace Combat
+{
+    public class UnitAttackAuthoring : MonoBehaviour
+    {
+        [SerializeField]
+        private float _targetRadius;
+
+        [SerializeField]
+        private Vector3 _firePointOffset;
+
+        [SerializeField]
+        private float _attackCooldownTime;
+
+        [SerializeField]
+        private NetCodeConfig _netCodeConfig;
+        
+        public int SimulationTickRate => _netCodeConfig.ClientServerTickRate.SimulationTickRate;
+
+
+        public float TargetRadius => _targetRadius;
+
+        public Vector3 FirePointOffset => _firePointOffset;
+
+        public float AttackCooldownTime => _attackCooldownTime;
+
+        public class UnitAttackBaker : Baker<UnitAttackAuthoring>
+        {
+            public override void Bake(UnitAttackAuthoring authoring)
+            {
+                var entity = GetEntity(TransformUsageFlags.Dynamic);
+                AddComponent(entity, new UnitTargetRadius { Value = authoring.TargetRadius });
+                AddComponent(entity, new UnitAttackProperties
+                {
+                    FirePointOffset = authoring.FirePointOffset,
+                    CooldownTickCount = (uint)(authoring.AttackCooldownTime * authoring.SimulationTickRate),
+                });
+                AddComponent<UnitTargetEntity>(entity);
+                AddBuffer<UnitAttackCooldown>(entity);
+            }
+        }
+    }
+}
