@@ -34,10 +34,13 @@ namespace PlayerInputs.MoveIndicator
 
         private float _localTime;
 
+        private Vector3 _defaultScale;
+        
         private void Awake()
         {
             _material = _renderer.material;
             _material.SetFloat(MATERIAL_SPEED_NAME, _speed);
+            _defaultScale = _transform.localScale;
         }
 
         public void Set(float3 spawnPosition)
@@ -65,6 +68,16 @@ namespace PlayerInputs.MoveIndicator
         {
             _localTime += Time.deltaTime;
             _material.SetFloat(MATERIAL_TIME_NAME, _localTime);
+        }
+
+        public void SetTargetScale(float3 scale)
+        {
+            _transform.localScale = new Vector3(scale.x, scale.y, scale.z);
+        }
+
+        public void SetDefaultScale()
+        {
+            _transform.localScale = _defaultScale;
         }
     }
 }
