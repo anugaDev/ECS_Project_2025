@@ -32,27 +32,32 @@ namespace Units.MovementSystems
         private float3 _desiredVelocity;
         
         private float _currentDeltaTime;
+        
+        private Entity _entity;
 
         public void OnUpdate(ref SystemState state)
         {
             _currentDeltaTime = SystemAPI.Time.DeltaTime;
 
-            foreach ((RefRW<LocalTransform> transform, RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRO<UnitMoveSpeedComponent> moveSpeed, RefRO<ElementSelectionComponent> selection)
+            foreach ((RefRW<LocalTransform> transform, RefRW<UnitTargetPositionComponent> targetPosition,
+                         RefRW<PathComponent> pathComponent, DynamicBuffer<PathWaypointBuffer>
+                             pathBuffer, RefRO<UnitMoveSpeedComponent> moveSpeed, RefRO<ElementSelectionComponent> selection, Entity entity)
                      in SystemAPI.Query<RefRW<LocalTransform>, RefRW<UnitTargetPositionComponent>,
                          RefRW<PathComponent>, DynamicBuffer<PathWaypointBuffer>,
                          RefRO<UnitMoveSpeedComponent>, RefRO<ElementSelectionComponent>>()
-                         .WithAll<Simulate, UnitTagComponent>())
+                         .WithAll<Simulate, UnitTagComponent>().WithEntityAccess())
             {
                 _currentTargetPositionComponent = targetPosition;
                 _currentPathComponent = pathComponent;
                 _currentPathBuffer = pathBuffer;
                 _currentTransform = transform;
                 _currentMoveSpeed = moveSpeed;
-                SetUnitPosition(selection.ValueRO.IsSelected);
+                _entity = entity;
+                SetUnitPosition();
             }
         }
 
-        private void SetUnitPosition(bool isSelected)
+        private void SetUnitPosition()
         {
             if (!_currentTargetPositionComponent.ValueRO.MustMove || !_currentPathComponent.ValueRO.HasPath)
             {
@@ -67,6 +72,7 @@ namespace Units.MovementSystems
             }
 
             UpdateUnitPosition();
+            //UnityEngine.Debug.Log($"[MOVE POSITION] Worker {_entity.Index}:{_entity.Version}");
         }
 
         private void UpdateUnitPosition()

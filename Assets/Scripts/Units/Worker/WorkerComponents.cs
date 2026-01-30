@@ -8,9 +8,6 @@ namespace Units.Worker
     {
         [GhostField]
         public Entity BuildingEntity;
-
-        [GhostField]
-        public Entity PreviousResourceEntity;
     }
 
     public struct WorkerConstructionTagComponent : IComponentData
@@ -25,15 +22,21 @@ namespace Units.Worker
         public Entity ResourceEntity;
     }
 
-    public struct CurrentResourceQuantityComponent : IComponentData
+    public struct CurrentWorkerResourceQuantityComponent : IComponentData
     {
+        [GhostField]
         public ResourceType ResourceType;
 
+        [GhostField]
         public int Value;
+
+        [GhostField]
+        public Entity PreviousResourceEntity;
     }
-    
-    public struct PreviousResourceEntityComponent : IComponentData
+
+    public struct WorkerActionCooldownComponent : IComponentData
     {
-        public Entity ResourceEntity;
+        [GhostField]
+        public double CooldownEndTime;
     }
 }

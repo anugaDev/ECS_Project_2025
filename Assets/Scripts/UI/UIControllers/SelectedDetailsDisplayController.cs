@@ -21,7 +21,13 @@ namespace UI.UIControllers
 
         [SerializeField]
         private TextMeshProUGUI _currentHitPoints;
+        
+        [SerializeField]
+        private GameObject _resourcesParent;
 
+        [SerializeField] 
+        private TextMeshProUGUI _resourcesText;
+        
         [SerializeField] 
         private Image _healthPointFill;
 
@@ -50,6 +56,21 @@ namespace UI.UIControllers
             _maxHitPoints.text = maxHitPoints.ToString();
             _currentHitPoints.text = currentHitPoints.ToString();
             _healthPointFill.fillAmount = (float)currentHitPoints / maxHitPoints;
+        }
+        
+        public void EnableResources()
+        {
+            _resourcesParent.SetActive(true);
+        }
+
+        public void DisableResources()
+        {
+            _resourcesParent.SetActive(false);
+        }
+        
+        public void SetResourcesText(string text)
+        {
+            _resourcesText.text = text;
         }
     }
 }

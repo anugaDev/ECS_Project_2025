@@ -3,6 +3,7 @@ using PlayerInputs;
 using Types;
 using Unity.Entities;
 using Unity.Rendering;
+using Units.Worker;
 using UnityEngine;
 
 namespace Units

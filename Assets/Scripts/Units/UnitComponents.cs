@@ -26,8 +26,9 @@ namespace Units
 
     public class UnitMaterialsComponent : IComponentData
     {
-        public Material RedTeamMaterial;
         public Material BlueTeamMaterial;
+
+        public Material RedTeamMaterial;
     }
     
     public struct PathComponent : IComponentData
