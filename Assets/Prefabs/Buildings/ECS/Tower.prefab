@@ -16,6 +16,8 @@ GameObject:
   - component: {fileID: -497743064502837610}
   - component: {fileID: -7441583105645170611}
   - component: {fileID: 6738076815132527177}
+  - component: {fileID: -4554234525112134490}
+  - component: {fileID: 1051833439830423814}
   m_Layer: 0
   m_Name: Tower
   m_TagString: Untagged
@@ -303,6 +305,43 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHitPoints: 500
   HealthBarOffset: {x: 0, y: 12, z: 0}
+--- !u!65 &-4554234525112134490
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2881682225047266158}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 3
+  m_Size: {x: 1.93, y: 5.06, z: 1.82}
+  m_Center: {x: 0, y: 2.44, z: 0}
+--- !u!208 &1051833439830423814
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2881682225047266158}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 0.965, y: 2.53, z: 0.91}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 2.44, z: 0}
+  m_TimeToStationary: 0.5
 --- !u!1 &3235298543143018961
 GameObject:
   m_ObjectHideFlags: 0

@@ -8,12 +8,12 @@ namespace GatherableResources
 {
     public class ResourceAuthoring : MonoBehaviour
     {
-        [SerializeField] 
+        [SerializeField]
         private ResourceType _resourceType;
 
         [SerializeField]
         private int _maxQuantity;
-        
+
         public ResourceType ResourceType => _resourceType;
 
         public int MaxQuantity => _maxQuantity;

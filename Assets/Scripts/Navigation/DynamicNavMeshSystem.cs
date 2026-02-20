@@ -3,7 +3,10 @@ using Units;
 using Unity.AI.Navigation;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace Navigation
 {
@@ -24,6 +27,8 @@ namespace Navigation
 
         private bool _initialNavMeshBuilt;
 
+        private bool _firstFrameProcessed;
+
         protected override void OnStartRunning()
         {
             _navMeshSurface = GameObject.FindObjectOfType<NavMeshSurface>();
@@ -43,65 +48,95 @@ namespace Navigation
                     _groundPlane = GroundPlaneSetup.Instance.gameObject;
                 }
 
-                RebuildNavMesh();
+                // CRITICAL: Check if NavMeshSurface has baked data
+                if (_navMeshSurface.navMeshData == null)
+                {
+                    UnityEngine.Debug.LogError("[DynamicNavMesh] ❌ NavMeshSurface has NO navMeshData!");
+                    UnityEngine.Debug.LogError("  The NavMesh was not baked or the data asset is missing!");
+                }
+                else
+                {
+                    UnityEngine.Debug.Log($"[DynamicNavMesh] NavMeshSurface has data asset: {_navMeshSurface.navMeshData.name}");
+
+                    // CRITICAL: NavMeshSurface should automatically add its data, but let's verify
+                    // Check if the data is actually in the scene
+                    UnityEngine.AI.NavMeshTriangulation triangulation = UnityEngine.AI.NavMesh.CalculateTriangulation();
+
+                    if (triangulation.vertices.Length > 100)
+                    {
+                        UnityEngine.Debug.Log($"[DynamicNavMesh] ✓ Using pre-baked NavMesh from SubScene!");
+                        UnityEngine.Debug.Log($"  Vertices={triangulation.vertices.Length}, Triangles={triangulation.indices.Length / 3}");
+                        UnityEngine.Debug.Log($"  NavMesh will NOT be rebuilt (SubScene objects are baked in editor)");
+                    }
+                    else
+                    {
+                        UnityEngine.Debug.LogError("[DynamicNavMesh] ❌ NavMeshData exists but is NOT active in scene!");
+                        UnityEngine.Debug.LogError("  This might be a NavMeshSurface bug. Trying to manually add data...");
+
+                        // Try to manually add the NavMesh data
+                        UnityEngine.AI.NavMesh.AddNavMeshData(_navMeshSurface.navMeshData);
+
+                        // Check again
+                        triangulation = UnityEngine.AI.NavMesh.CalculateTriangulation();
+                        if (triangulation.vertices.Length > 100)
+                        {
+                            UnityEngine.Debug.Log($"[DynamicNavMesh] ✓ Manually added NavMeshData! Vertices={triangulation.vertices.Length}");
+                        }
+                        else
+                        {
+                            UnityEngine.Debug.LogError("[DynamicNavMesh] ❌ Still no NavMesh! Check if NavMeshSurface is enabled.");
+                        }
+                    }
+                }
+
                 _initialNavMeshBuilt = true;
             }
 
-            bool foundNewBuilding = false;
+            // Create NavMeshObstacles for buildings (both pre-placed and runtime-spawned)
             EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            foreach (var buildingReference in SystemAPI.Query<RefRO<BuildingComponents>>()
-                         .WithAll<NewBuildingTagComponent>().WithNone<NavMeshProcessedTag>() .WithEntityAccess())
+            foreach (var (buildingComponents, transform, entity) in SystemAPI.Query<RefRO<BuildingComponents>, RefRO<LocalTransform>>()
+                         .WithAll<NewBuildingTagComponent>().WithNone<NavMeshProcessedTag>().WithEntityAccess())
             {
-                foundNewBuilding = true;
-                Entity entity = buildingReference.Item2;
+                // Skip pre-placed buildings on first frame (they're baked into NavMesh)
+                if (!_firstFrameProcessed)
+                {
+                    ecb.AddComponent<NavMeshProcessedTag>(entity);
+                    continue;
+                }
+
+                // For runtime-spawned buildings, create NavMeshObstacle
+                CreateBuildingNavMeshObstacle(entity, transform.ValueRO, buildingComponents.ValueRO);
                 ecb.AddComponent<NavMeshProcessedTag>(entity);
             }
 
-            if (foundNewBuilding)
-            {
-                _rebuildPending = true;
-                _lastChangeTime = SystemAPI.Time.ElapsedTime;
-            }
+            _firstFrameProcessed = true;
 
             ecb.Playback(EntityManager);
             ecb.Dispose();
-
-            if (_rebuildPending && SystemAPI.Time.ElapsedTime - _lastChangeTime >= REBUILD_DELAY)
-            {
-                RebuildNavMesh();
-                _rebuildPending = false;
-            }
         }
 
-        private void CreateNavMeshObstacle(BuildingObstacleData data)
+        private void CreateBuildingNavMeshObstacle(Entity buildingEntity, LocalTransform transform, BuildingComponents buildingComponents)
         {
-            GameObject obstacleObj = new GameObject($"NavObstacle_{data.Entity.Index}");
-            obstacleObj.transform.position = data.Position;
-            obstacleObj.transform.rotation = data.Rotation;
-            obstacleObj.layer = 0;
+            // Create a companion GameObject with NavMeshObstacle
+            GameObject obstacleObj = new GameObject($"BuildingObstacle_{buildingEntity.Index}");
+            obstacleObj.transform.position = transform.Position;
+            obstacleObj.transform.rotation = transform.Rotation;
 
-            BoxCollider boxCollider = obstacleObj.AddComponent<BoxCollider>();
-            boxCollider.size = data.Size;
-            boxCollider.center = Vector3.zero;
-            boxCollider.isTrigger = false;
+            // Add NavMeshObstacle component
+            NavMeshObstacle obstacle = obstacleObj.AddComponent<NavMeshObstacle>();
+            obstacle.shape = NavMeshObstacleShape.Box;
+            obstacle.size = new UnityEngine.Vector3(5f, 2f, 5f); // Default size - adjust based on building type
+            obstacle.center = UnityEngine.Vector3.zero;
+            obstacle.carving = true; // CRITICAL: Enable carving to cut holes in NavMesh
+            obstacle.carveOnlyStationary = false; // Carve even if moving (for placement)
 
-            NavMeshModifier modifier = obstacleObj.AddComponent<NavMeshModifier>();
-            modifier.overrideArea = true;
-            modifier.area = 1;
+            UnityEngine.Debug.Log($"[DynamicNavMesh] Created NavMeshObstacle for building at {transform.Position}");
 
-            GameObject debugCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            debugCube.transform.SetParent(obstacleObj.transform);
-            debugCube.transform.localPosition = Vector3.zero;
-            debugCube.transform.localScale = data.Size;
-            debugCube.GetComponent<Renderer>().material.color = Color.red;
-            Object.Destroy(debugCube.GetComponent<BoxCollider>());
-
-            EntityManager.AddComponentObject(data.Entity, new NavMeshObstacleReference
-            {
-                ObstacleGameObject = obstacleObj
-            });
+            // TODO: Store reference to GameObject for cleanup when building is destroyed
         }
+
+
 
         private void RebuildNavMesh()
         {
@@ -110,7 +145,60 @@ namespace Navigation
                 return;
             }
 
+            UnityEngine.Debug.Log($"[DynamicNavMesh] Rebuilding NavMesh...");
+            UnityEngine.Debug.Log($"  CollectObjects: {_navMeshSurface.collectObjects}");
+            UnityEngine.Debug.Log($"  UseGeometry: {_navMeshSurface.useGeometry}");
+            UnityEngine.Debug.Log($"  LayerMask: {_navMeshSurface.layerMask.value}");
+            UnityEngine.Debug.Log($"  Size: {_navMeshSurface.size}");
+            UnityEngine.Debug.Log($"  Center: {_navMeshSurface.center}");
+
+            // DEBUG: Check if GroundPlane exists
+            GameObject groundPlane = GameObject.Find("GroundPlane");
+            if (groundPlane == null)
+            {
+                UnityEngine.Debug.LogError("  ❌ GroundPlane GameObject NOT FOUND!");
+            }
+            else
+            {
+                UnityEngine.Debug.Log($"  ✓ GroundPlane found at position: {groundPlane.transform.position}");
+                BoxCollider groundCollider = groundPlane.GetComponent<BoxCollider>();
+                if (groundCollider == null)
+                {
+                    UnityEngine.Debug.LogError("  ❌ GroundPlane has NO BoxCollider!");
+                }
+                else
+                {
+                    UnityEngine.Debug.Log($"  ✓ GroundPlane has BoxCollider: size={groundCollider.size}, center={groundCollider.center}");
+                    UnityEngine.Debug.Log($"  ✓ GroundPlane layer: {groundPlane.layer}");
+                    UnityEngine.Debug.Log($"  ✓ GroundPlane enabled: {groundCollider.enabled}");
+                    UnityEngine.Debug.Log($"  ✓ GroundPlane isTrigger: {groundCollider.isTrigger}");
+                    UnityEngine.Debug.Log($"  ✓ GroundPlane bounds: {groundCollider.bounds}");
+
+                    // Check if layer is in mask
+                    int layerBit = 1 << groundPlane.layer;
+                    bool layerIncluded = (_navMeshSurface.layerMask.value & layerBit) != 0;
+                    UnityEngine.Debug.Log($"  ✓ Layer {groundPlane.layer} included in LayerMask: {layerIncluded}");
+                }
+            }
+
+            // DEBUG: Check what colliders are in the volume
+            Collider[] colliders = Physics.OverlapBox(
+                _navMeshSurface.center,
+                _navMeshSurface.size / 2f,
+                Quaternion.identity,
+                _navMeshSurface.layerMask
+            );
+            UnityEngine.Debug.Log($"  Colliders in volume: {colliders.Length}");
+            foreach (Collider col in colliders)
+            {
+                UnityEngine.Debug.Log($"    - {col.gameObject.name} (Layer: {col.gameObject.layer})");
+            }
+
             _navMeshSurface.BuildNavMesh();
+
+            UnityEngine.AI.NavMeshTriangulation triangulation = UnityEngine.AI.NavMesh.CalculateTriangulation();
+            UnityEngine.Debug.Log($"[DynamicNavMesh] NavMesh rebuilt! Vertices: {triangulation.vertices.Length}, Triangles: {triangulation.indices.Length / 3}");
+
             InvalidateAllPaths();
         }
 

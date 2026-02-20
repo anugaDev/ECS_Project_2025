@@ -16,6 +16,8 @@ GameObject:
   - component: {fileID: 6396654682935655944}
   - component: {fileID: -3730346804985069876}
   - component: {fileID: -4375712007227466854}
+  - component: {fileID: 6818675068349466535}
+  - component: {fileID: -8248967151253099552}
   m_Layer: 0
   m_Name: House
   m_TagString: Untagged
@@ -300,6 +302,43 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHitPoints: 250
   HealthBarOffset: {x: 0, y: 5, z: 0}
+--- !u!65 &6818675068349466535
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2881682225047266158}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 3
+  m_Size: {x: 2.62, y: 2.2, z: 2.41}
+  m_Center: {x: 0, y: 1.05, z: 0}
+--- !u!208 &-8248967151253099552
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2881682225047266158}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 1.31, y: 1.1, z: 1.205}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 1.05, z: 0}
+  m_TimeToStationary: 0.5
 --- !u!1 &7514932591857146079
 GameObject:
   m_ObjectHideFlags: 0
