@@ -1,8 +1,11 @@
+using ElementCommons;
+using Buildings;
 using GatherableResources;
 using Types;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
+using Unity.Transforms;
 using Units.MovementSystems;
 using Units.Worker;
 using Unity.Mathematics;
@@ -145,6 +148,70 @@ namespace Units
                 // Clear input so this doesn't re-trigger next tick
                 inputTarget.ValueRW.TargetEntity = Entity.Null;
                 inputTarget.ValueRW.IsFollowingTarget = false;
+            }
+
+            // --- Phase 3: Assign storing when an idle worker with resources is near a town center ---
+
+            foreach ((RefRO<UnitTypeComponent>                       unitType,
+                      RefRO<UnitStateComponent>                      unitState,
+                      RefRO<LocalTransform>                          workerTransform,
+                      RefRO<CurrentWorkerResourceQuantityComponent>   workerResource,
+                      RefRO<ElementTeamComponent>                    workerTeam,
+                      Entity                                         entity)
+                     in SystemAPI.Query<RefRO<UnitTypeComponent>,
+                                       RefRO<UnitStateComponent>,
+                                       RefRO<LocalTransform>,
+                                       RefRO<CurrentWorkerResourceQuantityComponent>,
+                                       RefRO<ElementTeamComponent>>()
+                         .WithAll<UnitTagComponent, Simulate>()
+                         .WithNone<WorkerGatheringTagComponent,
+                                   WorkerStoringTagComponent,
+                                   WorkerConstructionTagComponent>()
+                         .WithEntityAccess())
+            {
+                if (unitType.ValueRO.Type != UnitType.Worker)
+                    continue;
+
+                if (unitState.ValueRO.State != UnitState.Idle)
+                    continue;
+
+                if (workerResource.ValueRO.Value <= 0)
+                    continue;
+
+                // Find closest same-team town center
+                Entity closestTC = Entity.Null;
+                float closestDistSq = float.MaxValue;
+
+                foreach ((RefRO<BuildingTypeComponent> buildingType,
+                          RefRO<ElementTeamComponent>  buildingTeam,
+                          RefRO<LocalTransform>        buildingTransform,
+                          Entity                       buildingEntity)
+                         in SystemAPI.Query<RefRO<BuildingTypeComponent>,
+                                            RefRO<ElementTeamComponent>,
+                                            RefRO<LocalTransform>>()
+                             .WithAll<BuildingComponents>()
+                             .WithEntityAccess())
+                {
+                    if (buildingType.ValueRO.Type != BuildingType.Center ||
+                        buildingTeam.ValueRO.Team != workerTeam.ValueRO.Team)
+                        continue;
+
+                    float distSq = math.distancesq(workerTransform.ValueRO.Position, buildingTransform.ValueRO.Position);
+                    if (distSq < closestDistSq)
+                    {
+                        closestDistSq = distSq;
+                        closestTC = buildingEntity;
+                    }
+                }
+
+                // 8.0 threshold matches WorkerStoringSystem
+                if (closestTC != Entity.Null && closestDistSq <= 8.0f * 8.0f)
+                {
+                    ecb.AddComponent(entity, new WorkerStoringTagComponent
+                    {
+                        BuildingEntity = closestTC
+                    });
+                }
             }
 
             ecb.Playback(EntityManager);

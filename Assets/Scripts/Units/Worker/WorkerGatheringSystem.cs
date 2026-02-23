@@ -18,6 +18,9 @@ namespace Units.Worker
         private const int   MAX_GATHERING_AMOUNT         = 50;
         private const float GATHERING_DISTANCE_THRESHOLD = 4.0f;
         private const int   AMOUNT_TO_GATHER             = 1;
+        private const float GATHER_INTERVAL_SECONDS      = 1.0f;
+
+        private float _gatherTimer;
 
         private ComponentLookup<CurrentResourceQuantityComponent> _resourceQuantityLookup;
         private ComponentLookup<ResourceTypeComponent> _resourceTypeLookup;
@@ -40,6 +43,12 @@ namespace Units.Worker
             _resourceQuantityLookup.Update(this);
             _teamLookup.Update(this);
             _transformLookup.Update(this);
+
+            // Accumulate time — only gather when interval elapses
+            _gatherTimer += SystemAPI.Time.DeltaTime;
+            bool canGather = _gatherTimer >= GATHER_INTERVAL_SECONDS;
+            if (canGather)
+                _gatherTimer -= GATHER_INTERVAL_SECONDS;
 
             var ecb = new EntityCommandBuffer(Allocator.Temp);
 
@@ -64,7 +73,7 @@ namespace Units.Worker
 
                 ProcessGathering(workerTransform.ValueRO, gatheringTag.ValueRO,
                                ref workerResource.ValueRW, workerTeam.ValueRO.Team,
-                               workerEntity, ref ecb);
+                               workerEntity, ref ecb, canGather);
             }
 
             ecb.Playback(EntityManager);
@@ -73,7 +82,7 @@ namespace Units.Worker
 
         private void ProcessGathering(LocalTransform workerTransform, WorkerGatheringTagComponent gatheringTag,
                                      ref CurrentWorkerResourceQuantityComponent workerResource, TeamType workerTeam,
-                                     Entity workerEntity, ref EntityCommandBuffer ecb)
+                                     Entity workerEntity, ref EntityCommandBuffer ecb, bool canGather)
         {
             Entity resourceEntity = gatheringTag.ResourceEntity;
 
@@ -83,6 +92,18 @@ namespace Units.Worker
             {
                 UnityEngine.Debug.Log($"[WGS] Resource {resourceEntity.Index} invalid/depleted — removing tag from {workerEntity.Index}");
                 ecb.RemoveComponent<WorkerGatheringTagComponent>(workerEntity);
+
+                // Resource depleted — go store whatever we have
+                if (workerResource.Value > 0)
+                {
+                    workerResource.PreviousResourceEntity = resourceEntity;
+                    Entity depletedTC = FindClosestTownCenter(workerTransform.Position, workerTeam);
+                    if (depletedTC != Entity.Null)
+                    {
+                        SetNextTarget(workerEntity, depletedTC, ecb);
+                        ecb.AddComponent(workerEntity, new WorkerStoringTagComponent { BuildingEntity = depletedTC });
+                    }
+                }
                 return;
             }
 
@@ -100,6 +121,10 @@ namespace Units.Worker
                 workerResource.ResourceType = resourceType.Type;
             }
 
+            // Only gather on timer tick (once per GATHER_INTERVAL_SECONDS)
+            if (!canGather)
+                return;
+
             int amountToGather = math.min(AMOUNT_TO_GATHER, resourceQuantity.Value);
             amountToGather     = math.min(amountToGather, MAX_GATHERING_AMOUNT - workerResource.Value);
 
@@ -108,6 +133,22 @@ namespace Units.Worker
                 workerResource.Value   += amountToGather;
                 resourceQuantity.Value -= amountToGather;
                 ecb.SetComponent(resourceEntity, resourceQuantity);
+
+                // Destroy depleted resource and go store whatever we have
+                if (resourceQuantity.Value <= 0)
+                {
+                    ecb.DestroyEntity(resourceEntity);
+
+                    workerResource.PreviousResourceEntity = Entity.Null;
+                    ecb.RemoveComponent<WorkerGatheringTagComponent>(workerEntity);
+                    Entity depletedTC2 = FindClosestTownCenter(workerTransform.Position, workerTeam);
+                    if (depletedTC2 != Entity.Null)
+                    {
+                        SetNextTarget(workerEntity, depletedTC2, ecb);
+                        ecb.AddComponent(workerEntity, new WorkerStoringTagComponent { BuildingEntity = depletedTC2 });
+                    }
+                    return;
+                }
             }
 
             if (workerResource.Value < MAX_GATHERING_AMOUNT)

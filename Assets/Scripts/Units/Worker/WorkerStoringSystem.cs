@@ -1,5 +1,6 @@
 using Buildings;
 using ElementCommons;
+using GatherableResources;
 using Types;
 using UI;
 using Unity.Collections;
@@ -15,7 +16,7 @@ namespace Units.Worker
     [UpdateAfter(typeof(MovementSystems.UnitStateSystem))]
     public partial class WorkerStoringSystem : SystemBase
     {
-        private const float STORING_DISTANCE_THRESHOLD = 4.0f;
+        private const float STORING_DISTANCE_THRESHOLD = 8.0f;
 
         private ComponentLookup<CurrentWoodComponent>  _woodLookup;
         private ComponentLookup<CurrentFoodComponent>  _foodLookup;
@@ -73,7 +74,7 @@ namespace Units.Worker
                 if (distanceSq > STORING_DISTANCE_THRESHOLD * STORING_DISTANCE_THRESHOLD)
                     continue;
 
-                ProcessStoring(storingTag.ValueRO, ref workerResource.ValueRW,
+                ProcessStoring(workerTransform.ValueRO, storingTag.ValueRO, ref workerResource.ValueRW,
                              workerOwner.ValueRO, workerEntity, ref ecb);
             }
 
@@ -81,7 +82,7 @@ namespace Units.Worker
             ecb.Dispose();
         }
 
-        private void ProcessStoring(WorkerStoringTagComponent storingTag,
+        private void ProcessStoring(LocalTransform workerTransform, WorkerStoringTagComponent storingTag,
                                    ref CurrentWorkerResourceQuantityComponent workerResource,
                                    GhostOwner workerOwner, Entity workerEntity, ref EntityCommandBuffer ecb)
         {
@@ -97,6 +98,7 @@ namespace Units.Worker
 
             StoreResourceToPlayer(playerEntity, workerResource.ResourceType, workerResource.Value, ecb);
 
+            ResourceType gatheredType = workerResource.ResourceType;
             workerResource.Value        = 0;
             workerResource.ResourceType = ResourceType.None;
             ecb.RemoveComponent<WorkerStoringTagComponent>(workerEntity);
@@ -111,6 +113,14 @@ namespace Units.Worker
             else
             {
                 workerResource.PreviousResourceEntity = Entity.Null;
+
+                // Previous resource was destroyed — find nearest resource of the same type
+                Entity nearest = FindNearestResourceOfType(workerTransform.Position, gatheredType);
+                if (nearest != Entity.Null)
+                {
+                    SetNextTarget(workerEntity, nearest, ecb);
+                    ecb.AddComponent(workerEntity, new WorkerGatheringTagComponent { ResourceEntity = nearest });
+                }
             }
         }
 
@@ -165,6 +175,34 @@ namespace Units.Worker
             }
 
             ecb.AddComponent<UpdateResourcesPanelTag>(playerEntity);
+        }
+
+        private Entity FindNearestResourceOfType(float3 position, ResourceType type)
+        {
+            Entity nearest = Entity.Null;
+            float closestDistSq = float.MaxValue;
+
+            foreach ((RefRO<LocalTransform> resTransform,
+                      RefRO<ResourceTypeComponent> resType,
+                      RefRO<CurrentResourceQuantityComponent> resQty,
+                      Entity resEntity)
+                     in SystemAPI.Query<RefRO<LocalTransform>,
+                                       RefRO<ResourceTypeComponent>,
+                                       RefRO<CurrentResourceQuantityComponent>>()
+                         .WithEntityAccess())
+            {
+                if (resType.ValueRO.Type != type || resQty.ValueRO.Value <= 0)
+                    continue;
+
+                float distSq = math.distancesq(position, resTransform.ValueRO.Position);
+                if (distSq < closestDistSq)
+                {
+                    closestDistSq = distSq;
+                    nearest = resEntity;
+                }
+            }
+
+            return nearest;
         }
     }
 }
