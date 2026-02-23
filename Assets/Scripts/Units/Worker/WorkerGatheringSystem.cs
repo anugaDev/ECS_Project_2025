@@ -15,10 +15,10 @@ namespace Units.Worker
     [UpdateAfter(typeof(MovementSystems.UnitStateSystem))]
     public partial class WorkerGatheringSystem : SystemBase
     {
-        private const int   MAX_GATHERING_AMOUNT = 50;
+        private const int MAX_GATHERING_AMOUNT = 50;
         private const float GATHERING_DISTANCE_THRESHOLD = 4.0f;
-        private const int   AMOUNT_TO_GATHER = 1;
-        private const float GATHER_INTERVAL_SECONDS = 1.0f;
+        private const int AMOUNT_TO_GATHER = 1;
+        private const float GATHER_INTERVAL_SECONDS = 0.25f;
 
         private float _gatherTimer;
 
