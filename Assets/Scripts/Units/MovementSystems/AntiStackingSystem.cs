@@ -46,6 +46,9 @@ namespace Units.MovementSystems
                                         RefRO<SetInputStateTargetComponent>,
                                         RefRO<ElementTeamComponent>>()
                          .WithAll<UnitTagComponent>()
+                         .WithNone<WorkerGatheringTagComponent,
+                                   WorkerStoringTagComponent,
+                                   WorkerConstructionTagComponent>()
                          .WithEntityAccess())
             {
                 if (path.ValueRO.HasPath || input.ValueRO.HasNewTarget)

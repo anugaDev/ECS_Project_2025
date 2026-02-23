@@ -15,10 +15,10 @@ namespace Units.Worker
     [UpdateAfter(typeof(MovementSystems.UnitStateSystem))]
     public partial class WorkerGatheringSystem : SystemBase
     {
-        private const int   MAX_GATHERING_AMOUNT         = 50;
+        private const int   MAX_GATHERING_AMOUNT = 50;
         private const float GATHERING_DISTANCE_THRESHOLD = 4.0f;
-        private const int   AMOUNT_TO_GATHER             = 1;
-        private const float GATHER_INTERVAL_SECONDS      = 1.0f;
+        private const int   AMOUNT_TO_GATHER = 1;
+        private const float GATHER_INTERVAL_SECONDS = 1.0f;
 
         private float _gatherTimer;
 
@@ -29,10 +29,10 @@ namespace Units.Worker
 
         protected override void OnCreate()
         {
-            _resourceTypeLookup     = GetComponentLookup<ResourceTypeComponent>(true);
+            _resourceTypeLookup = GetComponentLookup<ResourceTypeComponent>(true);
             _resourceQuantityLookup = GetComponentLookup<CurrentResourceQuantityComponent>();
-            _teamLookup             = GetComponentLookup<ElementTeamComponent>(true);
-            _transformLookup        = GetComponentLookup<LocalTransform>(true);
+            _teamLookup = GetComponentLookup<ElementTeamComponent>(true);
+            _transformLookup = GetComponentLookup<LocalTransform>(true);
             RequireForUpdate<UnitTagComponent>();
         }
 
@@ -44,7 +44,6 @@ namespace Units.Worker
             _teamLookup.Update(this);
             _transformLookup.Update(this);
 
-            // Accumulate time — only gather when interval elapses
             _gatherTimer += SystemAPI.Time.DeltaTime;
             bool canGather = _gatherTimer >= GATHER_INTERVAL_SECONDS;
             if (canGather)
@@ -93,7 +92,6 @@ namespace Units.Worker
                 UnityEngine.Debug.Log($"[WGS] Resource {resourceEntity.Index} invalid/depleted — removing tag from {workerEntity.Index}");
                 ecb.RemoveComponent<WorkerGatheringTagComponent>(workerEntity);
 
-                // Resource depleted — go store whatever we have
                 if (workerResource.Value > 0)
                 {
                     workerResource.PreviousResourceEntity = resourceEntity;
@@ -121,7 +119,6 @@ namespace Units.Worker
                 workerResource.ResourceType = resourceType.Type;
             }
 
-            // Only gather on timer tick (once per GATHER_INTERVAL_SECONDS)
             if (!canGather)
                 return;
 
@@ -134,7 +131,6 @@ namespace Units.Worker
                 resourceQuantity.Value -= amountToGather;
                 ecb.SetComponent(resourceEntity, resourceQuantity);
 
-                // Destroy depleted resource and go store whatever we have
                 if (resourceQuantity.Value <= 0)
                 {
                     ecb.DestroyEntity(resourceEntity);
@@ -175,9 +171,9 @@ namespace Units.Worker
             float  closestDistanceSq = float.MaxValue;
 
             foreach ((RefRO<BuildingTypeComponent> buildingType,
-                      RefRO<ElementTeamComponent>  buildingTeam,
-                      RefRO<LocalTransform>         buildingTransform,
-                      Entity                        buildingEntity)
+                      RefRO<ElementTeamComponent> buildingTeam,
+                      RefRO<LocalTransform> buildingTransform,
+                      Entity buildingEntity)
                      in SystemAPI.Query<RefRO<BuildingTypeComponent>,
                                         RefRO<ElementTeamComponent>,
                                         RefRO<LocalTransform>>()
@@ -208,11 +204,11 @@ namespace Units.Worker
 
             ecb.SetComponent(workerEntity, new SetServerStateTargetComponent
             {
-                TargetEntity      = targetEntity,
-                TargetPosition    = targetTransform.Position,
+                TargetEntity = targetEntity,
+                TargetPosition = targetTransform.Position,
                 IsFollowingTarget = true,
-                StoppingDistance  = 2.0f,
-                TargetVersion     = currentVersion + 1
+                StoppingDistance = 2.0f,
+                TargetVersion = currentVersion + 1
             });
         }
     }
