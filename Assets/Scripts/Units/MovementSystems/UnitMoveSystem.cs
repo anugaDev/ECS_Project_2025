@@ -8,10 +8,6 @@ using Unity.Transforms;
 
 namespace Units.MovementSystems
 {
-    /// <summary>
-    /// CLIENT-ONLY: Moves units along NavMesh paths.
-    /// Server doesn't have NavMesh, so this system only runs on clients.
-    /// </summary>
     [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
     [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
     [UpdateAfter(typeof(Navigation.NavMeshPathfindingSystem))]
@@ -37,15 +33,8 @@ namespace Units.MovementSystems
 
         public void OnUpdate(ref SystemState state)
         {
-            // NOTE: Do NOT guard with IsFirstTimeFullyPredictingTick here.
-            // Movement must re-run on every resimulated tick so the unit's position is
-            // correctly advanced through the full rollback window. Blocking resimulation
-            // caused the unit to snap back to the server-authoritative position each
-            // update → jitter. Path recalculation (not movement) is guarded in
-            // NavMeshPathfindingSystem instead.
             _currentDeltaTime = SystemAPI.Time.DeltaTime;
 
-            // DEBUG: Log if running on server (should NOT happen with PredictedClient components)
             if (state.WorldUnmanaged.IsServer())
             {
                 UnityEngine.Debug.LogError("[UnitMoveSystem] Running on SERVER - this should NOT happen!");
@@ -86,11 +75,6 @@ namespace Units.MovementSystems
                 return;
             }
 
-            // Monotonic index: scan starts from the STORED index (never goes backward).
-            // This prevents threshold boundary bouncing: once a waypoint is considered
-            // passed, it stays passed even if position oscillates within the threshold zone.
-            // Both client and server advance their own indices independently at the same
-            // rate (same speed, same waypoints, same starting position).
             int startIndex = math.clamp(_currentPathComponent.ValueRO.CurrentWaypointIndex, 0, count - 1);
 
             for (int i = startIndex; i < count; i++)
@@ -113,7 +97,7 @@ namespace Units.MovementSystems
                         return;
                     }
                     _currentPathComponent.ValueRW.CurrentWaypointIndex = i + 1;
-                    continue; // immediately target next waypoint this tick
+                    continue;
                 }
 
                 MoveTowardsWaypoint(toWaypoint, distance);

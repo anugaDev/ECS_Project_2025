@@ -7,18 +7,6 @@ using Unity.Transforms;
 
 namespace Units.MovementSystems
 {
-    /// <summary>
-    /// SERVER-ONLY counterpart to UnitMoveSystem.
-    ///
-    /// Reads NavMesh waypoints from UnitWaypointsInputComponent (delivered via NetCode's
-    /// command buffer from the client's GhostInputSystemGroup). Uses PathComponent on the
-    /// server (now AllPredicted) for monotonic waypoint index tracking.
-    ///
-    /// MONOTONIC INDEX: Scan starts from the stored CurrentWaypointIndex (never goes
-    /// backward). Once a waypoint is considered passed it stays passed, preventing
-    /// threshold boundary bouncing when server and client positions differ by a tiny amount.
-    /// Server also detects new paths via W0 change (stored in LastTargetPosition).
-    /// </summary>
     [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
     [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
     [BurstCompile]
@@ -62,14 +50,12 @@ namespace Units.MovementSystems
         {
             int count = waypointsInput.ValueRO.WaypointCount;
 
-            // Client cleared count to 0 after path ended
             if (count == 0)
             {
                 pathComponent.ValueRW.HasPath = false;
                 return;
             }
 
-            // Detect new path: W0 changed → reset index to 0
             float3 w0 = waypointsInput.ValueRO.W0;
             bool isNewPath = !pathComponent.ValueRO.HasPath ||
                              math.distancesq(pathComponent.ValueRO.LastTargetPosition, w0) > 0.01f;
@@ -81,7 +67,6 @@ namespace Units.MovementSystems
                 pathComponent.ValueRW.LastTargetPosition = w0;
             }
 
-            // Monotonic index — same logic as UnitMoveSystem
             int startIndex = math.clamp(pathComponent.ValueRO.CurrentWaypointIndex, 0, count - 1);
             float3 pos = transform.ValueRO.Position;
 

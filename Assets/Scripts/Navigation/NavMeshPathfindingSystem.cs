@@ -10,18 +10,6 @@ using UnityEngine.AI;
 
 namespace Navigation
 {
-    /// <summary>
-    /// Calculates NavMesh paths and records waypoints as IInputComponentData.
-    ///
-    /// RUNS IN GhostInputSystemGroup (NOT PredictedSimulationSystemGroup).
-    /// This is critical: IInputComponentData values are captured at the end of
-    /// GhostInputSystemGroup for each tick. By running here, the NavMesh waypoints
-    /// are recorded and delivered to the server via the NetCode command buffer.
-    /// The server reads UnitWaypointsInputComponent and follows the same path,
-    /// preventing units from clipping through buildings.
-    ///
-    /// CLIENT-ONLY: NavMesh only exists on the client.
-    /// </summary>
     [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
     [UpdateInGroup(typeof(GhostInputSystemGroup))]
     [UpdateAfter(typeof(PlayerInputs.UnitMoveInputSystem))]
@@ -69,8 +57,6 @@ namespace Navigation
         {
             if (!inputTarget.ValueRO.HasNewTarget)
             {
-                // When path is complete (UnitMoveSystem set HasPath=false), clear WaypointCount
-                // so ServerUnitMoveSystem stops moving the unit.
                 if (!pathComponent.ValueRO.HasPath && waypointsInput.ValueRO.WaypointCount > 0)
                     waypointsInput.ValueRW.WaypointCount = 0;
                 return;
@@ -194,10 +180,6 @@ namespace Navigation
             inputTarget.ValueRW.HasNewTarget = false;
         }
 
-        /// <summary>
-        /// Copies the PathWaypointBuffer into the fixed-array IInputComponentData
-        /// so the server receives the same waypoints via the NetCode command buffer.
-        /// </summary>
         private static void WriteWaypointsInput(
             RefRW<UnitWaypointsInputComponent> waypointsInput,
             DynamicBuffer<PathWaypointBuffer> pathBuffer)

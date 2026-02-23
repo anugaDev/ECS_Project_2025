@@ -1,189 +1,175 @@
 using ElementCommons;
+using Units;
 using Units.Worker;
-using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.NetCode;
+using UnityEngine.AI;
 
-/*namespace Units.MovementSystems
+namespace Units.MovementSystems
 {
-    /// <summary>
-    /// System that arranges selected units into a grid formation when they receive move commands.
-    /// Uses SetInputStateTargetComponent to set formation positions.
-    /// Runs before NavMeshPathfindingSystem to adjust targets before pathfinding.
-    /// DISABLED FOR TESTING - Testing basic movement only
-    /// </summary>
-    //[UpdateInGroup(typeof(GhostInputSystemGroup))]
-    //[UpdateAfter(typeof(PlayerInputs.UnitMoveInputSystem))]
-    //[BurstCompile]
-    public partial struct FormationSystem_DISABLED : ISystem
+    [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
+    [UpdateInGroup(typeof(GhostInputSystemGroup))]
+    [UpdateAfter(typeof(PlayerInputs.UnitMoveInputSystem))]
+    [UpdateBefore(typeof(Navigation.NavMeshPathfindingSystem))]
+    public partial class FormationSystem : SystemBase
     {
-        private const float OFFSET_MULTIPLIER = 0.5f;
-        private const float GRID_SPACING = 3.0f;
-        
-        private NativeList<Entity> _commandedUnits;
+        private const float GRID_SPACING          = 3.0f;
+        private const float OFFSET_MULTIPLIER     = 0.5f;
+        private const float NAVMESH_SAMPLE_RADIUS = 5.0f;
+        private const float OCCUPIED_RADIUS       = 1.0f;
+        private const float SPIRAL_DISTANCE       = 2.5f;
+        private const int   SPIRAL_ATTEMPTS       = 12;
 
-        private NativeList<float3> _targetPositions;
+        private int _walkableMask;
 
-        private NativeList<int> _teams;
-
-        [BurstCompile]
-        public void OnCreate(ref SystemState state)
+        protected override void OnCreate()
         {
-            state.RequireForUpdate<UnitTagComponent>();
+            _walkableMask = 1 << NavMesh.GetAreaFromName("Walkable");
+            RequireForUpdate<UnitTagComponent>();
         }
 
-        public void OnUpdate(ref SystemState state)
+        protected override void OnUpdate()
         {
-            InitializeLists();
+            var commandedUnits   = new NativeList<Entity>(Allocator.Temp);
+            var requestedTargets = new NativeList<float3>(Allocator.Temp);
+            var teams            = new NativeList<int>(Allocator.Temp);
 
-            // Collect all units that have received new input targets
-            foreach ((RefRO<SetInputStateTargetComponent> inputTarget,
+            foreach ((RefRO<SetInputStateTargetComponent> input,
                      RefRO<ElementSelectionComponent> selection,
                      RefRO<ElementTeamComponent> team,
                      Entity entity)
                      in SystemAPI.Query<RefRO<SetInputStateTargetComponent>,
                                        RefRO<ElementSelectionComponent>,
                                        RefRO<ElementTeamComponent>>()
-                         .WithAll<UnitTagComponent, Simulate>()
+                         .WithAll<UnitTagComponent>()
                          .WithEntityAccess())
             {
-                if (!inputTarget.ValueRO.HasNewTarget || !selection.ValueRO.IsSelected)
+                if (!input.ValueRO.HasNewTarget || !selection.ValueRO.IsSelected)
                     continue;
 
-                SetCommandedUnitCandidate(entity, inputTarget, team);
+                commandedUnits.Add(entity);
+                requestedTargets.Add(input.ValueRO.TargetPosition);
+                teams.Add((int)team.ValueRO.Team);
             }
 
-            if (_commandedUnits.Length == 0)
+            if (commandedUnits.Length == 0)
             {
-                ResetLists();
+                commandedUnits.Dispose();
+                requestedTargets.Dispose();
+                teams.Dispose();
                 return;
             }
 
-            NativeHashSet<int> processedIndices = new NativeHashSet<int>(_commandedUnits.Length, Allocator.Temp);
+            var processed = new NativeHashSet<int>(commandedUnits.Length, Allocator.Temp);
 
-            for (int commandedUnitIndex = 0; commandedUnitIndex < _commandedUnits.Length; commandedUnitIndex++)
+            for (int i = 0; i < commandedUnits.Length; i++)
             {
-                UpdateProcessedUnit(state, processedIndices, commandedUnitIndex);
+                if (processed.Contains(i)) continue;
+
+                float3 baseTarget = requestedTargets[i];
+                int    unitTeam   = teams[i];
+
+                var group = new NativeList<int>(Allocator.Temp);
+                for (int j = i; j < commandedUnits.Length; j++)
+                {
+                    if (teams[j] == unitTeam &&
+                        math.distancesq(requestedTargets[j], baseTarget) < 1.0f)
+                    {
+                        group.Add(j);
+                        processed.Add(j);
+                    }
+                }
+
+                AssignFormationSlots(group, commandedUnits, baseTarget);
+                group.Dispose();
             }
 
-            processedIndices.Dispose();
-            _commandedUnits.Dispose();
-            _targetPositions.Dispose();
-            _teams.Dispose();
+            processed.Dispose();
+            commandedUnits.Dispose();
+            requestedTargets.Dispose();
+            teams.Dispose();
         }
 
-        private void UpdateProcessedUnit(SystemState state, NativeHashSet<int> processedIndices, int commandedUnitIndex)
+        private void AssignFormationSlots(
+            NativeList<int> group,
+            NativeList<Entity> entities,
+            float3 baseTarget)
         {
-            if (processedIndices.Contains(commandedUnitIndex))
+            int total = group.Length;
+            var claimed = new NativeList<float3>(total, Allocator.Temp);
+
+            for (int gi = 0; gi < total; gi++)
             {
-                return;
+                int unitListIndex = group[gi];
+                float3 rawSlot    = baseTarget + CalculateGridOffset(gi, total);
+                float3 slot       = FindFreeNavMeshPosition(rawSlot, claimed);
+
+                claimed.Add(slot);
+
+                SetInputStateTargetComponent input =
+                    EntityManager.GetComponentData<SetInputStateTargetComponent>(entities[unitListIndex]);
+                input.TargetPosition = slot;
+                input.HasNewTarget   = true;
+                EntityManager.SetComponentData(entities[unitListIndex], input);
             }
 
-            float3 baseUnitTarget = _targetPositions[commandedUnitIndex];
-            int unitTeam = _teams[commandedUnitIndex];
-            NativeList<int> groupIndices = new NativeList<int>(Allocator.Temp);
-            ProcessUnitTeam(processedIndices, unitTeam, baseUnitTarget, groupIndices);
-            SetTargets(state, groupIndices, baseUnitTarget);
-            groupIndices.Dispose();
+            claimed.Dispose();
         }
 
-        private void ProcessUnitTeam(NativeHashSet<int> processedIndices, int unitTeam, float3 baseUnitTarget,
-            NativeList<int> groupIndices)
+        private float3 FindFreeNavMeshPosition(float3 candidate, NativeList<float3> claimed)
         {
-            for (int processedUnitIndex = 0; processedUnitIndex < _commandedUnits.Length; processedUnitIndex++)
+            for (int attempt = 0; attempt <= SPIRAL_ATTEMPTS; attempt++)
             {
-                ProcessUnitTeam(processedIndices, unitTeam, baseUnitTarget, groupIndices, processedUnitIndex);
-            }
-        }
+                float3 probe = attempt == 0
+                    ? candidate
+                    : candidate + SpiralOffset(attempt);
 
-        private void ProcessUnitTeam(NativeHashSet<int> processedIndices, int unitTeam, float3 baseUnitTarget,
-            NativeList<int> groupIndices, int processedUnitIndex)
-        {
-            if (IsUnitTeam(unitTeam, baseUnitTarget, processedUnitIndex))
-            {
-                return;
+                if (!NavMesh.SamplePosition(probe, out NavMeshHit hit, NAVMESH_SAMPLE_RADIUS, _walkableMask))
+                    continue;
+
+                float3 snapped = hit.position;
+                if (!IsClaimed(snapped, claimed))
+                    return snapped;
             }
 
-            groupIndices.Add(processedUnitIndex);
-            processedIndices.Add(processedUnitIndex);  
+            if (NavMesh.SamplePosition(candidate, out NavMeshHit fallback, NAVMESH_SAMPLE_RADIUS, _walkableMask))
+                return fallback.position;
+
+            return candidate;
         }
 
-        private bool IsUnitTeam(int unitTeam, float3 baseUnitTarget, int processedUnitIndex)
+        private static bool IsClaimed(float3 position, NativeList<float3> claimed)
         {
-            return _teams[processedUnitIndex] != unitTeam ||
-                   !(math.distance(_targetPositions[processedUnitIndex], baseUnitTarget) < 1.0f);
-        }
-
-        private void SetTargets(SystemState state, NativeList<int> groupIndices, float3 baseUnitTarget)
-        {
-            if (groupIndices.Length <= 0)
+            for (int i = 0; i < claimed.Length; i++)
             {
-                return;
+                if (math.distancesq(position, claimed[i]) < OCCUPIED_RADIUS * OCCUPIED_RADIUS)
+                    return true;
             }
-
-            SetTargetsPositions(state, groupIndices, baseUnitTarget);
+            return false;
         }
 
-        private void SetTargetsPositions(SystemState state, NativeList<int> groupIndices, float3 baseUnitTarget)
+        private static float3 SpiralOffset(int attempt)
         {
-            for (int groupIndex = 0; groupIndex < groupIndices.Length; groupIndex++)
-            {
-                SetTargetPositionComponent(state, groupIndices, baseUnitTarget, groupIndex);
-            }
+            float angle = math.radians(attempt * (360f / SPIRAL_ATTEMPTS));
+            return new float3(math.cos(angle) * SPIRAL_DISTANCE, 0f,
+                              math.sin(angle) * SPIRAL_DISTANCE);
         }
 
-        private void SetTargetPositionComponent(SystemState state, NativeList<int> groupIndices, float3 baseUnitTarget,
-            int groupIndex)
-        {
-            int unitIndex = groupIndices[groupIndex];
-            float3 formationOffset = CalculateGridOffset(groupIndex, groupIndices.Length);
-            float3 newTarget = baseUnitTarget + formationOffset;
-
-            // Get the current input target to preserve entity target and other settings
-            SetInputStateTargetComponent currentInput = state.EntityManager.GetComponentData<SetInputStateTargetComponent>(_commandedUnits[unitIndex]);
-
-            // Update only the position with formation offset
-            currentInput.TargetPosition = newTarget;
-            currentInput.HasNewTarget = true;
-
-            state.EntityManager.SetComponentData(_commandedUnits[unitIndex], currentInput);
-        }
-
-        private void InitializeLists()
-        {
-            _commandedUnits = new NativeList<Entity>(Allocator.Temp);
-            _targetPositions = new NativeList<float3>(Allocator.Temp);
-            _teams = new NativeList<int>(Allocator.Temp);
-        }
-
-        private void ResetLists()
-        {
-            _commandedUnits.Dispose();
-            _targetPositions.Dispose();
-            _teams.Dispose();
-        }
-
-        private void SetCommandedUnitCandidate(Entity entity, RefRO<SetInputStateTargetComponent> inputTarget, RefRO<ElementTeamComponent> team)
-        {
-            _commandedUnits.Add(entity);
-            _targetPositions.Add(inputTarget.ValueRO.TargetPosition);
-            _teams.Add((int)team.ValueRO.Team);
-        }
-
-        [BurstCompile]
-        private float3 CalculateGridOffset(int index, int totalUnits)
+        private static float3 CalculateGridOffset(int index, int totalUnits)
         {
             int columns = (int)math.ceil(math.sqrt(totalUnits));
-            int rows = (int)math.ceil(totalUnits / (float)columns);
-            int row = index / columns;
-            int col = index % columns;
-            float offsetX = (col - (columns - 1) * OFFSET_MULTIPLIER) * GRID_SPACING;
-            float offsetZ = (row - (rows - 1) * OFFSET_MULTIPLIER) * GRID_SPACING;
+            int row     = index / columns;
+            int col     = index % columns;
+            int colCount = index < (totalUnits / columns) * columns ? columns
+                         : totalUnits - (totalUnits / columns) * columns;
+            colCount = math.max(colCount, 1);
 
-            return new float3(offsetX, 0, offsetZ);
+            float offsetX = (col - (colCount  - 1) * OFFSET_MULTIPLIER) * GRID_SPACING;
+            float offsetZ = (row - (totalUnits / columns * OFFSET_MULTIPLIER)) * GRID_SPACING;
+
+            return new float3(offsetX, 0f, offsetZ);
         }
     }
-}*/
-
+}
