@@ -8,9 +8,10 @@ using Unity.Transforms;
 
 namespace Units.Worker
 {
-    [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
-    [BurstCompile]
-    public partial struct WorkerConstructionSystem : ISystem
+    // DISABLED FOR TESTING - Testing basic movement only
+    //[UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
+    //[BurstCompile]
+    public partial struct WorkerConstructionSystem_DISABLED : ISystem
     {
         private const float CONSTRUCTION_PROGRESS_PER_SECOND = 0.1f;
         

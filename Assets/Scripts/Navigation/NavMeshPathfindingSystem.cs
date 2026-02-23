@@ -1,6 +1,6 @@
 using ElementCommons;
-using PlayerInputs;
 using Units;
+using Units.Worker;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.NetCode;
@@ -10,12 +10,24 @@ using UnityEngine.AI;
 
 namespace Navigation
 {
-    [UpdateInGroup(typeof(PredictedSimulationSystemGroup), OrderFirst = true)]
-    [UpdateBefore(typeof(Units.MovementSystems.UnitMoveSystem))]
+    /// <summary>
+    /// Calculates NavMesh paths and records waypoints as IInputComponentData.
+    ///
+    /// RUNS IN GhostInputSystemGroup (NOT PredictedSimulationSystemGroup).
+    /// This is critical: IInputComponentData values are captured at the end of
+    /// GhostInputSystemGroup for each tick. By running here, the NavMesh waypoints
+    /// are recorded and delivered to the server via the NetCode command buffer.
+    /// The server reads UnitWaypointsInputComponent and follows the same path,
+    /// preventing units from clipping through buildings.
+    ///
+    /// CLIENT-ONLY: NavMesh only exists on the client.
+    /// </summary>
+    [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
+    [UpdateInGroup(typeof(GhostInputSystemGroup))]
+    [UpdateAfter(typeof(PlayerInputs.UnitMoveInputSystem))]
     public partial class NavMeshPathfindingSystem : SystemBase
     {
         private NavMeshPath _reusablePath;
-
         private int _walkableAreaMask;
 
         protected override void OnCreate()
@@ -28,119 +40,174 @@ namespace Navigation
         {
             const float TARGET_CHANGE_THRESHOLD = 0.1f;
 
-            foreach ((RefRO<LocalTransform> transform, RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRO<ElementSelectionComponent> selection, Entity entity)
-                     in SystemAPI.Query<RefRO<LocalTransform>, RefRW<UnitTargetPositionComponent>, RefRW<PathComponent>, DynamicBuffer<PathWaypointBuffer>, RefRO<ElementSelectionComponent>>()
-                         .WithAll<Simulate, UnitTagComponent>()
+            foreach ((RefRO<LocalTransform> transform,
+                     RefRW<SetInputStateTargetComponent> inputTarget,
+                     RefRW<PathComponent> pathComponent,
+                     DynamicBuffer<PathWaypointBuffer> pathBuffer,
+                     RefRW<UnitWaypointsInputComponent> waypointsInput,
+                     RefRO<ElementSelectionComponent> selection,
+                     Entity entity)
+                     in SystemAPI.Query<RefRO<LocalTransform>,
+                                       RefRW<SetInputStateTargetComponent>,
+                                       RefRW<PathComponent>,
+                                       DynamicBuffer<PathWaypointBuffer>,
+                                       RefRW<UnitWaypointsInputComponent>,
+                                       RefRO<ElementSelectionComponent>>()
+                         .WithAll<UnitTagComponent>()
                          .WithEntityAccess())
             {
-                UpdateUnitPathfinding(targetPosition, pathComponent, TARGET_CHANGE_THRESHOLD, pathBuffer, transform, selection.ValueRO.IsSelected, entity);
+                UpdateUnitPathfinding(inputTarget, pathComponent, TARGET_CHANGE_THRESHOLD,
+                    pathBuffer, waypointsInput, transform, selection.ValueRO.IsSelected, entity);
             }
         }
 
-        private void UpdateUnitPathfinding(RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, float TARGET_CHANGE_THRESHOLD,
-            DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRO<LocalTransform> transform, bool isSelected, Entity entity)
+        private void UpdateUnitPathfinding(RefRW<SetInputStateTargetComponent> inputTarget,
+            RefRW<PathComponent> pathComponent, float TARGET_CHANGE_THRESHOLD,
+            DynamicBuffer<PathWaypointBuffer> pathBuffer,
+            RefRW<UnitWaypointsInputComponent> waypointsInput,
+            RefRO<LocalTransform> transform, bool isSelected, Entity entity)
         {
-            if (!targetPosition.ValueRO.MustMove)
+            if (!inputTarget.ValueRO.HasNewTarget)
             {
+                // When path is complete (UnitMoveSystem set HasPath=false), clear WaypointCount
+                // so ServerUnitMoveSystem stops moving the unit.
+                if (!pathComponent.ValueRO.HasPath && waypointsInput.ValueRO.WaypointCount > 0)
+                    waypointsInput.ValueRW.WaypointCount = 0;
                 return;
             }
 
-            CheckUnitTarget(targetPosition, pathComponent, TARGET_CHANGE_THRESHOLD, pathBuffer, transform, isSelected, entity);
+            CheckUnitTarget(inputTarget, pathComponent, TARGET_CHANGE_THRESHOLD,
+                pathBuffer, waypointsInput, transform, isSelected, entity);
         }
 
-        private void CheckUnitTarget(RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, float TARGET_CHANGE_THRESHOLD,
-            DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRO<LocalTransform> transform, bool isSelected, Entity entity)
+        private void CheckUnitTarget(RefRW<SetInputStateTargetComponent> inputTarget,
+            RefRW<PathComponent> pathComponent, float TARGET_CHANGE_THRESHOLD,
+            DynamicBuffer<PathWaypointBuffer> pathBuffer,
+            RefRW<UnitWaypointsInputComponent> waypointsInput,
+            RefRO<LocalTransform> transform, bool isSelected, Entity entity)
         {
-            float3 currentTarget = targetPosition.ValueRO.Value;
-            bool isTargetChanged = GetIsTargetChanged(pathComponent, TARGET_CHANGE_THRESHOLD, currentTarget);
+            float3 targetPosition = inputTarget.ValueRO.TargetPosition;
 
-            if (!isTargetChanged && pathComponent.ValueRO.HasPath)
-            {
+            if (math.lengthsq(targetPosition) < 0.01f)
                 return;
+
+            const float NAVMESH_PRECISION_THRESHOLD = 1.0f;
+
+            if (pathComponent.ValueRO.HasPath && pathBuffer.Length > 0)
+            {
+                float3 lastTarget = pathComponent.ValueRO.LastTargetPosition;
+                if (math.lengthsq(lastTarget) > 0.01f)
+                {
+                    float distanceToLastTarget = math.distance(targetPosition, lastTarget);
+                    if (distanceToLastTarget < NAVMESH_PRECISION_THRESHOLD)
+                        return;
+                }
             }
 
-            SetUnitPath(targetPosition, pathComponent, pathBuffer, transform, currentTarget, isSelected, entity);
+            SetUnitPath(inputTarget, pathComponent, pathBuffer, waypointsInput, transform, targetPosition, isSelected, entity);
         }
 
-        private void SetUnitPath(RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRO<LocalTransform> transform,
-            float3 currentTarget, bool isSelected, Entity entity)
+        private void SetUnitPath(RefRW<SetInputStateTargetComponent> inputTarget,
+            RefRW<PathComponent> pathComponent,
+            DynamicBuffer<PathWaypointBuffer> pathBuffer,
+            RefRW<UnitWaypointsInputComponent> waypointsInput,
+            RefRO<LocalTransform> transform,
+            float3 targetPosition, bool isSelected, Entity entity)
         {
             pathBuffer.Clear();
             pathComponent.ValueRW.CurrentWaypointIndex = 0;
             pathComponent.ValueRW.HasPath = false;
 
             Vector3 startPos = transform.ValueRO.Position;
-            Vector3 endPos = currentTarget;
+            Vector3 endPos = targetPosition;
 
-            SetUnitPathfinding(targetPosition, pathComponent, pathBuffer, startPos, endPos, currentTarget, isSelected, entity);
-        }
+            bool pathFound = NavMesh.CalculatePath(startPos, endPos, _walkableAreaMask, _reusablePath);
 
-        private void SetUnitPathfinding(RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, DynamicBuffer<PathWaypointBuffer> pathBuffer, Vector3 startPos,
-            Vector3 endPos, float3 currentTarget, bool isSelected, Entity entity)
-        {
-            if (NavMesh.CalculatePath(startPos, endPos, _walkableAreaMask, _reusablePath))
-            {
-                OnPathCalculated(targetPosition, pathComponent, pathBuffer, currentTarget, isSelected, entity);
-            }
+            if (pathFound)
+                OnPathCalculated(inputTarget, pathComponent, pathBuffer, waypointsInput, targetPosition, isSelected, entity);
             else
-            {
-                OnPathNotAvailable(pathBuffer, targetPosition, pathComponent, currentTarget);
-            }
+                OnPathNotAvailable(inputTarget, pathBuffer, pathComponent, waypointsInput, targetPosition);
         }
 
-        private void OnPathCalculated(RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent, DynamicBuffer<PathWaypointBuffer> pathBuffer, float3 currentTarget, bool isSelected, Entity entity)
+        private void OnPathCalculated(RefRW<SetInputStateTargetComponent> inputTarget,
+            RefRW<PathComponent> pathComponent,
+            DynamicBuffer<PathWaypointBuffer> pathBuffer,
+            RefRW<UnitWaypointsInputComponent> waypointsInput,
+            float3 targetPosition, bool isSelected, Entity entity)
         {
             if (_reusablePath.status == NavMeshPathStatus.PathComplete)
-            {
-                CompletePath(pathBuffer, pathComponent, currentTarget, isSelected, entity);
-            }
+                CompletePath(inputTarget, pathBuffer, pathComponent, waypointsInput, targetPosition, isSelected, entity);
             else
-            {
-                RecalculatePath(pathBuffer, targetPosition, pathComponent, currentTarget);
-            }
+                RecalculatePath(inputTarget, pathBuffer, pathComponent, waypointsInput, targetPosition);
         }
 
-        private bool GetIsTargetChanged(RefRW<PathComponent> pathComponent, float TARGET_CHANGE_THRESHOLD, float3 currentTarget)
-        {
-            float3 lastTarget = pathComponent.ValueRO.LastTargetPosition;
-            float distanceToLastTarget = math.distance(currentTarget, lastTarget);
-            bool targetChanged = distanceToLastTarget > TARGET_CHANGE_THRESHOLD;
-            return targetChanged;
-        }
-
-        private void OnPathNotAvailable(DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent,
-            float3 currentTarget)
+        private void OnPathNotAvailable(RefRW<SetInputStateTargetComponent> inputTarget,
+            DynamicBuffer<PathWaypointBuffer> pathBuffer,
+            RefRW<PathComponent> pathComponent,
+            RefRW<UnitWaypointsInputComponent> waypointsInput,
+            float3 targetPosition)
         {
             pathBuffer.Clear();
-            pathBuffer.Add(new PathWaypointBuffer { Position = targetPosition.ValueRO.Value });
+            pathBuffer.Add(new PathWaypointBuffer { Position = targetPosition });
             pathComponent.ValueRW.HasPath = true;
             pathComponent.ValueRW.CurrentWaypointIndex = 0;
-            pathComponent.ValueRW.LastTargetPosition = currentTarget;
+            pathComponent.ValueRW.LastTargetPosition = targetPosition;
+            WriteWaypointsInput(waypointsInput, pathBuffer);
+            inputTarget.ValueRW.HasNewTarget = false;
         }
 
-        private void RecalculatePath(DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRW<UnitTargetPositionComponent> targetPosition, RefRW<PathComponent> pathComponent,
-            float3 currentTarget)
+        private void RecalculatePath(RefRW<SetInputStateTargetComponent> inputTarget,
+            DynamicBuffer<PathWaypointBuffer> pathBuffer,
+            RefRW<PathComponent> pathComponent,
+            RefRW<UnitWaypointsInputComponent> waypointsInput,
+            float3 targetPosition)
         {
             pathBuffer.Clear();
-            pathBuffer.Add(new PathWaypointBuffer { Position = targetPosition.ValueRO.Value });
+            pathBuffer.Add(new PathWaypointBuffer { Position = targetPosition });
             pathComponent.ValueRW.HasPath = true;
             pathComponent.ValueRW.CurrentWaypointIndex = 0;
-            pathComponent.ValueRW.LastTargetPosition = currentTarget;
+            pathComponent.ValueRW.LastTargetPosition = targetPosition;
+            WriteWaypointsInput(waypointsInput, pathBuffer);
+            inputTarget.ValueRW.HasNewTarget = false;
         }
 
-        private void CompletePath(DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRW<PathComponent> pathComponent, float3 currentTarget, bool isSelected, Entity entity)
+        private void CompletePath(RefRW<SetInputStateTargetComponent> inputTarget,
+            DynamicBuffer<PathWaypointBuffer> pathBuffer,
+            RefRW<PathComponent> pathComponent,
+            RefRW<UnitWaypointsInputComponent> waypointsInput,
+            float3 targetPosition, bool isSelected, Entity entity)
         {
             pathBuffer.Clear();
 
             for (int i = 1; i < _reusablePath.corners.Length; i++)
-            {
                 pathBuffer.Add(new PathWaypointBuffer { Position = _reusablePath.corners[i] });
-            }
 
-            pathComponent.ValueRW.HasPath = pathBuffer.Length > 0;
+            if (pathBuffer.Length == 0)
+                pathBuffer.Add(new PathWaypointBuffer { Position = targetPosition });
+
+            pathComponent.ValueRW.HasPath = true;
             pathComponent.ValueRW.CurrentWaypointIndex = 0;
-            pathComponent.ValueRW.LastTargetPosition = currentTarget;
+            pathComponent.ValueRW.LastTargetPosition = targetPosition;
+
+            WriteWaypointsInput(waypointsInput, pathBuffer);
+
+            inputTarget.ValueRW.HasNewTarget = false;
+        }
+
+        /// <summary>
+        /// Copies the PathWaypointBuffer into the fixed-array IInputComponentData
+        /// so the server receives the same waypoints via the NetCode command buffer.
+        /// </summary>
+        private static void WriteWaypointsInput(
+            RefRW<UnitWaypointsInputComponent> waypointsInput,
+            DynamicBuffer<PathWaypointBuffer> pathBuffer)
+        {
+            int count = math.min(pathBuffer.Length, 8);
+            var w = waypointsInput.ValueRW;
+            w.WaypointCount = count;
+            for (int i = 0; i < count; i++)
+                w.SetWaypoint(i, pathBuffer[i].Position);
+            waypointsInput.ValueRW = w;
         }
     }
 }
-

@@ -5,6 +5,7 @@ using PlayerCamera;
 using PlayerInputs.MoveIndicator;
 using UI;
 using Units;
+using Units.Worker;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.NetCode;
@@ -38,10 +39,7 @@ namespace PlayerInputs
             
         private const float RESOURCE_STOPPING_DISTANCE = 2.0f;
 
-
-        private UnitTargetPositionComponent _unitTargetPositionComponent;
-
-        private UnitSelectedTargetComponent _unitSelectedTargetComponent;
+        private SetInputStateTargetComponent _inputTargetComponent;
 
         private CheckGameplayInteractionPolicy _interactionPolicy;
 
@@ -121,12 +119,17 @@ namespace PlayerInputs
 
         private void SelectTargetPosition()
         {
+            // Safety check: Only run on client with a valid camera
+            if (!SystemAPI.HasSingleton<MainCameraTagComponent>())
+            {
+                return;
+            }
+
             CollisionWorld collisionWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld;
             Entity cameraEntity = SystemAPI.GetSingletonEntity<MainCameraTagComponent>();
             Camera mainCamera = EntityManager.GetComponentObject<MainCameraComponentData>(cameraEntity).Camera;
             RaycastInput targetInput = GetRaycastInput(mainCamera, _targetSelectionFilter);
             RaycastInput groundInput = GetRaycastInput(mainCamera, _selectionFilter);
-
             SetUnitPosition(collisionWorld, targetInput, groundInput);
         }
 
@@ -166,11 +169,11 @@ namespace PlayerInputs
 
         private void SetMovePositionIndicatorTransform()
         {
-            float3 spawnPosition = _unitTargetPositionComponent.Value;
+            float3 spawnPosition = _inputTargetComponent.TargetPosition;
 
-            if (_unitSelectedTargetComponent.IsFollowingTarget)
+            if (_inputTargetComponent.IsFollowingTarget)
             {
-                Entity targetEntity = _unitSelectedTargetComponent.TargetEntity;
+                Entity targetEntity = _inputTargetComponent.TargetEntity;
                 LocalTransform targetTransform = EntityManager.GetComponentData<LocalTransform>(targetEntity);
                 float3 position = targetTransform.Position;
                 spawnPosition = position;
@@ -190,16 +193,14 @@ namespace PlayerInputs
 
         private float3 CalculateTargetSize(Entity targetEntity, LocalTransform targetTransform)
         {
-            float3 size = new float3(1f, 1f, 1f); // Default size
+            float3 size = Vector3.one;
 
-            // Check if it's a building with BuildingObstacleSizeComponent
             if (EntityManager.HasComponent<BuildingObstacleSizeComponent>(targetEntity))
             {
                 BuildingObstacleSizeComponent obstacleSize = EntityManager.GetComponentData<BuildingObstacleSizeComponent>(targetEntity);
                 size = obstacleSize.Size;
             }
 
-            // Apply the entity's scale
             size *= targetTransform.Scale;
 
             return size;
@@ -207,24 +208,19 @@ namespace PlayerInputs
 
         private float CalculateStoppingDistance(Entity targetEntity)
         {
-            // Buildings: use half of their size as stopping distance
             if (EntityManager.HasComponent<BuildingObstacleSizeComponent>(targetEntity))
             {
                 BuildingObstacleSizeComponent obstacleSize = EntityManager.GetComponentData<BuildingObstacleSizeComponent>(targetEntity);
                 LocalTransform targetTransform = EntityManager.GetComponentData<LocalTransform>(targetEntity);
-
-                // Calculate the maximum dimension (width or depth) and use half of it
                 float maxDimension = math.max(obstacleSize.Size.x, obstacleSize.Size.z) * targetTransform.Scale;
                 return maxDimension * 0.5f + 1.0f; // Half size + 1 unit buffer
             }
 
-            // Resources: fixed stopping distance
             if (EntityManager.HasComponent<ResourceTypeComponent>(targetEntity))
             {
                 return RESOURCE_STOPPING_DISTANCE;
             }
 
-            // Units: fixed stopping distance
             if (EntityManager.HasComponent<UnitTagComponent>(targetEntity))
             {
                 return UNIT_STOPPING_DISTANCE;
@@ -238,52 +234,33 @@ namespace PlayerInputs
             ElementSelectionComponent selectedPositionComponent = EntityManager.GetComponentData<ElementSelectionComponent>(entity);
 
             if (!selectedPositionComponent.IsSelected)
-            {
                 return;
-            }
 
             _anySelected = true;
 
-            _unitTargetPositionComponent = GetUnitPositionComponent(closestHit);
-            EntityManager.SetComponentData(entity, _unitTargetPositionComponent);
-
+            float3 targetPosition = closestHit.Position;
             bool hasTarget = targetEntity != Entity.Null &&
                            EntityManager.Exists(targetEntity) &&
                            EntityManager.HasComponent<SelectableElementTypeComponent>(targetEntity);
 
-            float stoppingDistance = 0.1f; // Default stopping distance
+            float stoppingDistance = DEFAULT_STOPPING_DISTANCE;
             if (hasTarget)
             {
                 stoppingDistance = CalculateStoppingDistance(targetEntity);
             }
 
-            _unitSelectedTargetComponent = new UnitSelectedTargetComponent
+            _inputTargetComponent = new SetInputStateTargetComponent
             {
                 TargetEntity = hasTarget ? targetEntity : Entity.Null,
+                TargetPosition = targetPosition,
                 IsFollowingTarget = hasTarget,
-                StoppingDistance = stoppingDistance
+                StoppingDistance = stoppingDistance,
+                HasNewTarget = true
             };
-            EntityManager.SetComponentData(entity, _unitSelectedTargetComponent);
 
-            PathComponent pathComp = EntityManager.GetComponentData<PathComponent>(entity);
-            pathComp.HasPath = false;
-            pathComp.CurrentWaypointIndex = 0;
-            pathComp.LastTargetPosition = float3.zero;
-            EntityManager.SetComponentData(entity, pathComp);
+            EntityManager.SetComponentData(entity, _inputTargetComponent);
 
             SetMovePositionIndicator();
-            
-            DynamicBuffer<PathWaypointBuffer> pathBuffer = EntityManager.GetBuffer<PathWaypointBuffer>(entity);
-            pathBuffer.Clear();
-        }
-
-        private UnitTargetPositionComponent GetUnitPositionComponent(RaycastHit closestHit)
-        {
-            return new UnitTargetPositionComponent
-            {
-                Value = closestHit.Position,
-                MustMove =  true
-            };
         }
 
         private RaycastInput GetRaycastInput(Camera mainCamera, CollisionFilter filter)
@@ -292,7 +269,7 @@ namespace PlayerInputs
             mousePosition.z = DEFAULT_Z_POSITION;
             Vector3 worldPosition = mainCamera.ScreenToWorldPoint(mousePosition);
 
-            return new RaycastInput
+            return new RaycastInput  
             {
                 Start = mainCamera.transform.position,
                 End = worldPosition,
@@ -302,7 +279,7 @@ namespace PlayerInputs
 
         protected override void OnUpdate()
         {
-            if (!_inputReceived)
+            if (!_inputReceived) 
             {
                 return;
             }

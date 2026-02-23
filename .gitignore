@@ -78,3 +78,20 @@ Assets/TextMesh Pro/Examples & Extras/Resources/Fonts & Materials/Roboto-Bold SD
 Assets/TextMesh Pro/Examples & Extras/Resources/Fonts & Materials/Roboto-Bold SDF.asset
 Assets/TextMesh Pro/Examples & Extras/Resources/Fonts & Materials/Roboto-Bold SDF.asset
 Assets/TextMesh Pro/Examples & Extras/Resources/Fonts & Materials/Roboto-Bold SDF.asset
+Assets/Scripts/docs.meta
+Assets/Scripts/docs/CHANGELOG.md
+Assets/Scripts/docs/CHANGELOG.md.meta
+Assets/Scripts/docs/DYNAMIC_NAVMESH_README.md
+Assets/Scripts/docs/DYNAMIC_NAVMESH_README.md.meta
+Assets/Scripts/docs/IMPLEMENTATION_SUMMARY.md
+Assets/Scripts/docs/IMPLEMENTATION_SUMMARY.md.meta
+Assets/Scripts/docs/NAVMESH_OBSTACLE_FIX.md
+Assets/Scripts/docs/NAVMESH_OBSTACLE_FIX.md.meta
+Assets/Scripts/docs/PHYSICS_FIX_SUMMARY.md
+Assets/Scripts/docs/PHYSICS_FIX_SUMMARY.md.meta
+Assets/Scripts/docs/README.md
+Assets/Scripts/docs/README.md.meta
+Assets/Scripts/docs/SETUP_GUIDE.md
+Assets/Scripts/docs/SETUP_GUIDE.md.meta
+Assets/Scripts/Navigation/NavMeshDebugger.cs
+Assets/Scripts/Navigation/NavMeshDebugger.cs.meta

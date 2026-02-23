@@ -37,8 +37,9 @@ namespace Units
                 AddComponent<NewUnitTagComponent>(unitEntity);
                 AddComponent<ElementTeamComponent>(unitEntity);
                 AddComponent<URPMaterialPropertyBaseColor>(unitEntity);
-                AddComponent<UnitTargetPositionComponent>(unitEntity);
-                AddComponent<UnitSelectedTargetComponent>(unitEntity);
+                AddComponent<SetInputStateTargetComponent>(unitEntity);
+                AddComponent<SetServerStateTargetComponent>(unitEntity);
+
                 AddComponent<ElementSelectionComponent>(unitEntity);
                 AddComponent<ElementDisplayDetailsComponent>(unitEntity);
                 AddComponent(unitEntity, GetUnitTypeComponent(authoring));
@@ -46,6 +47,7 @@ namespace Units
                 AddComponent(unitEntity, GetSelectableTypeComponent());
                 AddComponentObject(unitEntity, GetUnitMaterialsComponent(authoring));
                 AddBuffer<PathWaypointBuffer>(unitEntity);
+                AddComponent<UnitWaypointsInputComponent>(unitEntity);
             }
 
             private SelectableElementTypeComponent GetSelectableTypeComponent()

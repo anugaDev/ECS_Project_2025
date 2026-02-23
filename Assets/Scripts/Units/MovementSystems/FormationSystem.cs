@@ -1,20 +1,25 @@
 using ElementCommons;
-using PlayerInputs;
+using Units.Worker;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.NetCode;
 
-namespace Units.MovementSystems
+/*namespace Units.MovementSystems
 {
-    [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
-    [UpdateBefore(typeof(Navigation.NavMeshPathfindingSystem))]
-    [BurstCompile]
-    public partial struct FormationSystem : ISystem
+    /// <summary>
+    /// System that arranges selected units into a grid formation when they receive move commands.
+    /// Uses SetInputStateTargetComponent to set formation positions.
+    /// Runs before NavMeshPathfindingSystem to adjust targets before pathfinding.
+    /// DISABLED FOR TESTING - Testing basic movement only
+    /// </summary>
+    //[UpdateInGroup(typeof(GhostInputSystemGroup))]
+    //[UpdateAfter(typeof(PlayerInputs.UnitMoveInputSystem))]
+    //[BurstCompile]
+    public partial struct FormationSystem_DISABLED : ISystem
     {
         private const float OFFSET_MULTIPLIER = 0.5f;
-        
         private const float GRID_SPACING = 3.0f;
         
         private NativeList<Entity> _commandedUnits;
@@ -33,17 +38,21 @@ namespace Units.MovementSystems
         {
             InitializeLists();
 
-            foreach ((RefRO<UnitTargetPositionComponent> targetPos, RefRO<ElementSelectionComponent> selection, RefRO<ElementTeamComponent> team, Entity entity)
-                     in SystemAPI.Query<RefRO<UnitTargetPositionComponent>, RefRO<ElementSelectionComponent>, RefRO<ElementTeamComponent>>()
+            // Collect all units that have received new input targets
+            foreach ((RefRO<SetInputStateTargetComponent> inputTarget,
+                     RefRO<ElementSelectionComponent> selection,
+                     RefRO<ElementTeamComponent> team,
+                     Entity entity)
+                     in SystemAPI.Query<RefRO<SetInputStateTargetComponent>,
+                                       RefRO<ElementSelectionComponent>,
+                                       RefRO<ElementTeamComponent>>()
                          .WithAll<UnitTagComponent, Simulate>()
                          .WithEntityAccess())
             {
-                if (!targetPos.ValueRO.MustMove || !selection.ValueRO.IsSelected)
-                {
+                if (!inputTarget.ValueRO.HasNewTarget || !selection.ValueRO.IsSelected)
                     continue;
-                }
 
-                SetCommandedUnitCandidate(entity, targetPos, team);
+                SetCommandedUnitCandidate(entity, inputTarget, team);
             }
 
             if (_commandedUnits.Length == 0)
@@ -98,7 +107,7 @@ namespace Units.MovementSystems
             }
 
             groupIndices.Add(processedUnitIndex);
-            processedIndices.Add(processedUnitIndex);
+            processedIndices.Add(processedUnitIndex);  
         }
 
         private bool IsUnitTeam(int unitTeam, float3 baseUnitTarget, int processedUnitIndex)
@@ -131,16 +140,15 @@ namespace Units.MovementSystems
             int unitIndex = groupIndices[groupIndex];
             float3 formationOffset = CalculateGridOffset(groupIndex, groupIndices.Length);
             float3 newTarget = baseUnitTarget + formationOffset;
-            state.EntityManager.SetComponentData(_commandedUnits[unitIndex], GetTargetPositionComponent(newTarget));
-        }
 
-        private static UnitTargetPositionComponent GetTargetPositionComponent(float3 newTarget)
-        {
-            return new UnitTargetPositionComponent
-            {
-                Value = newTarget,
-                MustMove = true
-            };
+            // Get the current input target to preserve entity target and other settings
+            SetInputStateTargetComponent currentInput = state.EntityManager.GetComponentData<SetInputStateTargetComponent>(_commandedUnits[unitIndex]);
+
+            // Update only the position with formation offset
+            currentInput.TargetPosition = newTarget;
+            currentInput.HasNewTarget = true;
+
+            state.EntityManager.SetComponentData(_commandedUnits[unitIndex], currentInput);
         }
 
         private void InitializeLists()
@@ -157,10 +165,10 @@ namespace Units.MovementSystems
             _teams.Dispose();
         }
 
-        private void SetCommandedUnitCandidate(Entity entity, RefRO<UnitTargetPositionComponent> targetPos, RefRO<ElementTeamComponent> team)
+        private void SetCommandedUnitCandidate(Entity entity, RefRO<SetInputStateTargetComponent> inputTarget, RefRO<ElementTeamComponent> team)
         {
             _commandedUnits.Add(entity);
-            _targetPositions.Add(targetPos.ValueRO.Value);
+            _targetPositions.Add(inputTarget.ValueRO.TargetPosition);
             _teams.Add((int)team.ValueRO.Team);
         }
 
@@ -177,5 +185,5 @@ namespace Units.MovementSystems
             return new float3(offsetX, 0, offsetZ);
         }
     }
-}
+}*/
 

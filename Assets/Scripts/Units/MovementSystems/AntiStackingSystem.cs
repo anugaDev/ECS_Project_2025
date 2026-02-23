@@ -1,5 +1,5 @@
 using ElementCommons;
-using PlayerInputs;
+using Units.Worker;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -7,15 +7,20 @@ using Unity.Mathematics;
 using Unity.NetCode;
 using Unity.Transforms;
 
-namespace Units.MovementSystems
+/*namespace Units.MovementSystems
 {
-    [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
-    [UpdateAfter(typeof(Navigation.NavMeshPathfindingSystem))]
-    [BurstCompile]
-    public partial struct AntiStackingSystem : ISystem
+    /// <summary>
+    /// System that prevents units from stacking on top of each other.
+    /// Pushes stationary units away from each other when they get too close.
+    /// Uses SetServerStateTargetComponent to set new positions.
+    /// DISABLED FOR TESTING - Testing basic movement only
+    /// </summary>
+    //[UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
+    //[UpdateAfter(typeof(Navigation.NavMeshPathfindingSystem))]
+    //[BurstCompile]
+    public partial struct AntiStackingSystem_DISABLED : ISystem
     {
         private const float STACKING_THRESHOLD = 1.5f;
-
         private const float PUSH_DISTANCE = 3.0f;
 
         private EntityCommandBuffer _entityCommandBuffer;
@@ -41,12 +46,19 @@ namespace Units.MovementSystems
         {
             InitializeLists();
 
-            foreach ((RefRO<LocalTransform> transform, RefRO<PathComponent> pathComponent, RefRO<ElementTeamComponent> team, Entity entity)
-                     in SystemAPI.Query<RefRO<LocalTransform>, RefRO<PathComponent>, RefRO<ElementTeamComponent>>()
+            foreach ((RefRO<LocalTransform> transform,
+                     RefRO<PathComponent> pathComponent,
+                     RefRO<CurrentTargetComponent> currentTarget,
+                     RefRO<ElementTeamComponent> team,
+                     Entity entity)
+                     in SystemAPI.Query<RefRO<LocalTransform>,
+                                       RefRO<PathComponent>,
+                                       RefRO<CurrentTargetComponent>,
+                                       RefRO<ElementTeamComponent>>()
                          .WithAll<UnitTagComponent, Simulate>()
                          .WithEntityAccess())
             {
-                AddUnitToList(pathComponent, entity, transform, team);
+                AddUnitToList(pathComponent, currentTarget, entity, transform, team);
             }
 
             if (_stationaryUnits.Length < 2)
@@ -64,9 +76,14 @@ namespace Units.MovementSystems
             DisposeLists();
         }
 
-        private void AddUnitToList(RefRO<PathComponent> pathComponent, Entity entity, RefRO<LocalTransform> transform, RefRO<ElementTeamComponent> team)
+        private void AddUnitToList(RefRO<PathComponent> pathComponent,
+                                   RefRO<CurrentTargetComponent> currentTarget,
+                                   Entity entity,
+                                   RefRO<LocalTransform> transform,
+                                   RefRO<ElementTeamComponent> team)
         {
-            if (pathComponent.ValueRO.HasPath)
+            // Don't push units that are moving or have reached their intended target
+            if (pathComponent.ValueRO.HasPath || currentTarget.ValueRO.IsTargetReached)
             {
                 return;
             }
@@ -131,16 +148,19 @@ namespace Units.MovementSystems
         private void SetTargetPosition(int unitIndexColumn)
         {
             float3 newPosition = FindFreePosition(_stationaryPositions[unitIndexColumn], _stationaryPositions, unitIndexColumn, _stationaryUnits.Length);
-            _entityCommandBuffer.SetComponent(_stationaryUnits[unitIndexColumn], GetTargetPositionComponent(newPosition));
-        }
 
-        private static UnitTargetPositionComponent GetTargetPositionComponent(float3 newPosition)
-        {
-            return new UnitTargetPositionComponent
+            // Use SetServerStateTargetComponent to request a new position
+            // This will be picked up by TargetSystem
+            SetServerStateTargetComponent serverTarget = new SetServerStateTargetComponent
             {
-                Value = newPosition,
-                MustMove = true
+                TargetEntity = Entity.Null,
+                TargetPosition = newPosition,
+                IsFollowingTarget = false,
+                StoppingDistance = 0.1f,
+                HasNewTarget = true
             };
+
+            _entityCommandBuffer.SetComponent(_stationaryUnits[unitIndexColumn], serverTarget);
         }
 
         [BurstCompile]
@@ -197,5 +217,5 @@ namespace Units.MovementSystems
             return (math.distance(_candidatePos, allPositions[unitIndex]) < STACKING_THRESHOLD);
         }
     }
-}
+}*/
 

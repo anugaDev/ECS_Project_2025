@@ -31,15 +31,30 @@ namespace Units
         public Material RedTeamMaterial;
     }
     
+    /// <summary>
+    /// CLIENT-ONLY: Path data for NavMesh pathfinding.
+    /// Not synchronized because server doesn't have NavMesh.
+    /// Server receives final positions through LocalTransform synchronization.
+    /// </summary>
+    /// <summary>
+    /// AllPredicted (not PredictedClient) so PathComponent exists on SERVER entities too.
+    /// ServerUnitMoveSystem uses PathComponent.CurrentWaypointIndex to track progress
+    /// through the NavMesh waypoints received via UnitWaypointsInputComponent.
+    /// No [GhostField] attributes = nothing is serialized; component just exists on both sides.
+    /// </summary>
+    [GhostComponent(PrefabType = GhostPrefabType.AllPredicted)]
     public struct PathComponent : IComponentData
     {
         public float3 LastTargetPosition;
-
         public int CurrentWaypointIndex;
-
         public bool HasPath;
     }
 
+    /// <summary>
+    /// CLIENT-ONLY: Waypoint buffer for NavMesh paths.
+    /// Not synchronized because server doesn't have NavMesh.
+    /// </summary>
+    [GhostComponent(PrefabType = GhostPrefabType.PredictedClient)]
     public struct PathWaypointBuffer : IBufferElementData
     {
         public float3 Position;
@@ -48,6 +63,6 @@ namespace Units
     public struct UnitAttackingTagComponent : IComponentData
     {
         [GhostField]
-        public Entity AttackingEntity;
+        public Entity TargetEntity;
     }
 }

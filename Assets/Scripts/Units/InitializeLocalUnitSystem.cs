@@ -3,6 +3,7 @@ using ElementCommons;
 using PlayerInputs;
 using ScriptableObjects;
 using Types;
+using Units.Worker;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
@@ -48,11 +49,11 @@ namespace Units
             };
         }
 
-        private UnitTargetPositionComponent GetTargetPositionComponent(LocalTransform transform)
+        private SetInputStateTargetComponent GetTargetPositionComponent(LocalTransform transform)
         {
-            return new UnitTargetPositionComponent
+            return new SetInputStateTargetComponent
             {
-                Value = transform.Position
+                TargetPosition = transform.Position
             };
         }
     }
