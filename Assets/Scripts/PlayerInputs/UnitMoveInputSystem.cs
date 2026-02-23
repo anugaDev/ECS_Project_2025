@@ -249,13 +249,16 @@ namespace PlayerInputs
                 stoppingDistance = CalculateStoppingDistance(targetEntity);
             }
 
+            int currentVersion = EntityManager.GetComponentData<SetInputStateTargetComponent>(entity).TargetVersion;
+
             _inputTargetComponent = new SetInputStateTargetComponent
             {
                 TargetEntity = hasTarget ? targetEntity : Entity.Null,
                 TargetPosition = targetPosition,
                 IsFollowingTarget = hasTarget,
                 StoppingDistance = stoppingDistance,
-                HasNewTarget = true
+                HasNewTarget = true,
+                TargetVersion = currentVersion + 1
             };
 
             EntityManager.SetComponentData(entity, _inputTargetComponent);

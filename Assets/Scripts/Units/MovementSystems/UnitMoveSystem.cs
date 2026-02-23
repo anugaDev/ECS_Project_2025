@@ -8,6 +8,10 @@ using Unity.Transforms;
 
 namespace Units.MovementSystems
 {
+    /// DISABLED: Movement is now handled by ServerUnitMoveSystem on both client and server.
+    /// This system used PathWaypointBuffer (client-only) which diverged from the server's
+    /// UnitWaypointsInputComponent, causing prediction mismatches and visual jitter.
+    [DisableAutoCreation]
     [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
     [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
     [UpdateAfter(typeof(Navigation.NavMeshPathfindingSystem))]
@@ -35,10 +39,6 @@ namespace Units.MovementSystems
         {
             _currentDeltaTime = SystemAPI.Time.DeltaTime;
 
-            if (state.WorldUnmanaged.IsServer())
-            {
-                UnityEngine.Debug.LogError("[UnitMoveSystem] Running on SERVER - this should NOT happen!");
-            }
 
             foreach ((RefRW<LocalTransform> transform,
                      RefRW<PathComponent> pathComponent,

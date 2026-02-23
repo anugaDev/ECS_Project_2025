@@ -33,6 +33,7 @@ namespace Units
             {
                 Entity unitEntity = GetEntity(TransformUsageFlags.Dynamic);
                 AddComponent<PathComponent>(unitEntity);
+                AddComponent<UnitStateComponent>(unitEntity);
                 AddComponent<UnitTagComponent>(unitEntity);
                 AddComponent<NewUnitTagComponent>(unitEntity);
                 AddComponent<ElementTeamComponent>(unitEntity);

@@ -2,7 +2,6 @@ using Buildings;
 using ElementCommons;
 using GatherableResources;
 using Types;
-using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -11,103 +10,89 @@ using Unity.Transforms;
 
 namespace Units.Worker
 {
-    // DISABLED FOR TESTING - Testing basic movement only
-    //[UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
-    //[UpdateAfter(typeof(MovementSystems.UnitStateSystem))]
-    //[BurstCompile]
-    public partial struct WorkerGatheringSystem_DISABLED : ISystem
+    [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
+    [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
+    [UpdateAfter(typeof(MovementSystems.UnitStateSystem))]
+    public partial class WorkerGatheringSystem : SystemBase
     {
-        private const int MAX_GATHERING_AMOUNT = 50;
-
-        private const float GATHERING_DISTANCE_THRESHOLD = 2.0f;
-
-        private const int AMMOUNT_TO_GATHER = 1;
+        private const int   MAX_GATHERING_AMOUNT         = 50;
+        private const float GATHERING_DISTANCE_THRESHOLD = 4.0f;
+        private const int   AMOUNT_TO_GATHER             = 1;
 
         private ComponentLookup<CurrentResourceQuantityComponent> _resourceQuantityLookup;
-
         private ComponentLookup<ResourceTypeComponent> _resourceTypeLookup;
-
-        private ComponentLookup<BuildingTypeComponent> _buildingTypeLookup;
-
         private ComponentLookup<ElementTeamComponent> _teamLookup;
-
         private ComponentLookup<LocalTransform> _transformLookup;
 
-        private EntityCommandBuffer _entityCommandBuffer;
-
-        [BurstCompile]
-        public void OnCreate(ref SystemState state)
+        protected override void OnCreate()
         {
-            _resourceTypeLookup = state.GetComponentLookup<ResourceTypeComponent>(true);
-            _resourceQuantityLookup = state.GetComponentLookup<CurrentResourceQuantityComponent>();
-            _buildingTypeLookup = state.GetComponentLookup<BuildingTypeComponent>(true);
-            _teamLookup = state.GetComponentLookup<ElementTeamComponent>(true);
-            _transformLookup = state.GetComponentLookup<LocalTransform>(true);
-            state.RequireForUpdate<NetworkTime>();
+            _resourceTypeLookup     = GetComponentLookup<ResourceTypeComponent>(true);
+            _resourceQuantityLookup = GetComponentLookup<CurrentResourceQuantityComponent>();
+            _teamLookup             = GetComponentLookup<ElementTeamComponent>(true);
+            _transformLookup        = GetComponentLookup<LocalTransform>(true);
+            RequireForUpdate<UnitTagComponent>();
         }
 
-        [BurstCompile]
-        public void OnUpdate(ref SystemState state)
+        protected override void OnUpdate()
         {
-            if (!state.WorldUnmanaged.IsServer())
-                return;
 
-            NetworkTime networkTime = SystemAPI.GetSingleton<NetworkTime>();
-            if (!networkTime.IsFirstTimeFullyPredictingTick)
-                return;
+            _resourceTypeLookup.Update(this);
+            _resourceQuantityLookup.Update(this);
+            _teamLookup.Update(this);
+            _transformLookup.Update(this);
 
-            _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            _resourceTypeLookup.Update(ref state);
-            _resourceQuantityLookup.Update(ref state);
-            _buildingTypeLookup.Update(ref state);
-            _teamLookup.Update(ref state);
-            _transformLookup.Update(ref state);
+            var ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            foreach ((RefRO<LocalTransform> workerTransform,
-                     RefRO<WorkerGatheringTagComponent> gatheringTag,
-                     RefRO<CurrentTargetComponent> currentTarget,
-                     RefRW<CurrentWorkerResourceQuantityComponent> workerResource,
-                     RefRO<ElementTeamComponent> workerTeam,
-                     Entity workerEntity)
+            foreach ((RefRO<LocalTransform>                      workerTransform,
+                      RefRO<WorkerGatheringTagComponent>         gatheringTag,
+                      RefRO<UnitStateComponent>                  unitState,
+                      RefRW<CurrentWorkerResourceQuantityComponent> workerResource,
+                      RefRO<ElementTeamComponent>                workerTeam,
+                      Entity                                     workerEntity)
                      in SystemAPI.Query<RefRO<LocalTransform>,
-                                       RefRO<WorkerGatheringTagComponent>,
-                                       RefRO<CurrentTargetComponent>,
-                                       RefRW<CurrentWorkerResourceQuantityComponent>,
-                                       RefRO<ElementTeamComponent>>()
+                                        RefRO<WorkerGatheringTagComponent>,
+                                        RefRO<UnitStateComponent>,
+                                        RefRW<CurrentWorkerResourceQuantityComponent>,
+                                        RefRO<ElementTeamComponent>>()
                          .WithAll<Simulate, UnitTagComponent>()
                          .WithEntityAccess())
             {
-                if (!currentTarget.ValueRO.IsTargetReached)
+                UnityEngine.Debug.Log($"[WGS] Worker {workerEntity.Index} has GatherTag. State={unitState.ValueRO.State}, Resource={gatheringTag.ValueRO.ResourceEntity.Index}");
+
+                if (unitState.ValueRO.State != UnitState.Acting)
                     continue;
 
                 ProcessGathering(workerTransform.ValueRO, gatheringTag.ValueRO,
                                ref workerResource.ValueRW, workerTeam.ValueRO.Team,
-                               workerEntity, ref state);
+                               workerEntity, ref ecb);
             }
 
-            _entityCommandBuffer.Playback(state.EntityManager);
-            _entityCommandBuffer.Dispose();
+            ecb.Playback(EntityManager);
+            ecb.Dispose();
         }
 
         private void ProcessGathering(LocalTransform workerTransform, WorkerGatheringTagComponent gatheringTag,
                                      ref CurrentWorkerResourceQuantityComponent workerResource, TeamType workerTeam,
-                                     Entity workerEntity, ref SystemState state)
+                                     Entity workerEntity, ref EntityCommandBuffer ecb)
         {
             Entity resourceEntity = gatheringTag.ResourceEntity;
 
-            if (!state.EntityManager.Exists(resourceEntity) || !_resourceQuantityLookup.TryGetComponent(resourceEntity, out CurrentResourceQuantityComponent resourceQuantity) || resourceQuantity.Value <= 0)
+            if (!EntityManager.Exists(resourceEntity) ||
+                !_resourceQuantityLookup.TryGetComponent(resourceEntity, out CurrentResourceQuantityComponent resourceQuantity) ||
+                resourceQuantity.Value <= 0)
             {
-                _entityCommandBuffer.RemoveComponent<WorkerGatheringTagComponent>(workerEntity);
+                UnityEngine.Debug.Log($"[WGS] Resource {resourceEntity.Index} invalid/depleted — removing tag from {workerEntity.Index}");
+                ecb.RemoveComponent<WorkerGatheringTagComponent>(workerEntity);
                 return;
             }
 
-            LocalTransform resourceTransform = state.EntityManager.GetComponentData<LocalTransform>(resourceEntity);
+            if (!_transformLookup.TryGetComponent(resourceEntity, out LocalTransform resourceTransform))
+                return;
+
             float distanceSq = math.distancesq(workerTransform.Position, resourceTransform.Position);
-
+            UnityEngine.Debug.Log($"[WGS] Worker {workerEntity.Index} dist²={distanceSq:F2} to resource {resourceEntity.Index} (threshold²={GATHERING_DISTANCE_THRESHOLD * GATHERING_DISTANCE_THRESHOLD})");
             if (distanceSq > GATHERING_DISTANCE_THRESHOLD * GATHERING_DISTANCE_THRESHOLD)
-            {
                 return;
-            }
 
             if (workerResource.ResourceType == ResourceType.None &&
                 _resourceTypeLookup.TryGetComponent(resourceEntity, out ResourceTypeComponent resourceType))
@@ -115,54 +100,46 @@ namespace Units.Worker
                 workerResource.ResourceType = resourceType.Type;
             }
 
-            int amountToGather = math.min(AMMOUNT_TO_GATHER, resourceQuantity.Value);
-            amountToGather = math.min(amountToGather, MAX_GATHERING_AMOUNT - workerResource.Value);
+            int amountToGather = math.min(AMOUNT_TO_GATHER, resourceQuantity.Value);
+            amountToGather     = math.min(amountToGather, MAX_GATHERING_AMOUNT - workerResource.Value);
 
             if (amountToGather > 0)
             {
-                workerResource.Value += amountToGather;
+                workerResource.Value   += amountToGather;
                 resourceQuantity.Value -= amountToGather;
-                _entityCommandBuffer.SetComponent(resourceEntity, resourceQuantity);
+                ecb.SetComponent(resourceEntity, resourceQuantity);
             }
 
             if (workerResource.Value < MAX_GATHERING_AMOUNT)
-            {
                 return;
-            }
 
-            UnityEngine.Debug.Log($"[GATHERING] Worker {workerEntity.Index} reached max capacity ({MAX_GATHERING_AMOUNT}). Finding Town Center...");
             workerResource.PreviousResourceEntity = resourceEntity;
-
-            Entity townCenter = FindClosestTownCenter(workerTransform.Position, workerTeam, ref state);
+            Entity townCenter = FindClosestTownCenter(workerTransform.Position, workerTeam);
 
             if (townCenter != Entity.Null)
             {
-                SetNextTarget(workerEntity, townCenter, ref state);
-                _entityCommandBuffer.RemoveComponent<WorkerGatheringTagComponent>(workerEntity);
-                _entityCommandBuffer.AddComponent(workerEntity, new WorkerStoringTagComponent
-                {
-                    BuildingEntity = townCenter
-                });
+                SetNextTarget(workerEntity, townCenter, ecb);
+                ecb.RemoveComponent<WorkerGatheringTagComponent>(workerEntity);
+                ecb.AddComponent(workerEntity, new WorkerStoringTagComponent { BuildingEntity = townCenter });
             }
             else
             {
-                UnityEngine.Debug.LogError($"[GATHERING] Worker {workerEntity.Index} cannot find Town Center!");
-                _entityCommandBuffer.RemoveComponent<WorkerGatheringTagComponent>(workerEntity);
+                ecb.RemoveComponent<WorkerGatheringTagComponent>(workerEntity);
             }
         }
 
-        private Entity FindClosestTownCenter(float3 workerPosition, TeamType workerTeam, ref SystemState state)
+        private Entity FindClosestTownCenter(float3 workerPosition, TeamType workerTeam)
         {
             Entity closestTownCenter = Entity.Null;
-            float closestDistanceSq = float.MaxValue;
+            float  closestDistanceSq = float.MaxValue;
 
             foreach ((RefRO<BuildingTypeComponent> buildingType,
-                     RefRO<ElementTeamComponent> buildingTeam,
-                     RefRO<LocalTransform> buildingTransform,
-                     Entity buildingEntity)
+                      RefRO<ElementTeamComponent>  buildingTeam,
+                      RefRO<LocalTransform>         buildingTransform,
+                      Entity                        buildingEntity)
                      in SystemAPI.Query<RefRO<BuildingTypeComponent>,
-                                       RefRO<ElementTeamComponent>,
-                                       RefRO<LocalTransform>>()
+                                        RefRO<ElementTeamComponent>,
+                                        RefRO<LocalTransform>>()
                          .WithAll<BuildingComponents>()
                          .WithEntityAccess())
             {
@@ -171,7 +148,6 @@ namespace Units.Worker
                     continue;
 
                 float distanceSq = math.distancesq(workerPosition, buildingTransform.ValueRO.Position);
-
                 if (distanceSq < closestDistanceSq)
                 {
                     closestDistanceSq = distanceSq;
@@ -182,27 +158,21 @@ namespace Units.Worker
             return closestTownCenter;
         }
 
-        private void SetNextTarget(Entity workerEntity, Entity targetEntity, ref SystemState state)
+        private void SetNextTarget(Entity workerEntity, Entity targetEntity, EntityCommandBuffer ecb)
         {
             if (!_transformLookup.TryGetComponent(targetEntity, out LocalTransform targetTransform))
-            {
-                UnityEngine.Debug.LogWarning($"[GATHERING] Worker {workerEntity.Index} cannot find transform for target {targetEntity.Index}");
                 return;
-            }
 
-            UnityEngine.Debug.Log($"[GATHERING] Worker {workerEntity.Index} setting next target to {targetEntity.Index} at {targetTransform.Position}");
+            int currentVersion = EntityManager.GetComponentData<SetServerStateTargetComponent>(workerEntity).TargetVersion;
 
-            SetServerStateTargetComponent serverTarget = new SetServerStateTargetComponent
+            ecb.SetComponent(workerEntity, new SetServerStateTargetComponent
             {
-                TargetEntity = targetEntity,
-                TargetPosition = targetTransform.Position,
+                TargetEntity      = targetEntity,
+                TargetPosition    = targetTransform.Position,
                 IsFollowingTarget = true,
-                StoppingDistance = 2.0f, // Town Center stopping distance
-                HasNewTarget = true
-            };
-
-            _entityCommandBuffer.SetComponent(workerEntity, serverTarget);
+                StoppingDistance  = 2.0f,
+                TargetVersion     = currentVersion + 1
+            });
         }
     }
 }
-

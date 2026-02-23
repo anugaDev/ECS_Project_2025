@@ -65,4 +65,17 @@ namespace Units
         [GhostField]
         public Entity TargetEntity;
     }
+
+    public enum UnitState : byte
+    {
+        Idle   = 0,
+        Moving = 1,
+        Acting = 2
+    }
+
+    [GhostComponent(PrefabType = GhostPrefabType.AllPredicted)]
+    public struct UnitStateComponent : IComponentData
+    {
+        [GhostField] public UnitState State;
+    }
 }

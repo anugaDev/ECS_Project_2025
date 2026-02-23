@@ -1,5 +1,4 @@
 using Buildings;
-using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -8,85 +7,84 @@ using Unity.Transforms;
 
 namespace Units.Worker
 {
-    // DISABLED FOR TESTING - Testing basic movement only
-    //[UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
-    //[BurstCompile]
-    public partial struct WorkerConstructionSystem_DISABLED : ISystem
+    [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
+    [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
+    [UpdateAfter(typeof(MovementSystems.UnitStateSystem))]
+    public partial class WorkerConstructionSystem : SystemBase
     {
         private const float CONSTRUCTION_PROGRESS_PER_SECOND = 0.1f;
-        
-        private const float CONSTRUCTION_DISTANCE_THRESHOLD = 3.0f;
-        
-        private const float MAX_CONSTRUCTION_VALUE = 1.0f; 
-        
-        private ComponentLookup<BuildingConstructionProgressComponent> _constructionProgressLookup;
-        
-        private EntityCommandBuffer _entityCommandBuffer;
+        private const float CONSTRUCTION_DISTANCE_THRESHOLD  = 3.0f;
+        private const float MAX_CONSTRUCTION_VALUE           = 1.0f;
 
-        [BurstCompile]
-        public void OnCreate(ref SystemState state)
+        private ComponentLookup<BuildingConstructionProgressComponent> _constructionProgressLookup;
+        private ComponentLookup<LocalTransform>                        _transformLookup;
+
+        protected override void OnCreate()
         {
-            _constructionProgressLookup = state.GetComponentLookup<BuildingConstructionProgressComponent>();
-            state.RequireForUpdate<NetworkTime>();
+            _constructionProgressLookup = GetComponentLookup<BuildingConstructionProgressComponent>();
+            _transformLookup            = GetComponentLookup<LocalTransform>(true);
+            RequireForUpdate<UnitTagComponent>();
         }
 
-        [BurstCompile]
-        public void OnUpdate(ref SystemState state)
+        protected override void OnUpdate()
         {
-            _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            _constructionProgressLookup.Update(ref state);
-            
-            float deltaTime = SystemAPI.Time.DeltaTime;
+            _constructionProgressLookup.Update(this);
+            _transformLookup.Update(this);
 
-            foreach ((RefRO<LocalTransform> workerTransform, RefRO<WorkerConstructionTagComponent> constructionTag,
-                     Entity workerEntity) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<WorkerConstructionTagComponent>>()
-                         .WithAll<Simulate, UnitTagComponent>().WithEntityAccess())
+            float deltaTime = SystemAPI.Time.DeltaTime;
+            var ecb = new EntityCommandBuffer(Allocator.Temp);
+
+            foreach ((RefRO<LocalTransform>               workerTransform,
+                      RefRO<WorkerConstructionTagComponent> constructionTag,
+                      Entity                               workerEntity)
+                     in SystemAPI.Query<RefRO<LocalTransform>,
+                                        RefRO<WorkerConstructionTagComponent>>()
+                         .WithAll<Simulate, UnitTagComponent>()
+                         .WithEntityAccess())
             {
-                ProcessConstruction(workerTransform.ValueRO, constructionTag.ValueRO, 
-                                  workerEntity, deltaTime, ref state);
+                ProcessConstruction(workerTransform.ValueRO, constructionTag.ValueRO,
+                                  workerEntity, deltaTime, ref ecb);
             }
 
-            _entityCommandBuffer.Playback(state.EntityManager);
-            _entityCommandBuffer.Dispose();
+            ecb.Playback(EntityManager);
+            ecb.Dispose();
         }
 
         private void ProcessConstruction(LocalTransform workerTransform, WorkerConstructionTagComponent constructionTag,
-                                        Entity workerEntity,float deltaTime,ref SystemState state)
+                                        Entity workerEntity, float deltaTime, ref EntityCommandBuffer ecb)
         {
             Entity buildingEntity = constructionTag.BuildingEntity;
 
-            if (!state.EntityManager.Exists(buildingEntity))
+            if (!EntityManager.Exists(buildingEntity))
             {
-                _entityCommandBuffer.RemoveComponent<WorkerConstructionTagComponent>(workerEntity);
+                ecb.RemoveComponent<WorkerConstructionTagComponent>(workerEntity);
                 return;
             }
 
             if (!_constructionProgressLookup.TryGetComponent(buildingEntity, out BuildingConstructionProgressComponent constructionProgress))
             {
-                _entityCommandBuffer.RemoveComponent<WorkerConstructionTagComponent>(workerEntity);
+                ecb.RemoveComponent<WorkerConstructionTagComponent>(workerEntity);
                 return;
             }
 
-            LocalTransform buildingTransform = state.EntityManager.GetComponentData<LocalTransform>(buildingEntity);
+            if (!_transformLookup.TryGetComponent(buildingEntity, out LocalTransform buildingTransform))
+                return;
+
             float distanceSq = math.distancesq(workerTransform.Position, buildingTransform.Position);
-
             if (distanceSq > CONSTRUCTION_DISTANCE_THRESHOLD * CONSTRUCTION_DISTANCE_THRESHOLD)
-            {
                 return;
-            }
 
             constructionProgress.Value += CONSTRUCTION_PROGRESS_PER_SECOND * deltaTime;
 
             if (constructionProgress.Value >= MAX_CONSTRUCTION_VALUE)
             {
-                _entityCommandBuffer.RemoveComponent<BuildingConstructionProgressComponent>(buildingEntity);
-                _entityCommandBuffer.RemoveComponent<WorkerConstructionTagComponent>(workerEntity);
+                ecb.RemoveComponent<BuildingConstructionProgressComponent>(buildingEntity);
+                ecb.RemoveComponent<WorkerConstructionTagComponent>(workerEntity);
             }
             else
             {
-                _entityCommandBuffer.SetComponent(buildingEntity, constructionProgress);
+                ecb.SetComponent(buildingEntity, constructionProgress);
             }
         }
     }
 }
-

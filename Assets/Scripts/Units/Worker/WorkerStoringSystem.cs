@@ -2,185 +2,148 @@ using Buildings;
 using ElementCommons;
 using Types;
 using UI;
-using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.NetCode;
 using Unity.Transforms;
-using UnityEngine;
 
 namespace Units.Worker
 {
-    // DISABLED FOR TESTING - Testing basic movement only
-    //[UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
-    //[UpdateAfter(typeof(MovementSystems.UnitStateSystem))]
-    //[BurstCompile]
-    public partial struct WorkerStoringSystem_DISABLED : ISystem
+    [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
+    [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
+    [UpdateAfter(typeof(MovementSystems.UnitStateSystem))]
+    public partial class WorkerStoringSystem : SystemBase
     {
-        private const float STORING_DISTANCE_THRESHOLD = 3.0f;
+        private const float STORING_DISTANCE_THRESHOLD = 4.0f;
 
-        private ComponentLookup<CurrentWoodComponent> _woodLookup;
+        private ComponentLookup<CurrentWoodComponent>  _woodLookup;
+        private ComponentLookup<CurrentFoodComponent>  _foodLookup;
+        private ComponentLookup<LocalTransform>        _transformLookup;
+        private ComponentLookup<GhostOwner>            _ghostOwnerLookup;
 
-        private ComponentLookup<CurrentFoodComponent> _foodLookup;
-        
-        private ComponentLookup<LocalTransform> _transformLookup;
-
-        private ComponentLookup<GhostOwner> _ghostOwnerLookup;
-
-        private ComponentLookup<BuildingTypeComponent> _buildingTypeLookup;
-
-        private ComponentLookup<ElementTeamComponent> _teamLookup;
-
-        private EntityCommandBuffer _entityCommandBuffer;
-
-        [BurstCompile]
-        public void OnCreate(ref SystemState state)
+        protected override void OnCreate()
         {
-            _woodLookup = state.GetComponentLookup<CurrentWoodComponent>();
-            _foodLookup = state.GetComponentLookup<CurrentFoodComponent>();
-            _ghostOwnerLookup = state.GetComponentLookup<GhostOwner>(true);
-            _transformLookup = state.GetComponentLookup<LocalTransform>(true);
-            _buildingTypeLookup = state.GetComponentLookup<BuildingTypeComponent>(true);
-            _teamLookup = state.GetComponentLookup<ElementTeamComponent>(true);
-            state.RequireForUpdate<NetworkTime>();
+            _woodLookup       = GetComponentLookup<CurrentWoodComponent>();
+            _foodLookup       = GetComponentLookup<CurrentFoodComponent>();
+            _ghostOwnerLookup = GetComponentLookup<GhostOwner>(true);
+            _transformLookup  = GetComponentLookup<LocalTransform>(true);
+            RequireForUpdate<UnitTagComponent>();
         }
 
-        [BurstCompile]
-        public void OnUpdate(ref SystemState state)
+        protected override void OnUpdate()
         {
-            if (!state.WorldUnmanaged.IsServer())
-                return;
 
-            NetworkTime networkTime = SystemAPI.GetSingleton<NetworkTime>();
-            if (!networkTime.IsFirstTimeFullyPredictingTick)
-                return;
+            _woodLookup.Update(this);
+            _foodLookup.Update(this);
+            _ghostOwnerLookup.Update(this);
+            _transformLookup.Update(this);
 
-            _entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            _woodLookup.Update(ref state);
-            _foodLookup.Update(ref state);
-            _ghostOwnerLookup.Update(ref state);
-            _transformLookup.Update(ref state);
-            _buildingTypeLookup.Update(ref state);
-            _teamLookup.Update(ref state);
+            var ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            foreach ((RefRO<LocalTransform> workerTransform,
-                     RefRO<WorkerStoringTagComponent> storingTag,
-                     RefRO<CurrentTargetComponent> currentTarget,
-                     RefRW<CurrentWorkerResourceQuantityComponent> workerResource,
-                     RefRO<GhostOwner> workerOwner,
-                     Entity workerEntity)
+            foreach ((RefRO<LocalTransform>                      workerTransform,
+                      RefRO<WorkerStoringTagComponent>           storingTag,
+                      RefRO<UnitStateComponent>                  unitState,
+                      RefRW<CurrentWorkerResourceQuantityComponent> workerResource,
+                      RefRO<GhostOwner>                          workerOwner,
+                      Entity                                     workerEntity)
                      in SystemAPI.Query<RefRO<LocalTransform>,
-                                       RefRO<WorkerStoringTagComponent>,
-                                       RefRO<CurrentTargetComponent>,
-                                       RefRW<CurrentWorkerResourceQuantityComponent>,
-                                       RefRO<GhostOwner>>()
+                                        RefRO<WorkerStoringTagComponent>,
+                                        RefRO<UnitStateComponent>,
+                                        RefRW<CurrentWorkerResourceQuantityComponent>,
+                                        RefRO<GhostOwner>>()
                          .WithAll<Simulate, UnitTagComponent>()
                          .WithEntityAccess())
             {
-                if (!currentTarget.ValueRO.IsTargetReached)
+                if (unitState.ValueRO.State != UnitState.Acting)
                     continue;
 
-                UnityEngine.Debug.Log($"[STORING] Worker {workerEntity.Index} reached Town Center, storing resources");
-                ProcessStoring(workerTransform.ValueRO, storingTag.ValueRO,
-                             ref workerResource.ValueRW, workerOwner.ValueRO,
-                             workerEntity, ref state);
+                // Verify the worker is actually near the town center, not at the resource
+                Entity buildingEntity = storingTag.ValueRO.BuildingEntity;
+                if (buildingEntity == Entity.Null || !EntityManager.Exists(buildingEntity))
+                {
+                    ecb.RemoveComponent<WorkerStoringTagComponent>(workerEntity);
+                    continue;
+                }
+
+                if (!_transformLookup.TryGetComponent(buildingEntity, out LocalTransform buildingTransform))
+                    continue;
+
+                float distanceSq = math.distancesq(workerTransform.ValueRO.Position, buildingTransform.Position);
+                if (distanceSq > STORING_DISTANCE_THRESHOLD * STORING_DISTANCE_THRESHOLD)
+                    continue;
+
+                ProcessStoring(storingTag.ValueRO, ref workerResource.ValueRW,
+                             workerOwner.ValueRO, workerEntity, ref ecb);
             }
 
-            _entityCommandBuffer.Playback(state.EntityManager);
-            _entityCommandBuffer.Dispose();
+            ecb.Playback(EntityManager);
+            ecb.Dispose();
         }
 
-        private void ProcessStoring(LocalTransform workerTransform, WorkerStoringTagComponent storingTag,
-                                   ref CurrentWorkerResourceQuantityComponent workerResource, GhostOwner workerOwner,
-                                   Entity workerEntity, ref SystemState state)
+        private void ProcessStoring(WorkerStoringTagComponent storingTag,
+                                   ref CurrentWorkerResourceQuantityComponent workerResource,
+                                   GhostOwner workerOwner, Entity workerEntity, ref EntityCommandBuffer ecb)
         {
-            Entity buildingEntity = storingTag.BuildingEntity;
-            if (buildingEntity == Entity.Null || !state.EntityManager.Exists(buildingEntity))
-            {
-                UnityEngine.Debug.LogWarning($"[STORING] Worker {workerEntity.Index} target building no longer exists");
-                _entityCommandBuffer.RemoveComponent<WorkerStoringTagComponent>(workerEntity);
-                return;
-            }
-
             if (workerResource.Value <= 0)
             {
-                UnityEngine.Debug.LogWarning($"[STORING] Worker {workerEntity.Index} has no resources to store");
-                _entityCommandBuffer.RemoveComponent<WorkerStoringTagComponent>(workerEntity);
+                ecb.RemoveComponent<WorkerStoringTagComponent>(workerEntity);
                 return;
             }
 
-            Entity playerEntity = FindPlayerEntity(workerOwner.NetworkId, ref state);
+            Entity playerEntity = FindPlayerEntity(workerOwner.NetworkId);
             if (playerEntity == Entity.Null)
-            {
-                UnityEngine.Debug.LogError($"[STORING] Worker {workerEntity.Index} cannot find player entity");
                 return;
-            }
 
-            StoreResourceToPlayer(playerEntity, workerResource.ResourceType, workerResource.Value);
-            UnityEngine.Debug.Log($"[STORING] Worker {workerEntity.Index} stored {workerResource.Value} {workerResource.ResourceType} at Town Center {buildingEntity.Index}");
+            StoreResourceToPlayer(playerEntity, workerResource.ResourceType, workerResource.Value, ecb);
 
-            workerResource.Value = 0;
+            workerResource.Value        = 0;
             workerResource.ResourceType = ResourceType.None;
-            _entityCommandBuffer.RemoveComponent<WorkerStoringTagComponent>(workerEntity);
-            Entity previousResourceEntity = workerResource.PreviousResourceEntity;
+            ecb.RemoveComponent<WorkerStoringTagComponent>(workerEntity);
 
-            if (previousResourceEntity != Entity.Null && state.EntityManager.Exists(previousResourceEntity))
+            Entity previousResource = workerResource.PreviousResourceEntity;
+            if (previousResource != Entity.Null && EntityManager.Exists(previousResource))
             {
-                UnityEngine.Debug.Log($"[STORING] Worker {workerEntity.Index} returning to previous resource {previousResourceEntity.Index}");
-                SetNextTarget(workerEntity, previousResourceEntity, ref state);
-                _entityCommandBuffer.AddComponent(workerEntity, new WorkerGatheringTagComponent
-                {
-                    ResourceEntity = previousResourceEntity
-                });
-
+                SetNextTarget(workerEntity, previousResource, ecb);
+                ecb.AddComponent(workerEntity, new WorkerGatheringTagComponent { ResourceEntity = previousResource });
                 workerResource.PreviousResourceEntity = Entity.Null;
             }
             else
             {
-                UnityEngine.Debug.Log($"[STORING] Worker {workerEntity.Index} has no previous resource, going idle");
                 workerResource.PreviousResourceEntity = Entity.Null;
             }
         }
 
-        private void SetNextTarget(Entity workerEntity, Entity targetEntity, ref SystemState state)
+        private void SetNextTarget(Entity workerEntity, Entity targetEntity, EntityCommandBuffer ecb)
         {
             if (!_transformLookup.TryGetComponent(targetEntity, out LocalTransform targetTransform))
-            {
-                UnityEngine.Debug.LogWarning($"[STORING] Worker {workerEntity.Index} cannot find transform for target {targetEntity.Index}");
                 return;
-            }
 
-            UnityEngine.Debug.Log($"[STORING] Worker {workerEntity.Index} setting next target to {targetEntity.Index} at {targetTransform.Position}");
-            SetServerStateTargetComponent serverTarget = new SetServerStateTargetComponent
+            int currentVersion = EntityManager.GetComponentData<SetServerStateTargetComponent>(workerEntity).TargetVersion;
+
+            ecb.SetComponent(workerEntity, new SetServerStateTargetComponent
             {
-                TargetEntity = targetEntity,
-                TargetPosition = targetTransform.Position,
+                TargetEntity      = targetEntity,
+                TargetPosition    = targetTransform.Position,
                 IsFollowingTarget = true,
-                StoppingDistance = 2.0f,
-                HasNewTarget = true
-            };
-
-            _entityCommandBuffer.SetComponent(workerEntity, serverTarget);
+                StoppingDistance  = 2.0f,
+                TargetVersion     = currentVersion + 1
+            });
         }
 
-        private Entity FindPlayerEntity(int networkId, ref SystemState state)
+        private Entity FindPlayerEntity(int networkId)
         {
-            foreach ((RefRO<GhostOwner> ghostOwner, Entity playerEntity) 
+            foreach ((RefRO<GhostOwner> ghostOwner, Entity playerEntity)
                      in SystemAPI.Query<RefRO<GhostOwner>>().WithAll<PlayerTagComponent>().WithEntityAccess())
             {
-                if (ghostOwner.ValueRO.NetworkId != networkId)
-                {
-                    continue;
-                }
-
-                return playerEntity;
+                if (ghostOwner.ValueRO.NetworkId == networkId)
+                    return playerEntity;
             }
-
             return Entity.Null;
         }
 
-        private void StoreResourceToPlayer(Entity playerEntity, ResourceType resourceType, int amount)
+        private void StoreResourceToPlayer(Entity playerEntity, ResourceType resourceType, int amount,
+                                           EntityCommandBuffer ecb)
         {
             switch (resourceType)
             {
@@ -188,21 +151,20 @@ namespace Units.Worker
                     if (_woodLookup.TryGetComponent(playerEntity, out CurrentWoodComponent wood))
                     {
                         wood.Value += amount;
-                        _entityCommandBuffer.SetComponent(playerEntity, wood);
+                        ecb.SetComponent(playerEntity, wood);
                     }
                     break;
-                    
+
                 case ResourceType.Food:
                     if (_foodLookup.TryGetComponent(playerEntity, out CurrentFoodComponent food))
                     {
                         food.Value += amount;
-                        _entityCommandBuffer.SetComponent(playerEntity, food);
+                        ecb.SetComponent(playerEntity, food);
                     }
                     break;
             }
 
-            _entityCommandBuffer.AddComponent<UpdateResourcesPanelTag>(playerEntity);
+            ecb.AddComponent<UpdateResourcesPanelTag>(playerEntity);
         }
     }
 }
-

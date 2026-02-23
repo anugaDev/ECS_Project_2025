@@ -57,6 +57,9 @@ namespace Navigation
         {
             if (!inputTarget.ValueRO.HasNewTarget)
             {
+                // Clear stale waypoints after client arrives.
+                // ServerUnitMoveSystem has a fallback to finish walking to
+                // LastTargetPosition if waypoints drop to 0 mid-walk.
                 if (!pathComponent.ValueRO.HasPath && waypointsInput.ValueRO.WaypointCount > 0)
                     waypointsInput.ValueRW.WaypointCount = 0;
                 return;
