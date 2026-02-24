@@ -110,12 +110,19 @@ namespace Navigation
             Vector3 startPos = transform.ValueRO.Position;
             Vector3 endPos = targetPosition;
 
+            // Sample the NavMesh to find the closest valid point to the target
+            // This ensures workers target the edge of a building rather than its center
+            if (NavMesh.SamplePosition(targetPosition, out NavMeshHit hit, 20.0f, _walkableAreaMask))
+            {
+                endPos = hit.position;
+            }
+
             bool pathFound = NavMesh.CalculatePath(startPos, endPos, _walkableAreaMask, _reusablePath);
 
             if (pathFound)
-                OnPathCalculated(inputTarget, pathComponent, pathBuffer, waypointsInput, targetPosition, isSelected, entity);
+                OnPathCalculated(inputTarget, pathComponent, pathBuffer, waypointsInput, endPos, isSelected, entity);
             else
-                OnPathNotAvailable(inputTarget, pathBuffer, pathComponent, waypointsInput, targetPosition);
+                OnPathNotAvailable(inputTarget, pathBuffer, pathComponent, waypointsInput, endPos);
         }
 
         private void OnPathCalculated(RefRW<SetInputStateTargetComponent> inputTarget,

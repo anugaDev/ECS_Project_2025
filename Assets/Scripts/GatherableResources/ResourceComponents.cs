@@ -28,10 +28,6 @@ namespace GatherableResources
         public GameObject Instance;
     }
 
-    /// <summary>
-    /// Keeps a reference to the tree GameObject so its CapsuleCollider stays alive for NavMesh.
-    /// Without this, the GameObject is destroyed during baking and NavMesh can't see the tree.
-    /// </summary>
     public class ResourceGameObjectReference : IComponentData
     {
         public GameObject GameObject;

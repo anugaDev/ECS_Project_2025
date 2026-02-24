@@ -20,9 +20,12 @@ namespace Units
     {
         private ComponentLookup<ResourceTypeComponent> _resourceTypeLookup;
 
+        private ComponentLookup<BuildingConstructionProgressComponent> _constructionProgressLookup;
+
         protected override void OnCreate()
         {
             _resourceTypeLookup = GetComponentLookup<ResourceTypeComponent>(true);
+            _constructionProgressLookup = GetComponentLookup<BuildingConstructionProgressComponent>(true);
             RequireForUpdate<UnitTagComponent>();
         }
 
@@ -30,12 +33,10 @@ namespace Units
         {
 
             _resourceTypeLookup.Update(this);
+            _constructionProgressLookup.Update(this);
 
-            var ecb = new EntityCommandBuffer(Allocator.Temp);
+            EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            // --- Phase 1: Cancel existing worker actions when the player manually overrides ---
-            // Player clicks bump SetInputStateTargetComponent.TargetVersion higher than
-            // SetServerStateTargetComponent.TargetVersion. Detect that mismatch here.
             foreach ((RefRO<UnitTypeComponent>            unitType,
                       RefRO<SetInputStateTargetComponent> inputTarget,
                       RefRW<SetServerStateTargetComponent> serverTarget,
@@ -49,23 +50,14 @@ namespace Units
                 if (unitType.ValueRO.Type != UnitType.Worker)
                     continue;
 
-                // Input version > server version → player issued a manual command
                 if (inputTarget.ValueRO.TargetVersion <= serverTarget.ValueRO.TargetVersion)
                     continue;
 
-                // Player manually overrode — cancel any active worker action
-                if (SystemAPI.HasComponent<WorkerGatheringTagComponent>(entity))
-                    ecb.RemoveComponent<WorkerGatheringTagComponent>(entity);
-                if (SystemAPI.HasComponent<WorkerStoringTagComponent>(entity))
-                    ecb.RemoveComponent<WorkerStoringTagComponent>(entity);
-                if (SystemAPI.HasComponent<WorkerConstructionTagComponent>(entity))
-                    ecb.RemoveComponent<WorkerConstructionTagComponent>(entity);
+                ResetActionComponents(entity, ecb);
 
-                // Equalize versions to prevent re-triggering every tick
                 serverTarget.ValueRW.TargetVersion = inputTarget.ValueRO.TargetVersion;
             }
 
-            // --- Phase 2: Assign gathering when an idle worker is near a resource ---
 
             foreach ((RefRO<UnitTypeComponent>            unitType,
                       RefRO<UnitStateComponent>           unitState,
@@ -86,19 +78,15 @@ namespace Units
                 if (unitState.ValueRO.State != UnitState.Idle)
                     continue;
 
-                UnityEngine.Debug.Log($"[WAS-P2] Worker {entity.Index} IDLE. IsFollowing={inputTarget.ValueRO.IsFollowingTarget}, TargetEntity={inputTarget.ValueRO.TargetEntity}, TargetPos={inputTarget.ValueRO.TargetPosition}, TV_in={inputTarget.ValueRO.TargetVersion}");
-
                 Entity targetEntity = inputTarget.ValueRO.TargetEntity;
 
-                // If the client clicked a target, but the Entity ID failed to sync over NetCode
-                // (e.g., baked subscene resources lacking Ghost IDs), TargetEntity arrives as Null.
-                // We fallback to a spatial search near the clicked TargetPosition.
                 if (inputTarget.ValueRO.IsFollowingTarget && (targetEntity == Entity.Null || !EntityManager.Exists(targetEntity)))
                 {
                     float3 targetPos = inputTarget.ValueRO.TargetPosition;
                     float closestDistSq = float.MaxValue;
-                    Entity closestResource = Entity.Null;
+                    Entity closestTarget = Entity.Null;
 
+                    // Search for closest resource
                     foreach ((RefRO<Unity.Transforms.LocalTransform> resTransform, RefRO<ResourceTypeComponent> resType, Entity resEntity) 
                         in SystemAPI.Query<RefRO<Unity.Transforms.LocalTransform>, RefRO<ResourceTypeComponent>>().WithEntityAccess())
                     {
@@ -106,51 +94,72 @@ namespace Units
                         if (distSq < closestDistSq)
                         {
                             closestDistSq = distSq;
-                            closestResource = resEntity;
+                            closestTarget = resEntity;
                         }
                     }
 
-                    UnityEngine.Debug.Log($"[WAS-P2] Spatial search at {targetPos}. Closest distSq={closestDistSq}, resource={closestResource.Index}");
-
-                    if (closestResource != Entity.Null && closestDistSq <= 36.0f)
+                    // Search for closest building under construction
+                    foreach ((RefRO<Unity.Transforms.LocalTransform> bTransform, RefRO<BuildingConstructionProgressComponent> bProgress, Entity bEntity) 
+                        in SystemAPI.Query<RefRO<Unity.Transforms.LocalTransform>, RefRO<BuildingConstructionProgressComponent>>().WithEntityAccess())
                     {
-                        targetEntity = closestResource;
+                        if (bProgress.ValueRO.Value >= bProgress.ValueRO.ConstructionTime)
+                            continue; // Skip finished buildings
+
+                        float distSq = Unity.Mathematics.math.distancesq(targetPos, bTransform.ValueRO.Position);
+                        if (distSq < closestDistSq)
+                        {
+                            closestDistSq = distSq;
+                            closestTarget = bEntity;
+                        }
                     }
-                }
-                else if (!inputTarget.ValueRO.IsFollowingTarget)
-                {
-                    UnityEngine.Debug.Log($"[WAS-P2] IsFollowingTarget=FALSE, skipping spatial search");
+
+                    if (closestTarget != Entity.Null && closestDistSq <= 36.0f)
+                    {
+                        targetEntity = closestTarget;
+                    }
                 }
 
                 if (targetEntity == Entity.Null || !EntityManager.Exists(targetEntity))
                 {
-                    UnityEngine.Debug.Log($"[WAS-P2] No valid target found, clearing IsFollowingTarget");
-                    // Clear input so we don't infinitely search
+                    inputTarget.ValueRW.IsFollowingTarget = false;
+                    continue;
+                }
+
+                if (_constructionProgressLookup.TryGetComponent(targetEntity, out BuildingConstructionProgressComponent progress) 
+                    && progress.Value < progress.ConstructionTime)
+                {
+                    ecb.AddComponent(entity, new WorkerConstructionTagComponent
+                    {
+                        BuildingEntity = targetEntity
+                    });
+
+                    // Target the boundary of the building instead of the exact center
+                    if (EntityManager.HasComponent<BuildingObstacleSizeComponent>(targetEntity))
+                    {
+                        inputTarget.ValueRW.StoppingDistance = 1.6f;
+                    }
+
+                    inputTarget.ValueRW.TargetEntity = Entity.Null;
                     inputTarget.ValueRW.IsFollowingTarget = false;
                     continue;
                 }
 
                 if (!_resourceTypeLookup.HasComponent(targetEntity))
                 {
-                    UnityEngine.Debug.Log($"[WAS-P2] Target {targetEntity.Index} has no ResourceTypeComponent");
                     inputTarget.ValueRW.TargetEntity = Entity.Null;
                     inputTarget.ValueRW.IsFollowingTarget = false;
                     continue;
                 }
 
-                UnityEngine.Debug.Log($"[WAS-P2] ✓ ASSIGNING GATHERING to worker {entity.Index} for resource {targetEntity.Index}");
 
                 ecb.AddComponent(entity, new WorkerGatheringTagComponent
                 {
                     ResourceEntity = targetEntity
                 });
 
-                // Clear input so this doesn't re-trigger next tick
                 inputTarget.ValueRW.TargetEntity = Entity.Null;
                 inputTarget.ValueRW.IsFollowingTarget = false;
             }
-
-            // --- Phase 3: Assign storing when an idle worker with resources is near a town center ---
 
             foreach ((RefRO<UnitTypeComponent>                       unitType,
                       RefRO<UnitStateComponent>                      unitState,
@@ -178,8 +187,7 @@ namespace Units
                 if (workerResource.ValueRO.Value <= 0)
                     continue;
 
-                // Find closest same-team town center
-                Entity closestTC = Entity.Null;
+                Entity closestTownCenter = Entity.Null;
                 float closestDistSq = float.MaxValue;
 
                 foreach ((RefRO<BuildingTypeComponent> buildingType,
@@ -196,26 +204,39 @@ namespace Units
                         buildingTeam.ValueRO.Team != workerTeam.ValueRO.Team)
                         continue;
 
+                    if (_constructionProgressLookup.TryGetComponent(buildingEntity, out BuildingConstructionProgressComponent progress)
+                        && (progress.ConstructionTime <= 0 || progress.Value < progress.ConstructionTime))
+                        continue;
+
                     float distSq = math.distancesq(workerTransform.ValueRO.Position, buildingTransform.ValueRO.Position);
                     if (distSq < closestDistSq)
                     {
                         closestDistSq = distSq;
-                        closestTC = buildingEntity;
+                        closestTownCenter = buildingEntity;
                     }
                 }
 
-                // 8.0 threshold matches WorkerStoringSystem
-                if (closestTC != Entity.Null && closestDistSq <= 8.0f * 8.0f)
+                if (closestTownCenter != Entity.Null && closestDistSq <= 8.0f * 8.0f)
                 {
                     ecb.AddComponent(entity, new WorkerStoringTagComponent
                     {
-                        BuildingEntity = closestTC
+                        BuildingEntity = closestTownCenter
                     });
                 }
             }
 
             ecb.Playback(EntityManager);
             ecb.Dispose();
+        }
+
+        private void ResetActionComponents(Entity entity, EntityCommandBuffer ecb)
+        {
+            if (SystemAPI.HasComponent<WorkerGatheringTagComponent>(entity))
+                ecb.RemoveComponent<WorkerGatheringTagComponent>(entity);
+            if (SystemAPI.HasComponent<WorkerStoringTagComponent>(entity))
+                ecb.RemoveComponent<WorkerStoringTagComponent>(entity);
+            if (SystemAPI.HasComponent<WorkerConstructionTagComponent>(entity))
+                ecb.RemoveComponent<WorkerConstructionTagComponent>(entity);
         }
     }
 }

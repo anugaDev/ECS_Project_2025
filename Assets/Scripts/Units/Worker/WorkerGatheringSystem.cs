@@ -26,6 +26,7 @@ namespace Units.Worker
         private ComponentLookup<ResourceTypeComponent> _resourceTypeLookup;
         private ComponentLookup<ElementTeamComponent> _teamLookup;
         private ComponentLookup<LocalTransform> _transformLookup;
+        private ComponentLookup<BuildingConstructionProgressComponent> _constructionProgressLookup;
 
         protected override void OnCreate()
         {
@@ -33,6 +34,7 @@ namespace Units.Worker
             _resourceQuantityLookup = GetComponentLookup<CurrentResourceQuantityComponent>();
             _teamLookup = GetComponentLookup<ElementTeamComponent>(true);
             _transformLookup = GetComponentLookup<LocalTransform>(true);
+            _constructionProgressLookup = GetComponentLookup<BuildingConstructionProgressComponent>(true);
             RequireForUpdate<UnitTagComponent>();
         }
 
@@ -43,6 +45,7 @@ namespace Units.Worker
             _resourceQuantityLookup.Update(this);
             _teamLookup.Update(this);
             _transformLookup.Update(this);
+            _constructionProgressLookup.Update(this);
 
             _gatherTimer += SystemAPI.Time.DeltaTime;
             bool canGather = _gatherTimer >= GATHER_INTERVAL_SECONDS;
@@ -51,13 +54,13 @@ namespace Units.Worker
 
             var ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            foreach ((RefRO<LocalTransform>                      workerTransform,
+            foreach ((RefRW<LocalTransform>                      workerTransform,
                       RefRO<WorkerGatheringTagComponent>         gatheringTag,
                       RefRO<UnitStateComponent>                  unitState,
                       RefRW<CurrentWorkerResourceQuantityComponent> workerResource,
                       RefRO<ElementTeamComponent>                workerTeam,
                       Entity                                     workerEntity)
-                     in SystemAPI.Query<RefRO<LocalTransform>,
+                     in SystemAPI.Query<RefRW<LocalTransform>,
                                         RefRO<WorkerGatheringTagComponent>,
                                         RefRO<UnitStateComponent>,
                                         RefRW<CurrentWorkerResourceQuantityComponent>,
@@ -70,7 +73,7 @@ namespace Units.Worker
                 if (unitState.ValueRO.State != UnitState.Acting)
                     continue;
 
-                ProcessGathering(workerTransform.ValueRO, gatheringTag.ValueRO,
+                ProcessGathering(ref workerTransform.ValueRW, gatheringTag.ValueRO,
                                ref workerResource.ValueRW, workerTeam.ValueRO.Team,
                                workerEntity, ref ecb, canGather);
             }
@@ -79,7 +82,7 @@ namespace Units.Worker
             ecb.Dispose();
         }
 
-        private void ProcessGathering(LocalTransform workerTransform, WorkerGatheringTagComponent gatheringTag,
+        private void ProcessGathering(ref LocalTransform workerTransform, WorkerGatheringTagComponent gatheringTag,
                                      ref CurrentWorkerResourceQuantityComponent workerResource, TeamType workerTeam,
                                      Entity workerEntity, ref EntityCommandBuffer ecb, bool canGather)
         {
@@ -112,6 +115,13 @@ namespace Units.Worker
             UnityEngine.Debug.Log($"[WGS] Worker {workerEntity.Index} dist²={distanceSq:F2} to resource {resourceEntity.Index} (threshold²={GATHERING_DISTANCE_THRESHOLD * GATHERING_DISTANCE_THRESHOLD})");
             if (distanceSq > GATHERING_DISTANCE_THRESHOLD * GATHERING_DISTANCE_THRESHOLD)
                 return;
+
+            float3 direction = math.normalizesafe(resourceTransform.Position - workerTransform.Position);
+            if (!math.all(direction == float3.zero))
+            {
+                direction.y = 0;
+                workerTransform.Rotation = quaternion.LookRotationSafe(direction, math.up());
+            }
 
             if (workerResource.ResourceType == ResourceType.None &&
                 _resourceTypeLookup.TryGetComponent(resourceEntity, out ResourceTypeComponent resourceType))
@@ -182,6 +192,10 @@ namespace Units.Worker
             {
                 if (buildingType.ValueRO.Type != BuildingType.Center ||
                     buildingTeam.ValueRO.Team != workerTeam)
+                    continue;
+
+                if (_constructionProgressLookup.TryGetComponent(buildingEntity, out BuildingConstructionProgressComponent progress)
+                    && (progress.ConstructionTime <= 0 || progress.Value < progress.ConstructionTime))
                     continue;
 
                 float distanceSq = math.distancesq(workerPosition, buildingTransform.ValueRO.Position);

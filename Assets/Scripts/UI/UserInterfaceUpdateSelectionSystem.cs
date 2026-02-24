@@ -100,11 +100,6 @@ namespace UI
 
         private void SetBuildingsSelection()
         {
-            if (_currentSelection == SelectableElementType.Unit)
-            {
-                return;
-            }
-
             CheckBuildingsSelection();
         }
 
@@ -125,7 +120,7 @@ namespace UI
             {
                 _currentSelection = SelectableElementType.Building;
             }
-            else if (_buildingTypesSelected.Any())
+            else if (_buildingTypesSelected.Any() && _currentSelection != SelectableElementType.Unit)
             {
                 _currentSelection = SelectableElementType.None;
             }
@@ -259,6 +254,21 @@ namespace UI
 
         private void SetBuildingActions()
         {
+            Entity selectedBuilding = _buildingTypesSelected.First(building => building.Value).Key.SelectedEntity;
+
+            // Hide actions if building is still under construction
+            if (EntityManager.HasComponent<BuildingConstructionProgressComponent>(selectedBuilding))
+            {
+                BuildingConstructionProgressComponent progress =
+                    EntityManager.GetComponentData<BuildingConstructionProgressComponent>(selectedBuilding);
+
+                if (progress.ConstructionTime <= 0 || progress.Value < progress.ConstructionTime)
+                {
+                    SetNoneSelected();
+                    return;
+                }
+            }
+
             _buildingActionsFactory.Set((BuildingType)_buildingTypesSelected.First(building => building.Value).Key.Type);
             PlayerUIActionType action = _buildingActionsFactory.Get();
             int[] payload = _buildingActionsFactory.GetPayload(action);

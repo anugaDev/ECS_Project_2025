@@ -42,13 +42,13 @@ namespace Units.Worker
 
             var ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            foreach ((RefRO<LocalTransform>                      workerTransform,
+            foreach ((RefRW<LocalTransform>                      workerTransform,
                       RefRO<WorkerStoringTagComponent>           storingTag,
                       RefRO<UnitStateComponent>                  unitState,
                       RefRW<CurrentWorkerResourceQuantityComponent> workerResource,
                       RefRO<GhostOwner>                          workerOwner,
                       Entity                                     workerEntity)
-                     in SystemAPI.Query<RefRO<LocalTransform>,
+                     in SystemAPI.Query<RefRW<LocalTransform>,
                                         RefRO<WorkerStoringTagComponent>,
                                         RefRO<UnitStateComponent>,
                                         RefRW<CurrentWorkerResourceQuantityComponent>,
@@ -59,7 +59,6 @@ namespace Units.Worker
                 if (unitState.ValueRO.State != UnitState.Acting)
                     continue;
 
-                // Verify the worker is actually near the town center, not at the resource
                 Entity buildingEntity = storingTag.ValueRO.BuildingEntity;
                 if (buildingEntity == Entity.Null || !EntityManager.Exists(buildingEntity))
                 {
@@ -73,6 +72,13 @@ namespace Units.Worker
                 float distanceSq = math.distancesq(workerTransform.ValueRO.Position, buildingTransform.Position);
                 if (distanceSq > STORING_DISTANCE_THRESHOLD * STORING_DISTANCE_THRESHOLD)
                     continue;
+
+                float3 direction = math.normalizesafe(buildingTransform.Position - workerTransform.ValueRO.Position);
+                if (!math.all(direction == float3.zero))
+                {
+                    direction.y = 0;
+                    workerTransform.ValueRW.Rotation = quaternion.LookRotationSafe(direction, math.up());
+                }
 
                 ProcessStoring(workerTransform.ValueRO, storingTag.ValueRO, ref workerResource.ValueRW,
                              workerOwner.ValueRO, workerEntity, ref ecb);

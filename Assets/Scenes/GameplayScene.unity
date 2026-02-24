@@ -2285,6 +2285,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2095090636}
     - target: {fileID: 4701030562781044709, guid: d4c6db27b7d2ad24ea782e526db3454f, type: 3}
+      propertyPath: _resourcesImage
+      value: 
+      objectReference: {fileID: 589264413}
+    - target: {fileID: 4701030562781044709, guid: d4c6db27b7d2ad24ea782e526db3454f, type: 3}
       propertyPath: _resourcesParent
       value: 
       objectReference: {fileID: 685424829}

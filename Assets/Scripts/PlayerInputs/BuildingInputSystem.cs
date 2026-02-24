@@ -11,6 +11,7 @@ using Units;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
+using Units.Worker;
 using Unity.Physics;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -300,6 +301,7 @@ namespace PlayerInputs
 
             SetUpdatedCosts();
             SetBuildingComponent();
+            CommandSelectedWorkers();
             EndBuilding();
         }
 
@@ -335,6 +337,36 @@ namespace PlayerInputs
                 BuildingType = _currentBuildingType,
                 Position = _lastPosition
             };
+        }
+
+        private void CommandSelectedWorkers()
+        {
+            float stoppingDistance = 1.6f;
+
+            foreach ((RefRO<OwnerTagComponent> _, UnitTypeComponent unitType, Entity entity) in
+                     SystemAPI.Query<RefRO<OwnerTagComponent>, UnitTypeComponent>().WithEntityAccess())
+            {
+                if (unitType.Type != UnitType.Worker)
+                    continue;
+
+                ElementSelectionComponent selection = EntityManager.GetComponentData<ElementSelectionComponent>(entity);
+                if (!selection.IsSelected)
+                    continue;
+
+                int currentVersion = EntityManager.GetComponentData<SetInputStateTargetComponent>(entity).TargetVersion;
+
+                SetInputStateTargetComponent inputTarget = new SetInputStateTargetComponent
+                {
+                    TargetEntity = Entity.Null,
+                    TargetPosition = _lastPosition,
+                    IsFollowingTarget = true,
+                    StoppingDistance = stoppingDistance,
+                    HasNewTarget = true,
+                    TargetVersion = currentVersion + 1
+                };
+
+                EntityManager.SetComponentData(entity, inputTarget);
+            }
         }
 
         private void EndBuilding()

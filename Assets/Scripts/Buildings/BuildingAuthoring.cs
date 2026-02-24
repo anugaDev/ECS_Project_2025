@@ -47,14 +47,13 @@ namespace Buildings
                 AddComponent(buildingEntity, GetObstacleSizeComponent(authoring));
                 AddComponent(buildingEntity, GetSelectableTypeComponent(authoring));
                 AddComponent(buildingEntity, GetBuildingProgressComponent(authoring));
-                AddComponentObject(buildingEntity, GetBuildingViewReferenceComponent(authoring));
+                AddComponent(buildingEntity, GetBuildingViewReferenceComponent(authoring));
             }
 
             private BuildingConstructionProgressComponent GetBuildingProgressComponent(BuildingAuthoring authoring)
             {
                 return new BuildingConstructionProgressComponent
                 {
-                    BuildingType = authoring.BuildingType,
                     ConstructionTime = authoring.ConstructionTime,
                     Value = 0F
                 };
@@ -64,8 +63,12 @@ namespace Buildings
             {
                 return new BuildingPivotReferencesComponent
                 {
-                    ConstructionSiteObject = authoring.ConstructionSite,
-                    Pivot = authoring.Pivot
+                    ConstructionSiteEntity = authoring.ConstructionSite != null 
+                        ? GetEntity(authoring.ConstructionSite, TransformUsageFlags.Dynamic) 
+                        : Entity.Null,
+                    PivotEntity = authoring.Pivot != null 
+                        ? GetEntity(authoring.Pivot, TransformUsageFlags.Dynamic) 
+                        : Entity.Null
                 };
             }
 

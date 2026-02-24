@@ -137,6 +137,14 @@ namespace Server
             _entityCommandBuffer.SetComponent(newBuilding, new GhostOwner{NetworkId = networkId});
             _entityCommandBuffer.SetComponent(newBuilding, new ElementTeamComponent{Team = team});
 
+            // Mark as finished by setting Value = ConstructionTime (component removal doesn't replicate)
+            if (state.EntityManager.HasComponent<Buildings.BuildingConstructionProgressComponent>(townCenterPrefab))
+            {
+                var progress = state.EntityManager.GetComponentData<Buildings.BuildingConstructionProgressComponent>(townCenterPrefab);
+                progress.Value = progress.ConstructionTime;
+                _entityCommandBuffer.SetComponent(newBuilding, progress);
+            }
+
             return buildingPosition;
         }
 

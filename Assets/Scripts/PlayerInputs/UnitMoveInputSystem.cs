@@ -210,10 +210,7 @@ namespace PlayerInputs
         {
             if (EntityManager.HasComponent<BuildingObstacleSizeComponent>(targetEntity))
             {
-                BuildingObstacleSizeComponent obstacleSize = EntityManager.GetComponentData<BuildingObstacleSizeComponent>(targetEntity);
-                LocalTransform targetTransform = EntityManager.GetComponentData<LocalTransform>(targetEntity);
-                float maxDimension = math.max(obstacleSize.Size.x, obstacleSize.Size.z) * targetTransform.Scale;
-                return maxDimension * 0.5f + 1.0f; // Half size + 1 unit buffer
+                return 1.6f;
             }
 
             if (EntityManager.HasComponent<ResourceTypeComponent>(targetEntity))

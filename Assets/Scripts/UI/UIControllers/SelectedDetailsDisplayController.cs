@@ -15,6 +15,9 @@ namespace UI.UIControllers
 
         [SerializeField] 
         private Image _unitImage;
+
+        [SerializeField] 
+        private GameObject _resourcesImage;
         
         [SerializeField]
         private TextMeshProUGUI _maxHitPoints;
@@ -61,6 +64,16 @@ namespace UI.UIControllers
         public void EnableResources()
         {
             _resourcesParent.SetActive(true);
+        }
+        
+        public void EnableResourceImage()
+        {
+            _resourcesImage.SetActive(true);
+        }
+
+        public void DisableResourceImage()
+        {
+            _resourcesImage.SetActive(false);
         }
 
         public void DisableResources()

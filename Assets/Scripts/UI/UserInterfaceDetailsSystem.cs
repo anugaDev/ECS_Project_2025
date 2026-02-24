@@ -1,3 +1,4 @@
+using Buildings;
 using Combat;
 using ElementCommons;
 using GatherableResources;
@@ -76,22 +77,45 @@ namespace UI
 
         private void SetResources()
         {
-            if (!EntityManager.Exists(_trackedEntity) ||
-                !EntityManager.HasComponent<CurrentWorkerResourceQuantityComponent>(_trackedEntity))
+            if (!EntityManager.Exists(_trackedEntity))
             {
                 _selectionDetailsController.DisableResources();
                 return;
             }
 
-            CurrentWorkerResourceQuantityComponent resourceComponent =
-                EntityManager.GetComponentData<CurrentWorkerResourceQuantityComponent>(_trackedEntity);
+            if (EntityManager.HasComponent<BuildingConstructionProgressComponent>(_trackedEntity))
+            {
+                BuildingConstructionProgressComponent constructionProgress =
+                    EntityManager.GetComponentData<BuildingConstructionProgressComponent>(_trackedEntity);
 
-            int value = resourceComponent.Value;
-            EnableResources(value);
-            _selectionDetailsController.SetResourcesText(value.ToString());
+                if(constructionProgress.Value >= constructionProgress.ConstructionTime)
+                {
+                    _selectionDetailsController.DisableResources();
+                    return;
+                }
 
-            // Debug log to verify replication
-            //UnityEngine.Debug.Log($"[UI-DETAILS] Worker {_trackedEntity.Index} resource value: {value} (ResourceType: {resourceComponent.ResourceType})");
+                float progressPercentage = (constructionProgress.Value / constructionProgress.ConstructionTime) * 100f;
+                int progressInt = UnityEngine.Mathf.Clamp((int)progressPercentage, 0, 100);
+
+                _selectionDetailsController.DisableResourceImage();
+                _selectionDetailsController.EnableResources();
+                _selectionDetailsController.SetResourcesText($"{progressInt}%");
+                return;
+            }
+
+            if (EntityManager.HasComponent<CurrentWorkerResourceQuantityComponent>(_trackedEntity))
+            {
+                CurrentWorkerResourceQuantityComponent resourceComponent =
+                    EntityManager.GetComponentData<CurrentWorkerResourceQuantityComponent>(_trackedEntity);
+
+                int value = resourceComponent.Value;
+                _selectionDetailsController.EnableResourceImage();
+                EnableResources(value);
+                _selectionDetailsController.SetResourcesText(value.ToString());
+                return;
+            }
+
+            _selectionDetailsController.DisableResources();
         }
 
         private void EnableResources(int value)

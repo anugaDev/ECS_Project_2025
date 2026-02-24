@@ -12,9 +12,9 @@ namespace Units.Worker
     [UpdateAfter(typeof(MovementSystems.UnitStateSystem))]
     public partial class WorkerConstructionSystem : SystemBase
     {
-        private const float CONSTRUCTION_PROGRESS_PER_SECOND = 0.1f;
+        private const float CONSTRUCTION_PROGRESS_PER_SECOND = 1f;
 
-        private const float CONSTRUCTION_DISTANCE_THRESHOLD  = 3.0f;
+        private const float CONSTRUCTION_DISTANCE_THRESHOLD  = 8.0f;
 
         private ComponentLookup<BuildingConstructionProgressComponent> _constructionProgressLookup;
 
@@ -35,15 +35,15 @@ namespace Units.Worker
             float deltaTime = SystemAPI.Time.DeltaTime;
             EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            foreach ((RefRO<LocalTransform>               workerTransform,
+            foreach ((RefRW<LocalTransform>               workerTransform,
                       RefRO<WorkerConstructionTagComponent> constructionTag,
                       Entity                               workerEntity)
-                     in SystemAPI.Query<RefRO<LocalTransform>,
+                     in SystemAPI.Query<RefRW<LocalTransform>,
                                         RefRO<WorkerConstructionTagComponent>>()
                          .WithAll<Simulate, UnitTagComponent>()
                          .WithEntityAccess())
             {
-                ProcessConstruction(workerTransform.ValueRO, constructionTag.ValueRO,
+                ProcessConstruction(ref workerTransform.ValueRW, constructionTag.ValueRO,
                                   workerEntity, deltaTime, ref ecb);
             }
 
@@ -51,7 +51,7 @@ namespace Units.Worker
             ecb.Dispose();
         }
 
-        private void ProcessConstruction(LocalTransform workerTransform, WorkerConstructionTagComponent constructionTag,
+        private void ProcessConstruction(ref LocalTransform workerTransform, WorkerConstructionTagComponent constructionTag,
                                         Entity workerEntity, float deltaTime, ref EntityCommandBuffer ecb)
         {
             Entity buildingEntity = constructionTag.BuildingEntity;
@@ -77,22 +77,22 @@ namespace Units.Worker
                 return;
             }
 
-            constructionProgress.Value += CONSTRUCTION_PROGRESS_PER_SECOND * deltaTime;
-            constructionProgress = SetFinishedBuilding(workerEntity, ecb, constructionProgress);
-            ecb.SetComponent(buildingEntity, constructionProgress);
-        }
-
-        private BuildingConstructionProgressComponent SetFinishedBuilding(Entity workerEntity, EntityCommandBuffer ecb,
-            BuildingConstructionProgressComponent constructionProgress)
-        {
-            if (!(constructionProgress.Value >= constructionProgress.ConstructionTime))
+            float3 direction = math.normalizesafe(buildingTransform.Position - workerTransform.Position);
+            if (!math.all(direction == float3.zero))
             {
-                return constructionProgress;
+                direction.y = 0;
+                workerTransform.Rotation = quaternion.LookRotationSafe(direction, math.up());
             }
 
-            constructionProgress.IsFinished = true;
-            ecb.RemoveComponent<WorkerConstructionTagComponent>(workerEntity);
-            return constructionProgress;
+            constructionProgress.Value += CONSTRUCTION_PROGRESS_PER_SECOND * deltaTime;
+
+            if (constructionProgress.Value >= constructionProgress.ConstructionTime)
+            {
+                constructionProgress.Value = constructionProgress.ConstructionTime;
+                ecb.RemoveComponent<WorkerConstructionTagComponent>(workerEntity);
+            }
+
+            ecb.SetComponent(buildingEntity, constructionProgress);
         }
     }
 }
