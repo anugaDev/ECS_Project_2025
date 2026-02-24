@@ -14,7 +14,7 @@ namespace Units.Worker
     {
         private const float CONSTRUCTION_PROGRESS_PER_SECOND = 0.1f;
         private const float CONSTRUCTION_DISTANCE_THRESHOLD  = 3.0f;
-        private const float MAX_CONSTRUCTION_VALUE           = 1.0f;
+        private const float MAX_CONSTRUCTION_VALUE = 1.0f;
 
         private ComponentLookup<BuildingConstructionProgressComponent> _constructionProgressLookup;
         private ComponentLookup<LocalTransform>                        _transformLookup;

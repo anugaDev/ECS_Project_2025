@@ -20,15 +20,15 @@ namespace Units.Worker
 
         private ComponentLookup<CurrentWoodComponent>  _woodLookup;
         private ComponentLookup<CurrentFoodComponent>  _foodLookup;
-        private ComponentLookup<LocalTransform>        _transformLookup;
-        private ComponentLookup<GhostOwner>            _ghostOwnerLookup;
+        private ComponentLookup<LocalTransform> _transformLookup;
+        private ComponentLookup<GhostOwner> _ghostOwnerLookup;
 
         protected override void OnCreate()
         {
-            _woodLookup       = GetComponentLookup<CurrentWoodComponent>();
-            _foodLookup       = GetComponentLookup<CurrentFoodComponent>();
+            _woodLookup = GetComponentLookup<CurrentWoodComponent>();
+            _foodLookup = GetComponentLookup<CurrentFoodComponent>();
             _ghostOwnerLookup = GetComponentLookup<GhostOwner>(true);
-            _transformLookup  = GetComponentLookup<LocalTransform>(true);
+            _transformLookup = GetComponentLookup<LocalTransform>(true);
             RequireForUpdate<UnitTagComponent>();
         }
 
@@ -114,7 +114,6 @@ namespace Units.Worker
             {
                 workerResource.PreviousResourceEntity = Entity.Null;
 
-                // Previous resource was destroyed — find nearest resource of the same type
                 Entity nearest = FindNearestResourceOfType(workerTransform.Position, gatheredType);
                 if (nearest != Entity.Null)
                 {
