@@ -13,16 +13,17 @@ namespace Units.Worker
     public partial class WorkerConstructionSystem : SystemBase
     {
         private const float CONSTRUCTION_PROGRESS_PER_SECOND = 0.1f;
+
         private const float CONSTRUCTION_DISTANCE_THRESHOLD  = 3.0f;
-        private const float MAX_CONSTRUCTION_VALUE = 1.0f;
 
         private ComponentLookup<BuildingConstructionProgressComponent> _constructionProgressLookup;
-        private ComponentLookup<LocalTransform>                        _transformLookup;
+
+        private ComponentLookup<LocalTransform> _transformLookup;
 
         protected override void OnCreate()
         {
             _constructionProgressLookup = GetComponentLookup<BuildingConstructionProgressComponent>();
-            _transformLookup            = GetComponentLookup<LocalTransform>(true);
+            _transformLookup = GetComponentLookup<LocalTransform>(true);
             RequireForUpdate<UnitTagComponent>();
         }
 
@@ -32,7 +33,7 @@ namespace Units.Worker
             _transformLookup.Update(this);
 
             float deltaTime = SystemAPI.Time.DeltaTime;
-            var ecb = new EntityCommandBuffer(Allocator.Temp);
+            EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
 
             foreach ((RefRO<LocalTransform>               workerTransform,
                       RefRO<WorkerConstructionTagComponent> constructionTag,
@@ -72,19 +73,26 @@ namespace Units.Worker
 
             float distanceSq = math.distancesq(workerTransform.Position, buildingTransform.Position);
             if (distanceSq > CONSTRUCTION_DISTANCE_THRESHOLD * CONSTRUCTION_DISTANCE_THRESHOLD)
+            {
                 return;
+            }
 
             constructionProgress.Value += CONSTRUCTION_PROGRESS_PER_SECOND * deltaTime;
+            constructionProgress = SetFinishedBuilding(workerEntity, ecb, constructionProgress);
+            ecb.SetComponent(buildingEntity, constructionProgress);
+        }
 
-            if (constructionProgress.Value >= MAX_CONSTRUCTION_VALUE)
+        private BuildingConstructionProgressComponent SetFinishedBuilding(Entity workerEntity, EntityCommandBuffer ecb,
+            BuildingConstructionProgressComponent constructionProgress)
+        {
+            if (!(constructionProgress.Value >= constructionProgress.ConstructionTime))
             {
-                ecb.RemoveComponent<BuildingConstructionProgressComponent>(buildingEntity);
-                ecb.RemoveComponent<WorkerConstructionTagComponent>(workerEntity);
+                return constructionProgress;
             }
-            else
-            {
-                ecb.SetComponent(buildingEntity, constructionProgress);
-            }
+
+            constructionProgress.IsFinished = true;
+            ecb.RemoveComponent<WorkerConstructionTagComponent>(workerEntity);
+            return constructionProgress;
         }
     }
 }

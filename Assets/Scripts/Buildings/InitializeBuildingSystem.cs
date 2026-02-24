@@ -38,6 +38,15 @@ namespace Buildings
                          .WithAll<NewBuildingTagComponent>().WithEntityAccess())
             {
                 SetTeamMaterialOnChildren(linkedEntities, buildingTeam.Team, entityCommandBuffer);
+
+                if (EntityManager.HasComponent<BuildingPivotReferencesComponent>(buildingEntity))
+                {
+                    BuildingPivotReferencesComponent pivotReferences = EntityManager.GetComponentObject<BuildingPivotReferencesComponent>(buildingEntity);
+                    if (pivotReferences.ConstructionSiteObject != null)
+                        pivotReferences.ConstructionSiteObject.SetActive(true);
+                    if (pivotReferences.Pivot != null)
+                        pivotReferences.Pivot.SetActive(false);
+                }
             }
 
             entityCommandBuffer.Playback(EntityManager);

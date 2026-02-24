@@ -3,6 +3,7 @@ using Types;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.NetCode;
+using UnityEngine;
 
 namespace Buildings
 {
@@ -72,9 +73,11 @@ namespace Buildings
         public BuildingsScriptableObject Configuration;
     }
     
-    public class BuildingViewReferenceComponent : IComponentData
+    public class BuildingPivotReferencesComponent : IComponentData
     {
-        public BuildingView Value;
+        public GameObject Pivot;
+
+        public GameObject ConstructionSiteObject;
     }
 
     public class BuildingMaterialsConfigurationComponent : IComponentData
@@ -97,6 +100,10 @@ namespace Buildings
     public struct BuildingConstructionProgressComponent : IComponentData
     {
         public BuildingType BuildingType;
+
+        public float ConstructionTime;
+        
+        public bool IsFinished;
 
         public float Value;
     }

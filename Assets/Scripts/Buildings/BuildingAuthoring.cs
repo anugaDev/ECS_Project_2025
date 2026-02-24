@@ -13,11 +13,23 @@ namespace Buildings
 
         [SerializeField] private BuildingView _buildingView;
 
+        [SerializeField] private float _constructionTime;
+        
+        [SerializeField] private GameObject _constructionSite;
+        
+        [SerializeField] private GameObject _pivot;
+        
+        public GameObject Pivot => _pivot;
+
         public BuildingType BuildingType => _buildingType;
 
         public SelectableElementType SelectableType => _selectableType;
 
         public BuildingView buildingView => _buildingView;
+        
+        public float ConstructionTime => _constructionTime;
+        
+        public GameObject ConstructionSite => _constructionSite;
 
         public class BuildingBaker : Baker<BuildingAuthoring>
         {
@@ -32,16 +44,28 @@ namespace Buildings
                 AddBuffer<RecruitmentQueueBufferComponent>(buildingEntity);
                 AddComponent<ElementDisplayDetailsComponent>(buildingEntity);
                 AddComponent(buildingEntity, GetUnitTypeComponent(authoring));
-                AddComponent(buildingEntity, GetSelectableTypeComponent(authoring));
                 AddComponent(buildingEntity, GetObstacleSizeComponent(authoring));
+                AddComponent(buildingEntity, GetSelectableTypeComponent(authoring));
+                AddComponent(buildingEntity, GetBuildingProgressComponent(authoring));
                 AddComponentObject(buildingEntity, GetBuildingViewReferenceComponent(authoring));
             }
 
-            private BuildingViewReferenceComponent GetBuildingViewReferenceComponent(BuildingAuthoring authoring)
+            private BuildingConstructionProgressComponent GetBuildingProgressComponent(BuildingAuthoring authoring)
             {
-                return new BuildingViewReferenceComponent
+                return new BuildingConstructionProgressComponent
                 {
-                    Value = authoring.buildingView
+                    BuildingType = authoring.BuildingType,
+                    ConstructionTime = authoring.ConstructionTime,
+                    Value = 0F
+                };
+            }
+
+            private BuildingPivotReferencesComponent GetBuildingViewReferenceComponent(BuildingAuthoring authoring)
+            {
+                return new BuildingPivotReferencesComponent
+                {
+                    ConstructionSiteObject = authoring.ConstructionSite,
+                    Pivot = authoring.Pivot
                 };
             }
 
@@ -63,8 +87,7 @@ namespace Buildings
 
             private BuildingObstacleSizeComponent GetObstacleSizeComponent(BuildingAuthoring authoring)
             {
-                // Try to get size from BoxCollider, otherwise use default
-                Vector3 size = new Vector3(5f, 5f, 5f); // Default size
+                Vector3 size = new Vector3(5f, 5f, 5f);
 
                 BoxCollider boxCollider = authoring.GetComponent<BoxCollider>();
                 if (boxCollider != null)
@@ -73,7 +96,6 @@ namespace Buildings
                 }
                 else
                 {
-                    // Try to find BoxCollider in children (building view)
                     if (authoring.buildingView != null)
                     {
                         BoxCollider childCollider = authoring.buildingView.GetComponentInChildren<BoxCollider>();
