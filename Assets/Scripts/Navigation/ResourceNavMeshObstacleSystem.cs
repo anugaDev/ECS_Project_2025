@@ -1,4 +1,5 @@
 using GatherableResources;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Transforms;
 using UnityEngine;
@@ -43,6 +44,11 @@ namespace Navigation
         {
             EntityCommandBuffer ecb = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
 
+            // Collect pending registrations — AddComponentObject is a structural change
+            // and must not be called inside a SystemAPI.Query foreach.
+            using NativeList<Entity> pendingEntities = new NativeList<Entity>(Unity.Collections.Allocator.Temp);
+            System.Collections.Generic.List<GameObject> pendingObstacles = new System.Collections.Generic.List<GameObject>();
+
             // Find resources that don't have NavMeshObstacle yet
             foreach (var (resourceType, transform, entity) in SystemAPI
                 .Query<RefRO<ResourceTypeComponent>, RefRO<LocalTransform>>()
@@ -52,19 +58,34 @@ namespace Navigation
                 // Only create obstacles for trees (not other resources like stone/gold)
                 if (resourceType.ValueRO.Type == Types.ResourceType.Wood)
                 {
-                    CreateTreeNavMeshObstacle(entity, transform.ValueRO);
+                    GameObject obstacleObj = CreateTreeNavMeshObstacle(transform.ValueRO);
+                    pendingEntities.Add(entity);
+                    pendingObstacles.Add(obstacleObj);
                     ecb.AddComponent<NavMeshProcessedTag>(entity);
                 }
             }
 
             ecb.Playback(EntityManager);
             ecb.Dispose();
+
+            // Safe to add managed components now — iteration is complete.
+            for (int i = 0; i < pendingEntities.Length; i++)
+            {
+                EntityManager.AddComponentObject(pendingEntities[i], new NavMeshObstacleReference
+                {
+                    ObstacleGameObject = pendingObstacles[i]
+                });
+                EntityManager.AddComponentObject(pendingEntities[i], new NavMeshObstacleCleanupRef
+                {
+                    ObstacleGameObject = pendingObstacles[i]
+                });
+            }
         }
 
-        private void CreateTreeNavMeshObstacle(Entity treeEntity, LocalTransform transform)
+        private GameObject CreateTreeNavMeshObstacle(LocalTransform transform)
         {
             // Create a companion GameObject with NavMeshObstacle
-            GameObject obstacleObj = new GameObject($"TreeObstacle_{treeEntity.Index}");
+            GameObject obstacleObj = new GameObject($"TreeObstacle_{transform.Position.x:F0}_{transform.Position.z:F0}");
             obstacleObj.transform.position = transform.Position;
             obstacleObj.transform.rotation = transform.Rotation;
 
@@ -98,6 +119,8 @@ namespace Navigation
 
                 UnityEngine.Debug.LogWarning($"[ResourceNavMeshObstacle] No template found, using fallback values");
             }
+
+            return obstacleObj;
         }
     }
 }

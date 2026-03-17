@@ -120,7 +120,6 @@ namespace PlayerInputs
 
         private void SelectTargetPosition()
         {
-            // Safety check: Only run on client with a valid camera
             if (!SystemAPI.HasSingleton<MainCameraTagComponent>())
             {
                 return;
