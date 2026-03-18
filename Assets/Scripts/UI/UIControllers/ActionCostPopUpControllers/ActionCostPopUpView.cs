@@ -48,7 +48,7 @@ public class ActionCostPopUpView : MonoBehaviour
         _gameObject.SetActive(false);
     }
 
-    private void SetPosition(float3 position)
+    public void SetPosition(float3 position)
     {
         _rectTransform.anchoredPosition = new Vector2(position.x, position.y);
     }
@@ -77,20 +77,5 @@ public class ActionCostPopUpView : MonoBehaviour
     private Predicate<ResourceCostEntity> IsSameResource(ResourcePanelCostController costController)
     {
         return resourceCost => resourceCost.ResourceType == costController.ResourceType;
-    }
-
-    private void FixedUpdate()
-    {
-        UpdatePosition();
-    }
-
-    private void UpdatePosition()
-    {
-        if (!_isEnabled)
-        {
-            return;
-        }
-        
-        SetPosition(Input.mousePosition);
     }
 }

@@ -2,6 +2,7 @@ using System;
 using Buildings;
 using ScriptableObjects;
 using TMPro;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -21,6 +22,9 @@ namespace UI.UIControllers
 
         [SerializeField]
         private Image _feedbackImage;
+        
+        [SerializeField]
+        private RectTransform _transform;
 
         [SerializeField]
         private GameObject _parent;
@@ -35,7 +39,7 @@ namespace UI.UIControllers
 
         public Action<SetPlayerUIActionComponent> OnClick;
         
-        public Action<ActionPopUpPayload> OnEnter;
+        public Action<ActionPopUpPayload, float3> OnEnter;
         
         public Action OnExit;
         
@@ -67,7 +71,7 @@ namespace UI.UIControllers
         
         public void OnPointerEnter(PointerEventData eventData)
         {
-            OnEnter?.Invoke(_popUpPayload);
+            OnEnter?.Invoke(_popUpPayload, _transform.position);
         }
 
         public void OnPointerExit(PointerEventData eventData)

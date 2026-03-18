@@ -5,6 +5,7 @@ using UI.UIControllers;
 using Units;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Transforms;
 
 namespace UI
@@ -40,12 +41,14 @@ namespace UI
             _selectionActionsController.CostPopUpView.Disable();
         }
 
-        private void SetActonPopUpEnabled(ActionPopUpPayload popUpPayload)
+        private void SetActonPopUpEnabled(ActionPopUpPayload popUpPayload, float3 position)
         {
-            _selectionActionsController.CostPopUpView.Enable();
-            _selectionActionsController.CostPopUpView.SetTitleText(popUpPayload.Name);
-            _selectionActionsController.CostPopUpView.SetDescription(popUpPayload.Description);
-            _selectionActionsController.CostPopUpView.SetCostTexts(popUpPayload.ResourceCost);
+            ActionCostPopUpView popUpView = _selectionActionsController.CostPopUpView;
+            popUpView.Enable();
+            popUpView.SetPosition(position);
+            popUpView.SetTitleText(popUpPayload.Name);
+            popUpView.SetDescription(popUpPayload.Description);
+            popUpView.SetCostTexts(popUpPayload.ResourceCost);
         }
 
         private void SetRecruitmentActions()

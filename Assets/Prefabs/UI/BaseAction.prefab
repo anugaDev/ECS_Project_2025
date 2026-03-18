@@ -107,6 +107,7 @@ MonoBehaviour:
   _text: {fileID: 5950782102379408874}
   _displayImage: {fileID: 1628013960801099243}
   _feedbackImage: {fileID: 3312448834272933467}
+  _transform: {fileID: 8261388687490484369}
   _parent: {fileID: 1241949790394681482}
   _enabledColor: {r: 1, g: 1, b: 1, a: 0}
   _disabledColor: {r: 1, g: 0, b: 0, a: 0.4745098}

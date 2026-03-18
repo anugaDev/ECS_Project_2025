@@ -5,6 +5,7 @@ using Buildings;
 using ScriptableObjects;
 using Types;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace UI.UIControllers
@@ -24,7 +25,7 @@ namespace UI.UIControllers
         
         public Action<SetPlayerUIActionComponent> OnActionSelected;
 
-        public Action<ActionPopUpPayload> OnActionEnter;
+        public Action<ActionPopUpPayload, float3> OnActionEnter;
 
         public Action OnActionExit;
 
@@ -52,9 +53,9 @@ namespace UI.UIControllers
             OnActionExit.Invoke();
         }
 
-        private void EnablePopUp(ActionPopUpPayload component)
+        private void EnablePopUp(ActionPopUpPayload component, float3 position)
         {
-            OnActionEnter.Invoke(component);
+            OnActionEnter.Invoke(component, position);
         }
 
         public void SetRecruitmentActions(UnitsScriptableObject unitsConfiguration)
