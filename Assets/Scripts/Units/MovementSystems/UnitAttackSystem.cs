@@ -112,7 +112,12 @@ namespace Units.MovementSystems
                 {
                     float distance = math.sqrt(distanceSq);
                     float3 dir    = toTarget / distance;
-                    float  step   = math.min(moveSpeed * deltaTime, distance - attackRange);
+                    // Stop at 90 % of attackRange so the unit is firmly inside
+                    // the attack zone — stopping exactly at the boundary causes
+                    // floating-point flicker where distanceSq ≈ rangeSq and the
+                    // attack intermittently fails to trigger.
+                    const float RANGE_STOP_FACTOR = 0.9f;
+                    float  step   = math.min(moveSpeed * deltaTime, distance - attackRange * RANGE_STOP_FACTOR);
                     if (step > 0f)
                     {
                         unitTransform.Position += dir * step;

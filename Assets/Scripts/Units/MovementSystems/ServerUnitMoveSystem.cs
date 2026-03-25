@@ -1,3 +1,4 @@
+using Units;
 using Units.Worker;
 using Unity.Burst;
 using Unity.Entities;
@@ -34,7 +35,8 @@ namespace Units.MovementSystems
                                        RefRO<UnitWaypointsInputComponent>,
                                        RefRW<PathComponent>,
                                        RefRO<UnitMoveSpeedComponent>>()
-                         .WithAll<Simulate, UnitTagComponent>())
+                         .WithAll<Simulate, UnitTagComponent>()
+                         .WithNone<UnitAttackingTagComponent>())  // UnitAttackSystem handles movement for attacking units
             {
                 MoveUnit(transform, waypointsInput, pathComponent, moveSpeed, deltaTime);
             }
