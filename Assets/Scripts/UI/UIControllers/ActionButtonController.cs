@@ -103,6 +103,7 @@ namespace UI.UIControllers
         public void Disable()
         {
             _feedbackImage.color = _disabledColor;
+            _button.interactable = false;
         }
     }
 }
