@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Types;
 using Unity.Entities;
 using UnityEngine;
@@ -23,8 +23,7 @@ namespace Units
         
         public UnitType Unit => _unit;
 
-
-        public RecruitmentEntity(float recruitmentTime, Entity entity, UnitType unitType)
+public RecruitmentEntity(float recruitmentTime, Entity entity, UnitType unitType)
         {
             _recruitmentTime = recruitmentTime;
             _entity = entity;

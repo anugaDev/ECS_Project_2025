@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+﻿#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 using Unity.AI.Navigation;
@@ -24,7 +24,6 @@ namespace Navigation
                 Debug.Log($"[NavMeshFix] Found NavMeshSurface on: {surface.gameObject.name}");
                 Debug.Log($"  Current useGeometry: {surface.useGeometry}");
 
-                // FORCE PhysicsColliders mode
                 surface.useGeometry = NavMeshCollectGeometry.PhysicsColliders;
                 surface.collectObjects = CollectObjects.All;
                 surface.layerMask = ~0;
@@ -42,7 +41,6 @@ namespace Navigation
         [MenuItem("Tools/NavMesh/Enable Read Write on All Meshes")]
         public static void EnableReadWriteOnAllMeshes()
         {
-            // Find all model assets
             string[] guids = AssetDatabase.FindAssets("t:Model");
             int fixedCount = 0;
             int totalCount = guids.Length;
@@ -75,7 +73,6 @@ namespace Navigation
         [MenuItem("Tools/NavMesh/Check Building Meshes")]
         public static void CheckBuildingMeshes()
         {
-            // Find all GameObjects with "Building" or "tower" in name
             GameObject[] allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
             int readableCount = 0;
             int notReadableCount = 0;

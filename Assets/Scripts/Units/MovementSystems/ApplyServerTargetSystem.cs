@@ -1,4 +1,4 @@
-using Units.Worker;
+﻿using Units.Worker;
 using Unity.Entities;
 using Unity.NetCode;
 
@@ -23,8 +23,6 @@ namespace Units.MovementSystems
                                         RefRW<SetInputStateTargetComponent>>()
                          .WithAll<UnitTagComponent>())
             {
-                // Only apply server target when server version is strictly newer.
-                // Player clicks bump the input version higher, so they won't be overwritten.
                 if (serverTarget.ValueRO.TargetVersion <= inputTarget.ValueRO.TargetVersion)
                     continue;
 

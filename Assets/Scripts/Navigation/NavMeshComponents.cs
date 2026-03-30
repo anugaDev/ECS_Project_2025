@@ -1,4 +1,4 @@
-using Unity.Entities;
+﻿using Unity.Entities;
 using Unity.Mathematics;
 
 namespace Navigation
@@ -15,11 +15,6 @@ namespace Navigation
         public UnityEngine.GameObject ObstacleGameObject;
     }
 
-    /// <summary>
-    /// Managed cleanup component — survives entity destruction (including NetCode ghost despawn).
-    /// Used to track the companion NavMeshObstacle GameObject so it can be destroyed and the
-    /// NavMesh rebuilt when the owning building or tree entity is despawned.
-    /// </summary>
     public class NavMeshObstacleCleanupRef : ICleanupComponentData
     {
         public UnityEngine.GameObject ObstacleGameObject;

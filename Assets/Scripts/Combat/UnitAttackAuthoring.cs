@@ -1,4 +1,4 @@
-using Units.MovementSystems;
+﻿using Units.MovementSystems;
 using Unity.Entities;
 using Unity.NetCode;
 using UnityEngine;
@@ -27,8 +27,7 @@ namespace Combat
         
         public int SimulationTickRate => _netCodeConfig.ClientServerTickRate.SimulationTickRate;
 
-
-        public float TargetRadius => _targetRadius;
+public float TargetRadius => _targetRadius;
 
         public float AttackRange => _attackRange;
 

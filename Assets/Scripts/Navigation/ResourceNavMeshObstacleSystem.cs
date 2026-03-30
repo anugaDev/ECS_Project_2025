@@ -1,4 +1,4 @@
-using GatherableResources;
+﻿using GatherableResources;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Transforms;
@@ -7,11 +7,6 @@ using UnityEngine.AI;
 
 namespace Navigation
 {
-    /// <summary>
-    /// Creates NavMeshObstacle GameObjects for resources (trees) to carve holes in the NavMesh.
-    /// Resources are ghosts in SubScene, so their GameObjects are destroyed at runtime.
-    /// This system creates companion GameObjects with NavMeshObstacle to carve holes.
-    /// </summary>
     [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [UpdateAfter(typeof(DynamicNavMeshSystem))]
@@ -23,7 +18,6 @@ namespace Navigation
         {
             base.OnCreate();
 
-            // Find the tree prefab and get its NavMeshObstacle component as a template
             GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
             foreach (GameObject obj in allObjects)
             {
@@ -44,18 +38,14 @@ namespace Navigation
         {
             EntityCommandBuffer ecb = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
 
-            // Collect pending registrations — AddComponentObject is a structural change
-            // and must not be called inside a SystemAPI.Query foreach.
             using NativeList<Entity> pendingEntities = new NativeList<Entity>(Unity.Collections.Allocator.Temp);
             System.Collections.Generic.List<GameObject> pendingObstacles = new System.Collections.Generic.List<GameObject>();
 
-            // Find resources that don't have NavMeshObstacle yet
             foreach (var (resourceType, transform, entity) in SystemAPI
                 .Query<RefRO<ResourceTypeComponent>, RefRO<LocalTransform>>()
                 .WithNone<NavMeshProcessedTag>()
                 .WithEntityAccess())
             {
-                // Only create obstacles for trees (not other resources like stone/gold)
                 if (resourceType.ValueRO.Type == Types.ResourceType.Wood)
                 {
                     GameObject obstacleObj = CreateTreeNavMeshObstacle(transform.ValueRO);
@@ -68,7 +58,6 @@ namespace Navigation
             ecb.Playback(EntityManager);
             ecb.Dispose();
 
-            // Safe to add managed components now — iteration is complete.
             for (int i = 0; i < pendingEntities.Length; i++)
             {
                 EntityManager.AddComponentObject(pendingEntities[i], new NavMeshObstacleReference
@@ -84,17 +73,14 @@ namespace Navigation
 
         private GameObject CreateTreeNavMeshObstacle(LocalTransform transform)
         {
-            // Create a companion GameObject with NavMeshObstacle
             GameObject obstacleObj = new GameObject($"TreeObstacle_{transform.Position.x:F0}_{transform.Position.z:F0}");
             obstacleObj.transform.position = transform.Position;
             obstacleObj.transform.rotation = transform.Rotation;
 
-            // Copy NavMeshObstacle settings from the template
             NavMeshObstacle obstacle = obstacleObj.AddComponent<NavMeshObstacle>();
 
             if (_templateObstacle != null)
             {
-                // COPY ALL SETTINGS FROM THE PREFAB'S NAVMESHOBSTACLE
                 obstacle.shape = _templateObstacle.shape;
                 obstacle.center = _templateObstacle.center;
                 obstacle.size = _templateObstacle.size;
@@ -109,7 +95,6 @@ namespace Navigation
             }
             else
             {
-                // Fallback to hardcoded values
                 obstacle.shape = NavMeshObstacleShape.Capsule;
                 obstacle.radius = 0.5f;
                 obstacle.height = 1f;

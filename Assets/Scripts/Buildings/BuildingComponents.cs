@@ -1,4 +1,4 @@
-using ScriptableObjects;
+﻿using ScriptableObjects;
 using Types;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -59,8 +59,7 @@ namespace Buildings
         public NetworkTick Tick { get; set; }
     }
 
-
-    public struct BuildingPrefabComponent : IComponentData
+public struct BuildingPrefabComponent : IComponentData
     {
         public Entity TownCenter;
 

@@ -1,4 +1,4 @@
-using ElementCommons;
+﻿using ElementCommons;
 using Buildings;
 using Combat;
 using GatherableResources;
@@ -67,8 +67,7 @@ namespace Units
                 serverTarget.ValueRW.TargetVersion = inputTarget.ValueRO.TargetVersion;
             }
 
-
-            foreach ((RefRO<UnitTypeComponent>            unitType,
+foreach ((RefRO<UnitTypeComponent>            unitType,
                       RefRO<UnitStateComponent>           unitState,
                       RefRW<SetInputStateTargetComponent> inputTarget,
                       Entity                              entity)
@@ -165,8 +164,7 @@ namespace Units
                     continue;
                 }
 
-
-                ecb.AddComponent(entity, new WorkerGatheringTagComponent
+ecb.AddComponent(entity, new WorkerGatheringTagComponent
                 {
                     ResourceEntity = targetEntity
                 });

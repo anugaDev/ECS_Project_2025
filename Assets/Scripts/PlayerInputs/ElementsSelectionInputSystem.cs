@@ -1,4 +1,4 @@
-using Buildings;
+﻿using Buildings;
 using ElementCommons;
 using Player;
 using Types;
@@ -38,8 +38,7 @@ namespace PlayerInputs
 
         private bool _isDragging;
 
-
-        private CheckGameplayInteractionPolicy _interactionPolicy;
+private CheckGameplayInteractionPolicy _interactionPolicy;
 
         protected override void OnCreate()
         {

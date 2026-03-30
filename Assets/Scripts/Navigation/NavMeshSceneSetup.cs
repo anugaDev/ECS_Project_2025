@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+﻿#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 using Unity.AI.Navigation;
@@ -6,9 +6,6 @@ using UnityEngine.AI;
 
 namespace Navigation
 {
-    /// <summary>
-    /// Editor utility to automatically set up NavMesh in the current scene
-    /// </summary>
     public class NavMeshSceneSetup : MonoBehaviour
     {
         [MenuItem("Tools/NavMesh/Setup NavMesh in Scene")]
@@ -16,7 +13,6 @@ namespace Navigation
         {
             Debug.Log("[NavMeshSceneSetup] Setting up NavMesh in scene...");
 
-            // 1. Create or find NavMesh GameObject
             GameObject navMeshObj = GameObject.Find("NavMesh");
             if (navMeshObj == null)
             {
@@ -28,7 +24,6 @@ namespace Navigation
                 Debug.Log("[NavMeshSceneSetup] Found existing NavMesh GameObject");
             }
 
-            // Add NavMeshSetup component if not present
             NavMeshSetup navMeshSetup = navMeshObj.GetComponent<NavMeshSetup>();
             if (navMeshSetup == null)
             {
@@ -36,17 +31,13 @@ namespace Navigation
                 Debug.Log("[NavMeshSceneSetup] Added NavMeshSetup component");
             }
 
-            // IMPORTANT: Manually create NavMeshSurface NOW (don't wait for Awake)
             NavMeshSurface navMeshSurface = navMeshObj.GetComponent<NavMeshSurface>();
             if (navMeshSurface == null)
             {
                 navMeshSurface = navMeshObj.AddComponent<NavMeshSurface>();
 
-                // Configure it with the correct settings
                 navMeshSurface.collectObjects = CollectObjects.All;
-                navMeshSurface.useGeometry = NavMeshCollectGeometry.RenderMeshes; // Use RenderMeshes!
-                navMeshSurface.layerMask = (1 << 2); // ONLY layer 2 (Ignore Raycast) - excludes building meshes!
-                navMeshSurface.agentTypeID = 0;
+                navMeshSurface.useGeometry = NavMeshCollectGeometry.RenderMeshes;                navMeshSurface.layerMask = (1 << 2);                navMeshSurface.agentTypeID = 0;
                 navMeshSurface.overrideVoxelSize = true;
                 navMeshSurface.voxelSize = 0.1f;
 
@@ -54,14 +45,11 @@ namespace Navigation
             }
             else
             {
-                // Force correct settings even if it already exists
                 navMeshSurface.useGeometry = NavMeshCollectGeometry.RenderMeshes;
                 navMeshSurface.collectObjects = CollectObjects.All;
-                navMeshSurface.layerMask = (1 << 2); // ONLY layer 2
-                Debug.Log("[NavMeshSceneSetup] Updated existing NavMeshSurface to RenderMeshes mode (Layer 2 only)");
+                navMeshSurface.layerMask = (1 << 2);                Debug.Log("[NavMeshSceneSetup] Updated existing NavMeshSurface to RenderMeshes mode (Layer 2 only)");
             }
 
-            // 2. Create or find Ground Plane GameObject
             GameObject groundObj = GameObject.Find("GroundPlane");
             if (groundObj == null)
             {
@@ -73,7 +61,6 @@ namespace Navigation
                 Debug.Log("[NavMeshSceneSetup] Found existing GroundPlane GameObject");
             }
 
-            // Add GroundPlaneSetup component if not present
             GroundPlaneSetup groundSetup = groundObj.GetComponent<GroundPlaneSetup>();
             if (groundSetup == null)
             {
@@ -81,10 +68,8 @@ namespace Navigation
                 Debug.Log("[NavMeshSceneSetup] Added GroundPlaneSetup component");
             }
 
-            // IMPORTANT: Set ground plane to layer 2 (Ignore Raycast)
             groundObj.layer = 2;
 
-            // IMPORTANT: Manually create the ground plane components NOW (don't wait for Awake)
             BoxCollider groundCollider = groundObj.GetComponent<BoxCollider>();
             if (groundCollider == null)
             {
@@ -101,11 +86,9 @@ namespace Navigation
             {
                 groundModifier = groundObj.AddComponent<NavMeshModifier>();
                 groundModifier.overrideArea = true;
-                groundModifier.area = 0; // Walkable
-                Debug.Log("[NavMeshSceneSetup] Created NavMeshModifier on GroundPlane");
+                groundModifier.area = 0;                Debug.Log("[NavMeshSceneSetup] Created NavMeshModifier on GroundPlane");
             }
 
-            // Mark scene as dirty
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
                 UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
 
@@ -120,7 +103,6 @@ namespace Navigation
         {
             Debug.Log("[NavMeshSceneSetup] Checking scene setup...");
 
-            // Check for NavMesh GameObject
             GameObject navMeshObj = GameObject.Find("NavMesh");
             if (navMeshObj == null)
             {
@@ -145,7 +127,6 @@ namespace Navigation
                 }
             }
 
-            // Check for Ground Plane
             GameObject groundObj = GameObject.Find("GroundPlane");
             if (groundObj == null)
             {
@@ -163,7 +144,6 @@ namespace Navigation
                 Debug.Log($"  - NavMeshModifier: {(modifier != null ? "✓" : "✗")}");
             }
 
-            // Check for NavMeshModifierVolumes (obstacles)
             NavMeshModifierVolume[] volumes = GameObject.FindObjectsOfType<NavMeshModifierVolume>();
             Debug.Log($"[NavMeshSceneSetup] Found {volumes.Length} NavMeshModifierVolume(s) in scene");
             foreach (var vol in volumes)

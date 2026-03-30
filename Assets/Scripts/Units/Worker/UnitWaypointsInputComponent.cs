@@ -1,24 +1,13 @@
-using Unity.Entities;
+﻿using Unity.Entities;
 using Unity.Mathematics;
 using Unity.NetCode;
 
 namespace Units.Worker
 {
-    /// <summary>
-    /// Records NavMesh path waypoints as input data so the server receives them
-    /// and can follow the same path as the client (no NavMesh needed server-side).
-    ///
-    /// Written by NavMeshPathfindingSystem in GhostInputSystemGroup so the values
-    /// are captured in the input record for each tick and delivered to the server
-    /// via the NetCode command buffer.
-    ///
-    /// Max 8 waypoints covers the vast majority of NavMesh paths in an RTS.
-    /// </summary>
     [GhostComponent(PrefabType = GhostPrefabType.AllPredicted)]
     public struct UnitWaypointsInputComponent : IInputComponentData
     {
-        [GhostField] public int WaypointCount; // 0 = no active path
-        [GhostField] public float3 W0;
+        [GhostField] public int WaypointCount;        [GhostField] public float3 W0;
         [GhostField] public float3 W1;
         [GhostField] public float3 W2;
         [GhostField] public float3 W3;

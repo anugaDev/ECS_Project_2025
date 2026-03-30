@@ -1,4 +1,4 @@
-using Buildings;
+﻿using Buildings;
 using Combat;
 using ElementCommons;
 using GatherableResources;
@@ -43,9 +43,8 @@ namespace UI
                 SetTrackedEntityDetails();
                 entityCommandBuffer.RemoveComponent<SetUIDisplayDetailsComponent>(entity);
             }
-            
 
-            foreach ((SetEmptyDetailsComponent _, Entity entity) 
+foreach ((SetEmptyDetailsComponent _, Entity entity) 
                      in SystemAPI.Query<SetEmptyDetailsComponent>().WithEntityAccess())
             {
                 _selectionDetailsController.DisableDetails();

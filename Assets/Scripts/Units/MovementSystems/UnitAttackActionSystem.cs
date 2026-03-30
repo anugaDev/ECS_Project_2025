@@ -1,4 +1,4 @@
-using Combat;
+﻿using Combat;
 using ElementCommons;
 using Unity.Collections;
 using Unity.Entities;
@@ -40,7 +40,6 @@ namespace Units.MovementSystems
 
             EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            // First loop: new player input cancels any ongoing attack
             foreach ((RefRO<SetInputStateTargetComponent>  inputTarget,
                       RefRW<SetServerStateTargetComponent> serverTarget,
                       Entity entity) in SystemAPI.Query<RefRO<SetInputStateTargetComponent>,

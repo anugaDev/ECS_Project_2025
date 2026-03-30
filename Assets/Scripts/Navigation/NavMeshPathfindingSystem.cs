@@ -1,4 +1,4 @@
-using ElementCommons;
+﻿using ElementCommons;
 using Units;
 using Units.Worker;
 using Unity.Entities;
@@ -133,8 +133,7 @@ namespace Navigation
 
                     float tx = dir.x != 0f ? math.abs(halfExtents.x / dir.x) : float.MaxValue;
                     float tz = dir.z != 0f ? math.abs(halfExtents.z / dir.z) : float.MaxValue;
-                    float t  = math.min(tx, tz); // distance from center to boundary along dir
-
+                    float t  = math.min(tx, tz);
                     float stoppingDist   = inputTarget.ValueRO.StoppingDistance;
                     float distToBoundary = distToCenter - t;
 

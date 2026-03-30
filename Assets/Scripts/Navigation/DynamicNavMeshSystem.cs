@@ -1,4 +1,4 @@
-using Buildings;
+﻿using Buildings;
 using Units;
 using Unity.AI.Navigation;
 using Unity.Collections;
@@ -60,8 +60,6 @@ namespace Navigation
 
             EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            // Collect pending obstacle registrations — cannot call EntityManager.AddComponentObject
-            // inside a SystemAPI.Query foreach as it is a structural change that invalidates the iterator.
             using NativeList<Entity> pendingEntities = new NativeList<Entity>(Allocator.Temp);
             System.Collections.Generic.List<GameObject> pendingObstacles = new System.Collections.Generic.List<GameObject>();
 
@@ -85,7 +83,6 @@ namespace Navigation
             ecb.Playback(EntityManager);
             ecb.Dispose();
 
-            // Safe to add managed components now — iteration is complete.
             for (int i = 0; i < pendingEntities.Length; i++)
             {
                 EntityManager.AddComponentObject(pendingEntities[i], new NavMeshObstacleReference

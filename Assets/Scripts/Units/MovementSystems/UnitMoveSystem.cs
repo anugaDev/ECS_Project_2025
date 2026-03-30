@@ -1,4 +1,4 @@
-using ElementCommons;
+﻿using ElementCommons;
 using Units.Worker;
 using Unity.Burst;
 using Unity.Entities;
@@ -36,8 +36,7 @@ namespace Units.MovementSystems
         {
             _currentDeltaTime = SystemAPI.Time.DeltaTime;
 
-
-            foreach ((RefRW<LocalTransform> transform,
+foreach ((RefRW<LocalTransform> transform,
                      RefRW<PathComponent> pathComponent,
                      DynamicBuffer<PathWaypointBuffer> pathBuffer,
                      RefRO<UnitMoveSpeedComponent> moveSpeed,

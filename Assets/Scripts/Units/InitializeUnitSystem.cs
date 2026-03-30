@@ -1,4 +1,4 @@
-using ElementCommons;
+﻿using ElementCommons;
 using Types;
 using Units;
 using Units.Worker;
@@ -83,14 +83,11 @@ namespace Server
 
         private void InitializeInputTarget(RefRW<SetInputStateTargetComponent> inputTarget, RefRO<LocalTransform> transform)
         {
-            // Initialize target to unit's spawn position so it doesn't move on spawn
             inputTarget.ValueRW.TargetPosition = transform.ValueRO.Position;
             inputTarget.ValueRW.TargetEntity = Entity.Null;
             inputTarget.ValueRW.IsFollowingTarget = false;
             inputTarget.ValueRW.StoppingDistance = 0f;
-            inputTarget.ValueRW.HasNewTarget = false; // No new target on spawn
-        }
+            inputTarget.ValueRW.HasNewTarget = false;        }
 
-
-    }
+}
 }

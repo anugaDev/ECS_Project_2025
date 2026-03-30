@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.AI;
 using Unity.AI.Navigation;
 
@@ -35,8 +35,7 @@ namespace Navigation
 
         [Header("Layer Settings")]
         [Tooltip("Layers to include in NavMesh baking. Exclude trees, units, and other dynamic objects.")]
-        [SerializeField] private LayerMask _includedLayers = ~0; // Default: all layers
-
+        [SerializeField] private LayerMask _includedLayers = ~0;
         private NavMeshSurface _navMeshSurface;
 
         private void Awake()
@@ -51,7 +50,6 @@ namespace Navigation
                 _navMeshSurface.BuildNavMesh();
             }
 
-            // CRITICAL: NavMeshSurface should auto-load, but let's force it
             if (_navMeshSurface != null)
             {
                 if (_navMeshSurface.navMeshData != null)
@@ -59,7 +57,6 @@ namespace Navigation
                     Debug.Log($"[NavMeshSetup] NavMeshSurface has data: {_navMeshSurface.navMeshData.name}");
                     Debug.Log($"[NavMeshSetup] Data bounds: {_navMeshSurface.navMeshData.sourceBounds}");
 
-                    // Check if data is actually populated
                     var bounds = _navMeshSurface.navMeshData.sourceBounds;
                     if (bounds.size == Vector3.zero)
                     {
@@ -71,7 +68,6 @@ namespace Navigation
                     {
                         Debug.Log($"[NavMeshSetup] ✓ NavMeshData has valid bounds: {bounds}");
 
-                        // NavMeshSurface should call AddData automatically, but let's verify
                         UnityEngine.AI.NavMeshTriangulation triangulation = UnityEngine.AI.NavMesh.CalculateTriangulation();
                         Debug.Log($"[NavMeshSetup] Active NavMesh: Vertices={triangulation.vertices.Length}, Triangles={triangulation.indices.Length / 3}");
                     }
@@ -91,7 +87,6 @@ namespace Navigation
             {
                 _navMeshSurface = gameObject.AddComponent<NavMeshSurface>();
 
-                // Only configure if we just created it
                 _navMeshSurface.collectObjects = CollectObjects.Volume;
                 _navMeshSurface.useGeometry = NavMeshCollectGeometry.PhysicsColliders;
                 _navMeshSurface.size = _navMeshSize;
@@ -117,7 +112,6 @@ namespace Navigation
                 _navMeshSurface.BuildNavMesh();
 
 #if UNITY_EDITOR
-                // Force save the NavMesh data asset
                 if (_navMeshSurface.navMeshData != null)
                 {
                     UnityEditor.EditorUtility.SetDirty(_navMeshSurface.navMeshData);
@@ -149,17 +143,12 @@ namespace Navigation
             {
                 Debug.Log("[NavMeshSetup] Fixing NavMesh settings...");
 
-                // IMPORTANT: Use Volume mode (not All Game Objects) to see SubScene objects
                 _navMeshSurface.collectObjects = CollectObjects.Volume;
 
-                // Set correct size for the map
                 _navMeshSurface.size = new Vector3(200f, 10f, 200f);
                 _navMeshSurface.center = Vector3.zero;
 
-                // Include all layers (especially Default where trees are)
-                _navMeshSurface.layerMask = ~0; // All layers
-
-                // Use PhysicsColliders mode
+                _navMeshSurface.layerMask = ~0;
                 _navMeshSurface.useGeometry = NavMeshCollectGeometry.PhysicsColliders;
 
                 Debug.Log($"[NavMeshSetup] ✓ Fixed!");

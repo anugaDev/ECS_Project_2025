@@ -1,12 +1,11 @@
-using PlayerCamera;
+﻿using PlayerCamera;
 using UnityEngine;
 
 namespace UI.UIControllers
 {
     public class UserInterfaceController : MonoBehaviour
     {
-        public static UserInterfaceController Instance; //TEMP
-
+        public static UserInterfaceController Instance;
         [SerializeField]
         private SelectionBoxController _selectionBoxController;
 
@@ -37,9 +36,8 @@ namespace UI.UIControllers
         public ResourcesPanelController ResourcesPanelController => _resourcesPanelController;
 
         public SelectionBoxController SelectionBoxController => _selectionBoxController;
-        
 
-        private void Awake()
+private void Awake()
         {
             if (Instance != null)
             {

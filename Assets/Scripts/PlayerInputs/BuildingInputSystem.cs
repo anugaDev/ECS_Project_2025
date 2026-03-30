@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Buildings;
 using ElementCommons;
@@ -324,25 +324,21 @@ namespace PlayerInputs
                 if (!selection.IsSelected)
                     continue;
 
-                // Ray from building center toward the worker's current world position (XZ only)
                 Unity.Mathematics.float3 workerPos     = EntityManager.GetComponentData<Unity.Transforms.LocalTransform>(entity).Position;
                 Unity.Mathematics.float3 buildingCenter = _lastPosition;
 
                 Unity.Mathematics.float3 dir = new Unity.Mathematics.float3(
                     workerPos.x - buildingCenter.x, 0f, workerPos.z - buildingCenter.z);
 
-                // If worker is right at center, use a default outward direction
                 if (Unity.Mathematics.math.lengthsq(dir) < 0.001f)
                     dir = new Unity.Mathematics.float3(1f, 0f, 0f);
 
                 dir = Unity.Mathematics.math.normalize(dir);
 
-                // Slab method: find where the ray exits the AABB on XZ plane
                 float tx = dir.x != 0f ? Unity.Mathematics.math.abs(halfExtents.x / dir.x) : float.MaxValue;
                 float tz = dir.z != 0f ? Unity.Mathematics.math.abs(halfExtents.z / dir.z) : float.MaxValue;
                 float t  = Unity.Mathematics.math.min(tx, tz);
 
-                // Boundary exit point + small separation so path ends outside the obstacle
                 Unity.Mathematics.float3 boundaryTarget = buildingCenter + dir * (t + 0.5f);
                 boundaryTarget.y = workerPos.y;
 
@@ -351,9 +347,7 @@ namespace PlayerInputs
                 Units.Worker.SetInputStateTargetComponent inputTarget = new Units.Worker.SetInputStateTargetComponent
                 {
                     TargetEntity      = Entity.Null,
-                    TargetPosition    = boundaryTarget,   // boundary edge, NOT center
-                    IsFollowingTarget = true,             // WorkerActionSystem triggers construction on arrival
-                    StoppingDistance  = stoppingDistance,
+                    TargetPosition    = boundaryTarget,                    IsFollowingTarget = true,                    StoppingDistance  = stoppingDistance,
                     HasNewTarget      = true,
                     TargetVersion     = currentVersion + 1
                 };

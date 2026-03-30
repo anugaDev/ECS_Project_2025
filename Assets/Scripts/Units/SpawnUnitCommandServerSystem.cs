@@ -1,4 +1,4 @@
-using Buildings;
+﻿using Buildings;
 using ElementCommons;
 using Types;
 using UI;
@@ -63,14 +63,11 @@ namespace Units
             if (!command.Tick.IsValid)
                 return;
 
-            // Check if we've already processed this command ID
             if (command.CommandId == lastProcessedCommand.ValueRO.CommandId)
                 return;
 
-            // Resources are deducted when unit is queued (QueueUnitCommandServerSystem), not when spawned
             InstantiateUnit(command, playerTeam, networkId, state);
 
-            // Update last processed command ID
             lastProcessedCommand.ValueRW = new LastProcessedUnitCommand()
             {
                 CommandId = command.CommandId

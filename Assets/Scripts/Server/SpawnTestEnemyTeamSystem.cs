@@ -1,4 +1,4 @@
-using Buildings;
+﻿using Buildings;
 using ElementCommons;
 using Types;
 using Unity.Collections;
@@ -141,9 +141,7 @@ namespace Server
             SetFullConstructionProgressComponent(buildingPrefab, newBuilding, ref state);
         }
 
-
-
-        private void SpawnUnit(UnitType unitType, float3 position, TeamType team, ref SystemState state)
+private void SpawnUnit(UnitType unitType, float3 position, TeamType team, ref SystemState state)
         {
             Entity unitPrefab = _unitFactory.Get(unitType);
             Entity newUnit = _entityCommandBuffer.Instantiate(unitPrefab);
