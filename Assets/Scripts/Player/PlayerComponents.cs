@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Buildings;
 using Types;
 using Unity.Entities;
@@ -124,5 +124,11 @@ namespace UI
     {
         [GhostField]
         public int FoodPerSecond;
+    }
+
+    public struct PlayerManualExitTag : IComponentData
+    {
+        [GhostField]
+        public TeamType ExitingTeam;
     }
 }

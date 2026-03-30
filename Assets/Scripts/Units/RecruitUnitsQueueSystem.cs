@@ -294,7 +294,7 @@ namespace Units
             };
         }
 
-        private static int GetCommandId(float3 buildingPosition, UnitType unit, NetworkTick tick)
+        private int GetCommandId(float3 buildingPosition, UnitType unit, NetworkTick tick)
         {
             int positionHash = (int)(buildingPosition.x * 1000 + buildingPosition.z * 100);
             int commandId = (int)tick.TickIndexForValidTick * 10000 + (int)unit * 100 + (positionHash % 100);
@@ -315,7 +315,7 @@ namespace Units
             });
         }
 
-        private static int GetCommandId(UnitType unitType, NetworkTick tick)
+        private int GetCommandId(UnitType unitType, NetworkTick tick)
         {
             return (int)tick.TickIndexForValidTick * 1000 + (int)unitType;
         }

@@ -95,7 +95,6 @@ namespace Units
                     float closestDistSq = float.MaxValue;
                     Entity closestTarget = Entity.Null;
 
-                    // Search for closest resource
                     foreach ((RefRO<Unity.Transforms.LocalTransform> resTransform, RefRO<ResourceTypeComponent> resType, Entity resEntity) 
                         in SystemAPI.Query<RefRO<Unity.Transforms.LocalTransform>, RefRO<ResourceTypeComponent>>().WithEntityAccess())
                     {
@@ -107,12 +106,11 @@ namespace Units
                         }
                     }
 
-                    // Search for closest building under construction
                     foreach ((RefRO<Unity.Transforms.LocalTransform> bTransform, RefRO<BuildingConstructionProgressComponent> bProgress, Entity bEntity) 
                         in SystemAPI.Query<RefRO<Unity.Transforms.LocalTransform>, RefRO<BuildingConstructionProgressComponent>>().WithEntityAccess())
                     {
                         if (bProgress.ValueRO.Value >= bProgress.ValueRO.ConstructionTime)
-                            continue; // Skip finished buildings
+                            continue;
 
                         float distSq = Unity.Mathematics.math.distancesq(targetPos, bTransform.ValueRO.Position);
                         if (distSq < closestDistSq)
