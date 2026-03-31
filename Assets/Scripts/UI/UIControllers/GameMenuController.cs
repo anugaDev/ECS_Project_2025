@@ -86,8 +86,25 @@ namespace UI.UIControllers
             TeamType localTeam  = em.GetComponentData<PlayerTeamComponent>(playerEntity).Team;
             localPlayerQuery.Dispose();
 
+            EntityQuery networkQuery = em.CreateEntityQuery(
+                ComponentType.ReadOnly<Unity.NetCode.NetworkId>(),
+                ComponentType.ReadOnly<Unity.NetCode.NetworkStreamInGame>()
+            );
+
+            if (networkQuery.IsEmpty)
+            {
+                networkQuery.Dispose();
+                SetVisible(false);
+                return;
+            }
+
+            Entity networkEntity = networkQuery.GetSingletonEntity();
+            networkQuery.Dispose();
+
             EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
-            ecb.AddComponent(playerEntity, new PlayerManualExitTag { ExitingTeam = localTeam });
+            Entity rpcEntity = ecb.CreateEntity();
+            ecb.AddComponent(rpcEntity, new PlayerManualExitTag { ExitingTeam = localTeam });
+            ecb.AddComponent(rpcEntity, new Unity.NetCode.SendRpcCommandRequest { TargetConnection = networkEntity });
             ecb.Playback(em);
             ecb.Dispose();
             SetVisible(false);

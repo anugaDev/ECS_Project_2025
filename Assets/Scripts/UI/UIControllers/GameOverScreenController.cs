@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Unity.Entities;
+using Unity.NetCode;
+using UnityEngine.SceneManagement;
 
 namespace UI.UIControllers
 {
@@ -94,7 +97,17 @@ namespace UI.UIControllers
 
         private void OnMainButtonClicked()
         {
-            UnityEngine.SceneManagement.SceneManager.LoadScene(GlobalParameters.MENU_SCENE_INDEX);
+            EntityQuery networkConnectionQuery =
+                World.DefaultGameObjectInjectionWorld.EntityManager.CreateEntityQuery(typeof(NetworkStreamConnection));
+
+            if (networkConnectionQuery.TryGetSingletonEntity<NetworkStreamConnection>(out var networkConnectionEntity))
+            {
+                World.DefaultGameObjectInjectionWorld.EntityManager.AddComponent<NetworkStreamRequestDisconnect>(
+                    networkConnectionEntity);
+            }
+
+            World.DisposeAllWorlds();
+            SceneManager.LoadScene(GlobalParameters.MENU_SCENE_INDEX);
         }
     }
 }

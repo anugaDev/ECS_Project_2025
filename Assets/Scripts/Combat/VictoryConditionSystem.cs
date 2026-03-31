@@ -4,6 +4,7 @@ using Types;
 using UI;
 using Units;
 using Unity.Entities;
+using Unity.NetCode;
 
 namespace Combat
 {
@@ -34,12 +35,26 @@ namespace Combat
             if (isGameOver)
                 return;
 
-            foreach (RefRO<PlayerManualExitTag> exitTag in
-                     SystemAPI.Query<RefRO<PlayerManualExitTag>>())
+            TeamType manualWinnerTeam = TeamType.None;
+            Entity rpcEntityToDestroy = Entity.Null;
+
+            foreach ((RefRO<PlayerManualExitTag> exitTag, RefRO<ReceiveRpcCommandRequest> receiveReq, Entity rpcEntity) in
+                     SystemAPI.Query<RefRO<PlayerManualExitTag>, RefRO<ReceiveRpcCommandRequest>>().WithEntityAccess())
             {
                 TeamType exitingTeam = exitTag.ValueRO.ExitingTeam;
-                TeamType winnerTeam  = exitingTeam == TeamType.Blue ? TeamType.Red : TeamType.Blue;
-                TriggerGameOver(ref state, winnerTeam);
+                manualWinnerTeam = exitingTeam == TeamType.Blue ? TeamType.Red : TeamType.Blue;
+                rpcEntityToDestroy = rpcEntity;
+                break;
+            }
+
+            if (manualWinnerTeam != TeamType.None && rpcEntityToDestroy != Entity.Null)
+            {
+                EntityCommandBuffer ecb = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
+                ecb.DestroyEntity(rpcEntityToDestroy);
+                ecb.Playback(state.EntityManager);
+                ecb.Dispose();
+
+                TriggerGameOver(ref state, manualWinnerTeam);
                 return;
             }
 

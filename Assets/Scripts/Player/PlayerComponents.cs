@@ -126,9 +126,8 @@ namespace UI
         public int FoodPerSecond;
     }
 
-    public struct PlayerManualExitTag : IComponentData
+    public struct PlayerManualExitTag : IRpcCommand
     {
-        [GhostField]
         public TeamType ExitingTeam;
     }
 }
