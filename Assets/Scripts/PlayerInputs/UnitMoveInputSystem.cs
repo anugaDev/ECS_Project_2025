@@ -240,24 +240,36 @@ namespace PlayerInputs
             ElementSelectionComponent selectedPositionComponent = EntityManager.GetComponentData<ElementSelectionComponent>(entity);
 
             if (!selectedPositionComponent.IsSelected)
+            {
                 return;
+            }
 
             _anySelected = true;
-
             float3 targetPosition = closestHit.Position;
-            bool hasTarget = targetEntity != Entity.Null &&
-                           EntityManager.Exists(targetEntity) &&
-                           EntityManager.HasComponent<SelectableElementTypeComponent>(targetEntity);
-
+            bool hasTarget = GetHasTarget(targetEntity);
             float stoppingDistance = DEFAULT_STOPPING_DISTANCE;
+
             if (hasTarget)
             {
                 stoppingDistance = CalculateStoppingDistance(targetEntity, entity);
             }
 
             int currentVersion = EntityManager.GetComponentData<SetInputStateTargetComponent>(entity).TargetVersion;
+            _inputTargetComponent = GetInputTargetComponent(targetEntity, hasTarget, targetPosition, stoppingDistance, currentVersion);
+            EntityManager.SetComponentData(entity, _inputTargetComponent);
+            SetMovePositionIndicator();
+        }
 
-            _inputTargetComponent = new SetInputStateTargetComponent
+        private bool GetHasTarget(Entity targetEntity)
+        {
+            return targetEntity != Entity.Null &&
+                   EntityManager.Exists(targetEntity) &&
+                   EntityManager.HasComponent<SelectableElementTypeComponent>(targetEntity);
+        }
+
+        private static SetInputStateTargetComponent GetInputTargetComponent(Entity targetEntity, bool hasTarget, float3 targetPosition, float stoppingDistance, int currentVersion)
+        {
+            return new SetInputStateTargetComponent
             {
                 TargetEntity = hasTarget ? targetEntity : Entity.Null,
                 TargetPosition = targetPosition,
@@ -266,10 +278,6 @@ namespace PlayerInputs
                 HasNewTarget = true,
                 TargetVersion = currentVersion + 1
             };
-
-            EntityManager.SetComponentData(entity, _inputTargetComponent);
-
-            SetMovePositionIndicator();
         }
 
         private RaycastInput GetRaycastInput(Camera mainCamera, CollisionFilter filter)

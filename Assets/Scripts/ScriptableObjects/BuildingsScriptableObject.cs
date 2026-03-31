@@ -10,6 +10,17 @@ namespace ScriptableObjects
     {
         [SerializeField]
         private List<BuildingScriptableObject> _buildingConfigurations;
+        
+        [Header("Tower Combat Properties")]
+        [SerializeField]
+        private float _towerAttackRange;
+
+        [SerializeField]
+        private int _towerDamagePerSecond;
+
+        public float TowerAttackRange => _towerAttackRange;
+
+        public int TowerDamagePerSecond => _towerDamagePerSecond;
 
         public Dictionary<BuildingType, BuildingScriptableObject> GetBuildingsDictionary()
         {

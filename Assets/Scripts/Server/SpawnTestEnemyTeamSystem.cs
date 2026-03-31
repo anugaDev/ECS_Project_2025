@@ -1,4 +1,4 @@
-﻿using Buildings;
+using Buildings;
 using ElementCommons;
 using Types;
 using Unity.Collections;
@@ -105,6 +105,12 @@ namespace Server
 
             float3 farm2Pos = basePosition + new float3(-6f * direction, 0f, 10f * direction);
             SpawnBuilding(BuildingType.Farm, farm2Pos, team, ref state);
+
+            float3 towerPos = basePosition + new float3(-15f * direction, 0f, 0f);
+            SpawnBuilding(BuildingType.Tower, towerPos, team, ref state);
+
+            float3 midTowerPos = new float3(0f, GlobalParameters.DEFAULT_SCENE_HEIGHT, 0f);
+            SpawnBuilding(BuildingType.Tower, midTowerPos, team, ref state);
         }
 
         private void SpawnEnemyUnits(float3 basePosition, TeamType team, ref SystemState state)

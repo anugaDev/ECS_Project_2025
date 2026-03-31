@@ -1,12 +1,17 @@
+using Combat;
+using ScriptableObjects;
 using Types;
 using UI;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
+using UnityEngine;
 
 namespace Buildings
 {
-    public struct BuildingPassivePendingTag : IComponentData { }
+    public struct BuildingPassivePendingTag : IComponentData
+    {
+    }
 
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
@@ -26,6 +31,7 @@ namespace Buildings
             _populationLookup = state.GetComponentLookup<CurrentPopulationComponent>(false);
             _foodGenerationLookup = state.GetComponentLookup<FoodGenerationComponent>(false);
             _constructionProgressLookup = state.GetComponentLookup<BuildingConstructionProgressComponent>(true);
+            state.RequireForUpdate<BuildingsConfigurationComponent>();
         }
 
         public void OnUpdate(ref SystemState state)
@@ -34,6 +40,8 @@ namespace Buildings
             _foodGenerationLookup.Update(ref state);
             _constructionProgressLookup.Update(ref state);
 
+            BuildingsScriptableObject buildingsConfig = SystemAPI.ManagedAPI.GetSingleton<BuildingsConfigurationComponent>().Configuration;
+
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
 
             foreach ((BuildingTypeComponent buildingType, GhostOwner ghostOwner, Entity buildingEntity)
@@ -41,7 +49,8 @@ namespace Buildings
                          .WithAll<NewBuildingTagComponent>().WithEntityAccess())
             {
                 bool isUnderConstruction = false;
-                if (_constructionProgressLookup.TryGetComponent(buildingEntity, out BuildingConstructionProgressComponent progress))
+                if (_constructionProgressLookup.TryGetComponent(buildingEntity,
+                        out BuildingConstructionProgressComponent progress))
                 {
                     isUnderConstruction = progress.ConstructionTime > 0 && progress.Value < progress.ConstructionTime;
                 }
@@ -52,7 +61,7 @@ namespace Buildings
                 }
                 else
                 {
-                    ApplyPassiveAction(buildingType.Type, entityCommandBuffer, ghostOwner, ref state);
+                    ApplyPassiveAction(buildingType.Type, buildingEntity, entityCommandBuffer, ghostOwner, buildingsConfig, ref state);
                 }
 
                 entityCommandBuffer.RemoveComponent<NewBuildingTagComponent>(buildingEntity);
@@ -62,12 +71,13 @@ namespace Buildings
                      in SystemAPI.Query<BuildingTypeComponent, GhostOwner>()
                          .WithAll<BuildingPassivePendingTag>().WithEntityAccess())
             {
-                if (!_constructionProgressLookup.TryGetComponent(buildingEntity, out BuildingConstructionProgressComponent progress))
+                if (!_constructionProgressLookup.TryGetComponent(buildingEntity,
+                        out BuildingConstructionProgressComponent progress))
                     continue;
 
                 if (progress.ConstructionTime > 0 && progress.Value >= progress.ConstructionTime)
                 {
-                    ApplyPassiveAction(buildingType.Type, entityCommandBuffer, ghostOwner, ref state);
+                    ApplyPassiveAction(buildingType.Type, buildingEntity, entityCommandBuffer, ghostOwner, buildingsConfig, ref state);
                     entityCommandBuffer.RemoveComponent<BuildingPassivePendingTag>(buildingEntity);
                 }
             }
@@ -76,8 +86,9 @@ namespace Buildings
             entityCommandBuffer.Dispose();
         }
 
-        private void ApplyPassiveAction(BuildingType buildingType, EntityCommandBuffer entityCommandBuffer,
-                                        GhostOwner ghostOwner, ref SystemState state)
+        private void ApplyPassiveAction(BuildingType buildingType, Entity buildingEntity,
+            EntityCommandBuffer entityCommandBuffer,
+            GhostOwner ghostOwner, BuildingsScriptableObject config, ref SystemState state)
         {
             switch (buildingType)
             {
@@ -87,9 +98,8 @@ namespace Buildings
                 case BuildingType.Farm:
                     ApplyFarmPassiveAction(entityCommandBuffer, ghostOwner, ref state);
                     break;
-                case BuildingType.Center:
-                case BuildingType.Barracks:
                 case BuildingType.Tower:
+                    ApplyTowerPassiveAction(buildingEntity, entityCommandBuffer, config, ref state);
                     break;
             }
         }
@@ -143,6 +153,18 @@ namespace Buildings
 
             return Entity.Null;
         }
+
+        private void ApplyTowerPassiveAction(Entity buildingEntity, EntityCommandBuffer ecb, BuildingsScriptableObject config, ref SystemState state)
+        {
+            if (!SystemAPI.HasComponent<TowerAttackProperties>(buildingEntity))
+            {
+                ecb.AddComponent(buildingEntity, new TowerAttackProperties
+                {
+                    AttackRange = config.TowerAttackRange,
+                    DamagePerSecond = config.TowerDamagePerSecond,
+                    TargetEntity = Entity.Null
+                });
+            }
+        }
     }
 }
-

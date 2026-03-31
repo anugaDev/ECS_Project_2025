@@ -58,3 +58,5 @@ MonoBehaviour:
       _cost: 75
     _buildingPrefab: {fileID: 2881682225047266158, guid: 3b544198aef4a3740a86dedc6f3f8984, type: 3}
     _buildingTemplate: {fileID: 4814117991548696416, guid: 6ccdcb91d99194749832093a59f19f01, type: 3}
+  _towerAttackRange: 15
+  _towerDamagePerSecond: 20

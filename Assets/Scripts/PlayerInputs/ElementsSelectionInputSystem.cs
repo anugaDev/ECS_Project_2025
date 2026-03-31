@@ -1,6 +1,5 @@
 ﻿using Buildings;
 using ElementCommons;
-using Player;
 using Types;
 using UI;
 using UI.UIControllers;
@@ -8,7 +7,6 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace PlayerInputs

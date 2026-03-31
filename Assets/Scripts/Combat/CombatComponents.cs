@@ -54,4 +54,13 @@ namespace Combat
     {
         public Entity Value;
     }
+
+    public struct TowerAttackProperties : IComponentData
+    {
+        public float AttackRange;
+
+        public int DamagePerSecond;
+
+        public Entity TargetEntity;
+    }
 }
