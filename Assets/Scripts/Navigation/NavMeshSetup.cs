@@ -68,7 +68,7 @@ namespace Navigation
                     {
                         Debug.Log($"[NavMeshSetup] ✓ NavMeshData has valid bounds: {bounds}");
 
-                        UnityEngine.AI.NavMeshTriangulation triangulation = UnityEngine.AI.NavMesh.CalculateTriangulation();
+                        NavMeshTriangulation triangulation = NavMesh.CalculateTriangulation();
                         Debug.Log($"[NavMeshSetup] Active NavMesh: Vertices={triangulation.vertices.Length}, Triangles={triangulation.indices.Length / 3}");
                     }
                 }
@@ -96,11 +96,11 @@ namespace Navigation
                 _navMeshSurface.overrideVoxelSize = true;
                 _navMeshSurface.voxelSize = 0.1f;
 
-                UnityEngine.Debug.Log("[NavMeshSetup] Created new NavMeshSurface with default settings");
+                Debug.Log("[NavMeshSetup] Created new NavMeshSurface with default settings");
             }
             else
             {
-                UnityEngine.Debug.Log("[NavMeshSetup] Using existing NavMeshSurface (preserving editor settings)");
+                Debug.Log("[NavMeshSetup] Using existing NavMeshSurface (preserving editor settings)");
             }
         }
 

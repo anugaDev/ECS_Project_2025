@@ -5,8 +5,9 @@ namespace Navigation
 {
     public class NavMeshVisualizer : MonoBehaviour
     {
-        private bool _showNavMesh = false;
         private Mesh _navMeshVisualization;
+        
+        private bool _showNavMesh;
 
         private void Update()
         {

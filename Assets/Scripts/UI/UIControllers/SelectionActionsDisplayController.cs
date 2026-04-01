@@ -5,7 +5,6 @@ using Buildings;
 using ScriptableObjects;
 using Types;
 using Unity.Entities;
-using Unity.Mathematics;
 using UnityEngine;
 
 namespace UI.UIControllers

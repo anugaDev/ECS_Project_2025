@@ -180,7 +180,7 @@ namespace Navigation
             bool pathFound = NavMesh.CalculatePath(startPos, endPos, _walkableAreaMask, _reusablePath);
 
             if (pathFound)
-                OnPathCalculated(inputTarget, pathComponent, pathBuffer, waypointsInput, endPos, isSelected, entity);
+                OnPathCalculated(inputTarget, pathComponent, pathBuffer, waypointsInput, endPos);
             else
                 OnPathNotAvailable(inputTarget, pathBuffer, pathComponent, waypointsInput, endPos);
         }
@@ -189,10 +189,10 @@ namespace Navigation
             RefRW<PathComponent> pathComponent,
             DynamicBuffer<PathWaypointBuffer> pathBuffer,
             RefRW<UnitWaypointsInputComponent> waypointsInput,
-            float3 targetPosition, bool isSelected, Entity entity)
+            float3 targetPosition)
         {
             if (_reusablePath.status == NavMeshPathStatus.PathComplete)
-                CompletePath(inputTarget, pathBuffer, pathComponent, waypointsInput, targetPosition, isSelected, entity);
+                CompletePath(inputTarget, pathBuffer, pathComponent, waypointsInput, targetPosition);
             else
                 RecalculatePath(inputTarget, pathBuffer, pathComponent, waypointsInput, targetPosition);
         }
@@ -233,7 +233,7 @@ namespace Navigation
             DynamicBuffer<PathWaypointBuffer> pathBuffer,
             RefRW<PathComponent> pathComponent,
             RefRW<UnitWaypointsInputComponent> waypointsInput,
-            float3 targetPosition, bool isSelected, Entity entity)
+            float3 targetPosition)
         {
             pathBuffer.Clear();
 

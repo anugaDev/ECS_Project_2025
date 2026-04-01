@@ -27,7 +27,7 @@ namespace Navigation
                     if (obstacle != null)
                     {
                         _templateObstacle = obstacle;
-                        UnityEngine.Debug.Log($"[ResourceNavMeshObstacle] Found template obstacle: shape={obstacle.shape}, radius={obstacle.radius}, height={obstacle.height}, carving={obstacle.carving}");
+                        Debug.Log($"[ResourceNavMeshObstacle] Found template obstacle: shape={obstacle.shape}, radius={obstacle.radius}, height={obstacle.height}, carving={obstacle.carving}");
                         break;
                     }
                 }

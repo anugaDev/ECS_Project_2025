@@ -17,7 +17,6 @@ namespace Navigation
     {
         private NavMeshSurface _navMeshSurface;
 
-        private GameObject _groundPlane;
 
         private double _lastChangeTime;
 
@@ -41,14 +40,9 @@ namespace Navigation
 
             if (!_initialNavMeshBuilt)
             {
-                if (GroundPlaneSetup.Instance != null)
-                {
-                    _groundPlane = GroundPlaneSetup.Instance.gameObject;
-                }
-
                 if (_navMeshSurface.navMeshData != null)
                 {
-                    UnityEngine.AI.NavMeshTriangulation triangulation = UnityEngine.AI.NavMesh.CalculateTriangulation();
+                    NavMeshTriangulation triangulation = NavMesh.CalculateTriangulation();
 
                     if (triangulation.vertices.Length <= 100)
                     {
@@ -110,26 +104,6 @@ namespace Navigation
             obstacle.carveOnlyStationary = false;
 
             return obstacleObj;
-        }
-
-        private void RebuildNavMesh()
-        {
-            if (_navMeshSurface == null)
-            {
-                return;
-            }
-
-            _navMeshSurface.BuildNavMesh();
-            InvalidateAllPaths();
-        }
-
-        private void InvalidateAllPaths()
-        {
-            foreach (var (pathComponent, pathBuffer)
-                     in SystemAPI.Query<RefRW<PathComponent>, DynamicBuffer<PathWaypointBuffer>>())
-            {
-                InvalidatePath(pathComponent, pathBuffer);
-            }
         }
 
         private void InvalidatePath(RefRW<PathComponent> pathComponent, DynamicBuffer<PathWaypointBuffer> pathBuffer)

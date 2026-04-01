@@ -55,8 +55,15 @@ namespace UI.UIControllers
         public void Show(bool isVictory)
         {
             if (_rootPanel != null)
+            {
                 _rootPanel.SetActive(true);
+            }
 
+            SetFinalScreenText(isVictory);
+        }
+
+        private void SetFinalScreenText(bool isVictory)
+        {
             if (isVictory)
             {
                 SetText(_titleLabel,    _victoryTitle,    _victoryColor);

@@ -74,12 +74,19 @@ namespace Navigation
             Renderer renderer = visual.GetComponent<Renderer>();
             Material mat = new Material(Shader.Find("Standard"));
             mat.color = new Color(0, 1, 0, 0.3f);
+
             mat.SetFloat("_Mode", 3);
+
             mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+
             mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+
             mat.SetInt("_ZWrite", 0);
+
             mat.DisableKeyword("_ALPHATEST_ON");
+
             mat.EnableKeyword("_ALPHABLEND_ON");
+
             mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
             mat.renderQueue = 3000;
             renderer.material = mat;

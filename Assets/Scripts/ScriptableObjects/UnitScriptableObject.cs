@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using GatherableResources;
 using Types;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace ScriptableObjects
 {
