@@ -27,28 +27,19 @@ namespace Units.MovementSystems
         {
             float deltaTime = SystemAPI.Time.DeltaTime;
 
-            foreach ((RefRW<LocalTransform> transform,
-                     RefRO<UnitWaypointsInputComponent> waypointsInput,
-                     RefRW<PathComponent> pathComponent,
-                     RefRO<UnitMoveSpeedComponent> moveSpeed)
+            foreach ((RefRW<LocalTransform> transform, RefRO<UnitWaypointsInputComponent> waypointsInput,
+                     RefRW<PathComponent> pathComponent, RefRO<UnitMoveSpeedComponent> moveSpeed)
                      in SystemAPI.Query<RefRW<LocalTransform>,
-                                       RefRO<UnitWaypointsInputComponent>,
-                                       RefRW<PathComponent>,
-                                       RefRO<UnitMoveSpeedComponent>>()
-                         .WithAll<Simulate, UnitTagComponent>()
-                         .WithNone<UnitAttackingTagComponent>())
+                             RefRO<UnitWaypointsInputComponent>, RefRW<PathComponent>, RefRO<UnitMoveSpeedComponent>>()
+                         .WithAll<Simulate, UnitTagComponent>().WithNone<UnitAttackingTagComponent>())
             {
                 MoveUnit(transform, waypointsInput, pathComponent, moveSpeed, deltaTime);
             }
         }
 
         [BurstCompile]
-        private void MoveUnit(
-            RefRW<LocalTransform> transform,
-            RefRO<UnitWaypointsInputComponent> waypointsInput,
-            RefRW<PathComponent> pathComponent,
-            RefRO<UnitMoveSpeedComponent> moveSpeed,
-            float deltaTime)
+        private void MoveUnit(RefRW<LocalTransform> transform,RefRO<UnitWaypointsInputComponent> waypointsInput,
+            RefRW<PathComponent> pathComponent, RefRO<UnitMoveSpeedComponent> moveSpeed, float deltaTime)
         {
             int count = waypointsInput.ValueRO.WaypointCount;
 

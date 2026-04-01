@@ -12,7 +12,7 @@ namespace Units.MovementSystems
     [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
     [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
     [UpdateAfter(typeof(UnitStateSystem))]
-    [UpdateBefore(typeof(WorkerActionSystem))]
+    [UpdateBefore(typeof(Worker.WorkerActionSystem))]
     public partial class UnitAttackActionSystem : SystemBase
     {
         private const float DEFAULT_ATTACK_RANGE = 4.0f;

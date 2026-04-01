@@ -1,17 +1,16 @@
-﻿using ElementCommons;
-using Buildings;
+﻿using Buildings;
 using Combat;
+using ElementCommons;
 using GatherableResources;
 using Types;
+using Units.MovementSystems;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.NetCode;
 using Unity.Transforms;
-using Units.MovementSystems;
-using Units.Worker;
-using Unity.Mathematics;
 
-namespace Units
+namespace Units.Worker
 {
     [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
     [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]

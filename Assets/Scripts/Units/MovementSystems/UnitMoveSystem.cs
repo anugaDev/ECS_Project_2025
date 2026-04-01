@@ -14,15 +14,21 @@ namespace Units.MovementSystems
     public partial struct UnitMoveSystem : ISystem
     {
         private const float FINAL_POSITION_THRESHOLD = 0.1f;
+
         private const float WAYPOINT_THRESHOLD = 0.5f;
 
         private DynamicBuffer<PathWaypointBuffer> _currentPathBuffer;
+
         private RefRO<UnitMoveSpeedComponent> _currentMoveSpeed;
+
         private RefRW<PathComponent> _currentPathComponent;
+
         private RefRW<LocalTransform> _currentTransform;
 
         private float3 _desiredDirection;
+
         private float _currentDeltaTime;
+
         private Entity _entity;
 
         [BurstCompile]
@@ -34,24 +40,16 @@ namespace Units.MovementSystems
         {
             _currentDeltaTime = SystemAPI.Time.DeltaTime;
 
-            foreach ((RefRW<LocalTransform> transform,
-                         RefRW<PathComponent> pathComponent,
-                         DynamicBuffer<PathWaypointBuffer> pathBuffer,
-                         RefRO<UnitMoveSpeedComponent> moveSpeed,
-                         Entity entity)
-                     in SystemAPI.Query<RefRW<LocalTransform>,
-                             RefRW<PathComponent>,
-                             DynamicBuffer<PathWaypointBuffer>,
-                             RefRO<UnitMoveSpeedComponent>>()
-                         .WithAll<Simulate, UnitTagComponent>()
-                         .WithEntityAccess())
+            foreach ((RefRW<LocalTransform> transform, RefRW<PathComponent> pathComponent,
+                         DynamicBuffer<PathWaypointBuffer> pathBuffer, RefRO<UnitMoveSpeedComponent> moveSpeed,Entity entity)
+                     in SystemAPI.Query<RefRW<LocalTransform>,RefRW<PathComponent>, DynamicBuffer<PathWaypointBuffer>,RefRO<UnitMoveSpeedComponent>>()
+                         .WithAll<Simulate, UnitTagComponent>().WithEntityAccess())
             {
                 _currentPathComponent = pathComponent;
                 _currentPathBuffer = pathBuffer;
                 _currentTransform = transform;
                 _currentMoveSpeed = moveSpeed;
                 _entity = entity;
-
                 MoveUnit();
             }
         }
@@ -103,12 +101,13 @@ namespace Units.MovementSystems
         private void MoveTowardsWaypoint(float3 toWaypoint, float distanceToWaypoint)
         {
             if (distanceToWaypoint < 0.001f)
+            {
                 return;
+            }
 
             _desiredDirection = math.normalize(toWaypoint);
             float speed = _currentMoveSpeed.ValueRO.Speed;
             float moveDistance = speed * _currentDeltaTime;
-
             _currentTransform.ValueRW.Position += _desiredDirection * moveDistance;
             _currentTransform.ValueRW.Rotation = quaternion.LookRotationSafe(_desiredDirection, math.up());
         }

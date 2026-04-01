@@ -11,4 +11,6 @@ public static class GlobalParameters
     public const int GAME_SCENE_INDEX = 1;
     
     public const int MENU_SCENE_INDEX = 0;
+
+    public const float MAP_EXTREME_AXIS = 50f;
 }

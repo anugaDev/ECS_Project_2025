@@ -160,11 +160,11 @@ namespace Server
         {
             if (team is TeamType.Red)
             {
-                return new float3(50f, GlobalParameters.DEFAULT_SCENE_HEIGHT, 50f);
+                return new float3(GlobalParameters.MAP_EXTREME_AXIS, GlobalParameters.DEFAULT_SCENE_HEIGHT, GlobalParameters.MAP_EXTREME_AXIS);
             }
             else
             {
-                return new float3(-50f, GlobalParameters.DEFAULT_SCENE_HEIGHT, -50f);
+                return new float3(-GlobalParameters.MAP_EXTREME_AXIS, GlobalParameters.DEFAULT_SCENE_HEIGHT, -GlobalParameters.MAP_EXTREME_AXIS);
             }
         }
     }

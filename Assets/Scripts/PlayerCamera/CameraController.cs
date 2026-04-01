@@ -42,13 +42,13 @@ namespace PlayerCamera
         [Header("Camera Start Positions")] 
         
         [SerializeField]
-        private Vector3 _redTeamPosition = new(50f, 50f, 50f);
+        private Vector3 _redTeamPosition = new(GlobalParameters.MAP_EXTREME_AXIS, GlobalParameters.MAP_EXTREME_AXIS, GlobalParameters.MAP_EXTREME_AXIS);
 
         [SerializeField] 
-        private Vector3 _blueTeamPosition = new(-50f, 50f, -50f);
+        private Vector3 _blueTeamPosition = new(-GlobalParameters.MAP_EXTREME_AXIS, GlobalParameters.MAP_EXTREME_AXIS, -GlobalParameters.MAP_EXTREME_AXIS);
 
         [SerializeField] 
-        private Vector3 _spectatorPosition = new(0f, 50f, 0f);
+        private Vector3 _spectatorPosition = new(0f, GlobalParameters.MAP_EXTREME_AXIS, 0f);
 
         private CinemachineFramingTransposer _transposer;
 

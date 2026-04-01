@@ -15,11 +15,16 @@ namespace Units.MovementSystems
     [UpdateBefore(typeof(Navigation.NavMeshPathfindingSystem))]
     public partial class FormationSystem : SystemBase
     {
-        private const float GRID_SPACING = 3.0f;
-        private const float OFFSET_MULTIPLIER = 0.5f;
         private const float NAVMESH_SAMPLE_RADIUS = 5.0f;
+        
+        private const float OFFSET_MULTIPLIER = 0.5f;
+        
         private const float OCCUPIED_RADIUS = 1.0f;
+        
         private const float SPIRAL_DISTANCE = 2.5f;
+        
+        private const float GRID_SPACING = 3.0f;
+        
         private const int SPIRAL_ATTEMPTS = 12;
 
         private int _walkableMask;
