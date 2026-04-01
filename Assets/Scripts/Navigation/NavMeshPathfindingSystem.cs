@@ -253,7 +253,7 @@ namespace Navigation
             inputTarget.ValueRW.HasNewTarget = false;
         }
 
-        private static void WriteWaypointsInput(
+        private void WriteWaypointsInput(
             RefRW<UnitWaypointsInputComponent> waypointsInput,
             DynamicBuffer<PathWaypointBuffer> pathBuffer)
         {

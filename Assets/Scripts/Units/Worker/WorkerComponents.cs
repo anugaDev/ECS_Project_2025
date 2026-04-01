@@ -33,10 +33,4 @@ namespace Units.Worker
         [GhostField]
         public Entity PreviousResourceEntity;
     }
-
-    public struct WorkerActionCooldownComponent : IComponentData
-    {
-        [GhostField]
-        public double CooldownEndTime;
-    }
 }

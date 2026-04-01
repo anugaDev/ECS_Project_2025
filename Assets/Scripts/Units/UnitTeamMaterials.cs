@@ -12,6 +12,7 @@ namespace Units
         private Material _blueTeamMaterial;
 
         public Material RedTeamMaterial => _redTeamMaterial;
+
         public Material BlueTeamMaterial => _blueTeamMaterial;
     }
 }

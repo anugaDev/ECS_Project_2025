@@ -115,7 +115,7 @@ namespace Server
             };
         }
 
-        private static int GetCommandId(float3 townCenterPosition, NetworkTick serverTick)
+        private int GetCommandId(float3 townCenterPosition, NetworkTick serverTick)
         {
             int positionHash = (int)(townCenterPosition.x * 1000 + townCenterPosition.z * 100);
             int commandId = (int)serverTick.TickIndexForValidTick * 10000 + (int)UnitType.Worker * 100 + (positionHash % 100);

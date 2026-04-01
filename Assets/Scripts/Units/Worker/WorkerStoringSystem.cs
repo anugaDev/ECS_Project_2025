@@ -19,8 +19,11 @@ namespace Units.Worker
         private const float STORING_DISTANCE_THRESHOLD = 8.0f;
 
         private ComponentLookup<CurrentWoodComponent>  _woodLookup;
+
         private ComponentLookup<CurrentFoodComponent>  _foodLookup;
+
         private ComponentLookup<LocalTransform> _transformLookup;
+
         private ComponentLookup<GhostOwner> _ghostOwnerLookup;
 
         protected override void OnCreate()
@@ -42,19 +45,12 @@ namespace Units.Worker
 
             EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            foreach ((RefRW<LocalTransform> workerTransform,
-                      RefRO<WorkerStoringTagComponent> storingTag,
-                      RefRO<UnitStateComponent> unitState,
-                      RefRW<CurrentWorkerResourceQuantityComponent> workerResource,
-                      RefRO<GhostOwner> workerOwner,
-                      Entity workerEntity)
-                     in SystemAPI.Query<RefRW<LocalTransform>,
-                                        RefRO<WorkerStoringTagComponent>,
-                                        RefRO<UnitStateComponent>,
-                                        RefRW<CurrentWorkerResourceQuantityComponent>,
-                                        RefRO<GhostOwner>>()
-                         .WithAll<Simulate, UnitTagComponent>()
-                         .WithEntityAccess())
+            foreach ((RefRW<LocalTransform> workerTransform, RefRO<WorkerStoringTagComponent> storingTag,
+                      RefRO<UnitStateComponent> unitState, RefRW<CurrentWorkerResourceQuantityComponent> workerResource,
+                      RefRO<GhostOwner> workerOwner, Entity workerEntity)
+                     in SystemAPI.Query<RefRW<LocalTransform>, RefRO<WorkerStoringTagComponent>, 
+                             RefRO<UnitStateComponent>, RefRW<CurrentWorkerResourceQuantityComponent>, RefRO<GhostOwner>>()
+                         .WithAll<Simulate, UnitTagComponent>().WithEntityAccess())
             {
                 if (unitState.ValueRO.State != UnitState.Acting)
                     continue;
@@ -88,9 +84,9 @@ namespace Units.Worker
             ecb.Dispose();
         }
 
-        private void ProcessStoring(LocalTransform workerTransform, WorkerStoringTagComponent storingTag,
-                                   ref CurrentWorkerResourceQuantityComponent workerResource,
-                                   GhostOwner workerOwner, Entity workerEntity, ref EntityCommandBuffer ecb)
+        private void ProcessStoring(LocalTransform workerTransform, WorkerStoringTagComponent storingTag, 
+            ref CurrentWorkerResourceQuantityComponent workerResource, 
+            GhostOwner workerOwner, Entity workerEntity, ref EntityCommandBuffer ecb)
         {
             if (workerResource.Value <= 0)
             {

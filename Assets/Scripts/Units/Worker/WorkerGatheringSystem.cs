@@ -15,18 +15,26 @@ namespace Units.Worker
     [UpdateAfter(typeof(MovementSystems.UnitStateSystem))]
     public partial class WorkerGatheringSystem : SystemBase
     {
-        private const int MAX_GATHERING_AMOUNT = 50;
         private const float GATHERING_DISTANCE_THRESHOLD = 4.0f;
-        private const int AMOUNT_TO_GATHER = 1;
+
         private const float GATHER_INTERVAL_SECONDS = 0.25f;
+
+        private const int MAX_GATHERING_AMOUNT = 50;
+        
+        private const int AMOUNT_TO_GATHER = 1;
+        
 
         private float _gatherTimer;
 
-        private ComponentLookup<CurrentResourceQuantityComponent> _resourceQuantityLookup;
-        private ComponentLookup<ResourceTypeComponent> _resourceTypeLookup;
-        private ComponentLookup<ElementTeamComponent> _teamLookup;
-        private ComponentLookup<LocalTransform> _transformLookup;
         private ComponentLookup<BuildingConstructionProgressComponent> _constructionProgressLookup;
+        
+        private ComponentLookup<CurrentResourceQuantityComponent> _resourceQuantityLookup;
+        
+        private ComponentLookup<ResourceTypeComponent> _resourceTypeLookup;
+        
+        private ComponentLookup<ElementTeamComponent> _teamLookup;
+        
+        private ComponentLookup<LocalTransform> _transformLookup;
 
         protected override void OnCreate()
         {
@@ -40,7 +48,6 @@ namespace Units.Worker
 
         protected override void OnUpdate()
         {
-
             _resourceTypeLookup.Update(this);
             _resourceQuantityLookup.Update(this);
             _teamLookup.Update(this);
@@ -54,26 +61,26 @@ namespace Units.Worker
 
             EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            foreach ((RefRW<LocalTransform>                      workerTransform,
-                      RefRO<WorkerGatheringTagComponent>         gatheringTag,
-                      RefRO<UnitStateComponent>                  unitState,
-                      RefRW<CurrentWorkerResourceQuantityComponent> workerResource,
-                      RefRO<ElementTeamComponent>                workerTeam,
-                      Entity                                     workerEntity)
+            foreach ((RefRW<LocalTransform> workerTransform,
+                         RefRO<WorkerGatheringTagComponent> gatheringTag,
+                         RefRO<UnitStateComponent> unitState,
+                         RefRW<CurrentWorkerResourceQuantityComponent> workerResource,
+                         RefRO<ElementTeamComponent> workerTeam,
+                         Entity workerEntity)
                      in SystemAPI.Query<RefRW<LocalTransform>,
-                                        RefRO<WorkerGatheringTagComponent>,
-                                        RefRO<UnitStateComponent>,
-                                        RefRW<CurrentWorkerResourceQuantityComponent>,
-                                        RefRO<ElementTeamComponent>>()
+                             RefRO<WorkerGatheringTagComponent>,
+                             RefRO<UnitStateComponent>,
+                             RefRW<CurrentWorkerResourceQuantityComponent>,
+                             RefRO<ElementTeamComponent>>()
                          .WithAll<Simulate, UnitTagComponent>()
                          .WithEntityAccess())
-            { 
+            {
                 if (unitState.ValueRO.State != UnitState.Acting)
                     continue;
 
                 ProcessGathering(ref workerTransform.ValueRW, gatheringTag.ValueRO,
-                               ref workerResource.ValueRW, workerTeam.ValueRO.Team,
-                               workerEntity, ref ecb, canGather);
+                    ref workerResource.ValueRW, workerTeam.ValueRO.Team,
+                    workerEntity, ref ecb, canGather);
             }
 
             ecb.Playback(EntityManager);
@@ -81,13 +88,14 @@ namespace Units.Worker
         }
 
         private void ProcessGathering(ref LocalTransform workerTransform, WorkerGatheringTagComponent gatheringTag,
-                                     ref CurrentWorkerResourceQuantityComponent workerResource, TeamType workerTeam,
-                                     Entity workerEntity, ref EntityCommandBuffer ecb, bool canGather)
+            ref CurrentWorkerResourceQuantityComponent workerResource, TeamType workerTeam,
+            Entity workerEntity, ref EntityCommandBuffer ecb, bool canGather)
         {
             Entity resourceEntity = gatheringTag.ResourceEntity;
 
             if (!EntityManager.Exists(resourceEntity) ||
-                !_resourceQuantityLookup.TryGetComponent(resourceEntity, out CurrentResourceQuantityComponent resourceQuantity) ||
+                !_resourceQuantityLookup.TryGetComponent(resourceEntity,
+                    out CurrentResourceQuantityComponent resourceQuantity) ||
                 resourceQuantity.Value <= 0)
             {
                 ecb.RemoveComponent<WorkerGatheringTagComponent>(workerEntity);
@@ -102,6 +110,7 @@ namespace Units.Worker
                         ecb.AddComponent(workerEntity, new WorkerStoringTagComponent { BuildingEntity = depletedTC });
                     }
                 }
+
                 return;
             }
 
@@ -129,11 +138,11 @@ namespace Units.Worker
                 return;
 
             int amountToGather = math.min(AMOUNT_TO_GATHER, resourceQuantity.Value);
-            amountToGather     = math.min(amountToGather, MAX_GATHERING_AMOUNT - workerResource.Value);
+            amountToGather = math.min(amountToGather, MAX_GATHERING_AMOUNT - workerResource.Value);
 
             if (amountToGather > 0)
             {
-                workerResource.Value   += amountToGather;
+                workerResource.Value += amountToGather;
                 resourceQuantity.Value -= amountToGather;
                 ecb.SetComponent(resourceEntity, resourceQuantity);
 
@@ -149,6 +158,7 @@ namespace Units.Worker
                         SetNextTarget(workerEntity, depletedTC2, ecb);
                         ecb.AddComponent(workerEntity, new WorkerStoringTagComponent { BuildingEntity = depletedTC2 });
                     }
+
                     return;
                 }
             }
@@ -174,15 +184,15 @@ namespace Units.Worker
         private Entity FindClosestTownCenter(float3 workerPosition, TeamType workerTeam)
         {
             Entity closestTownCenter = Entity.Null;
-            float  closestDistanceSq = float.MaxValue;
+            float closestDistanceSq = float.MaxValue;
 
             foreach ((RefRO<BuildingTypeComponent> buildingType,
-                      RefRO<ElementTeamComponent> buildingTeam,
-                      RefRO<LocalTransform> buildingTransform,
-                      Entity buildingEntity)
+                         RefRO<ElementTeamComponent> buildingTeam,
+                         RefRO<LocalTransform> buildingTransform,
+                         Entity buildingEntity)
                      in SystemAPI.Query<RefRO<BuildingTypeComponent>,
-                                        RefRO<ElementTeamComponent>,
-                                        RefRO<LocalTransform>>()
+                             RefRO<ElementTeamComponent>,
+                             RefRO<LocalTransform>>()
                          .WithAll<BuildingComponents>()
                          .WithEntityAccess())
             {
@@ -190,7 +200,8 @@ namespace Units.Worker
                     buildingTeam.ValueRO.Team != workerTeam)
                     continue;
 
-                if (_constructionProgressLookup.TryGetComponent(buildingEntity, out BuildingConstructionProgressComponent progress)
+                if (_constructionProgressLookup.TryGetComponent(buildingEntity,
+                        out BuildingConstructionProgressComponent progress)
                     && (progress.ConstructionTime <= 0 || progress.Value < progress.ConstructionTime))
                     continue;
 
@@ -210,7 +221,8 @@ namespace Units.Worker
             if (!_transformLookup.TryGetComponent(targetEntity, out LocalTransform targetTransform))
                 return;
 
-            int currentVersion = EntityManager.GetComponentData<SetServerStateTargetComponent>(workerEntity).TargetVersion;
+            int currentVersion = EntityManager.GetComponentData<SetServerStateTargetComponent>(workerEntity)
+                .TargetVersion;
 
             ecb.SetComponent(workerEntity, new SetServerStateTargetComponent
             {

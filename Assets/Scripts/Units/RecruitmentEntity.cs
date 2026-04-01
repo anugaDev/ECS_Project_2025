@@ -23,7 +23,7 @@ namespace Units
         
         public UnitType Unit => _unit;
 
-public RecruitmentEntity(float recruitmentTime, Entity entity, UnitType unitType)
+        public RecruitmentEntity(float recruitmentTime, Entity entity, UnitType unitType)
         {
             _recruitmentTime = recruitmentTime;
             _entity = entity;
@@ -33,10 +33,17 @@ public RecruitmentEntity(float recruitmentTime, Entity entity, UnitType unitType
         public void Update(float deltaTime)
         {
             _currentTime += deltaTime;
-            if(_currentTime >= _recruitmentTime && !_eventCalled)
+            RecruitOnTimerFinished();
+        }
+
+        private void RecruitOnTimerFinished()
+        {
+            if (!(_currentTime >= _recruitmentTime) || _eventCalled)
             {
-                FinishedRecruitmentEvent();
+                return;
             }
+
+            FinishedRecruitmentEvent();
         }
 
         private void FinishedRecruitmentEvent()

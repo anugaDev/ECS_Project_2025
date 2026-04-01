@@ -17,21 +17,21 @@ namespace Units.MovementSystems
 
         protected override void OnUpdate()
         {
-            foreach ((RefRO<SetServerStateTargetComponent>  serverTarget,
-                      RefRW<SetInputStateTargetComponent>   inputTarget)
+            foreach ((RefRO<SetServerStateTargetComponent> serverTarget,
+                         RefRW<SetInputStateTargetComponent> inputTarget)
                      in SystemAPI.Query<RefRO<SetServerStateTargetComponent>,
-                                        RefRW<SetInputStateTargetComponent>>()
+                             RefRW<SetInputStateTargetComponent>>()
                          .WithAll<UnitTagComponent>())
             {
                 if (serverTarget.ValueRO.TargetVersion <= inputTarget.ValueRO.TargetVersion)
                     continue;
 
-                inputTarget.ValueRW.TargetEntity      = serverTarget.ValueRO.TargetEntity;
-                inputTarget.ValueRW.TargetPosition    = serverTarget.ValueRO.TargetPosition;
-                inputTarget.ValueRW.IsFollowingTarget  = serverTarget.ValueRO.IsFollowingTarget;
-                inputTarget.ValueRW.StoppingDistance   = serverTarget.ValueRO.StoppingDistance;
-                inputTarget.ValueRW.HasNewTarget       = true;
-                inputTarget.ValueRW.TargetVersion      = serverTarget.ValueRO.TargetVersion;
+                inputTarget.ValueRW.TargetEntity = serverTarget.ValueRO.TargetEntity;
+                inputTarget.ValueRW.TargetPosition = serverTarget.ValueRO.TargetPosition;
+                inputTarget.ValueRW.IsFollowingTarget = serverTarget.ValueRO.IsFollowingTarget;
+                inputTarget.ValueRW.StoppingDistance = serverTarget.ValueRO.StoppingDistance;
+                inputTarget.ValueRW.HasNewTarget = true;
+                inputTarget.ValueRW.TargetVersion = serverTarget.ValueRO.TargetVersion;
             }
         }
     }

@@ -1,6 +1,4 @@
-﻿using ElementCommons;
-using Units.Worker;
-using Unity.Burst;
+﻿using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.NetCode;
@@ -36,15 +34,15 @@ namespace Units.MovementSystems
         {
             _currentDeltaTime = SystemAPI.Time.DeltaTime;
 
-foreach ((RefRW<LocalTransform> transform,
-                     RefRW<PathComponent> pathComponent,
-                     DynamicBuffer<PathWaypointBuffer> pathBuffer,
-                     RefRO<UnitMoveSpeedComponent> moveSpeed,
-                     Entity entity)
+            foreach ((RefRW<LocalTransform> transform,
+                         RefRW<PathComponent> pathComponent,
+                         DynamicBuffer<PathWaypointBuffer> pathBuffer,
+                         RefRO<UnitMoveSpeedComponent> moveSpeed,
+                         Entity entity)
                      in SystemAPI.Query<RefRW<LocalTransform>,
-                                       RefRW<PathComponent>,
-                                       DynamicBuffer<PathWaypointBuffer>,
-                                       RefRO<UnitMoveSpeedComponent>>()
+                             RefRW<PathComponent>,
+                             DynamicBuffer<PathWaypointBuffer>,
+                             RefRO<UnitMoveSpeedComponent>>()
                          .WithAll<Simulate, UnitTagComponent>()
                          .WithEntityAccess())
             {
@@ -92,6 +90,7 @@ foreach ((RefRW<LocalTransform> transform,
                         _currentPathComponent.ValueRW.HasPath = false;
                         return;
                     }
+
                     _currentPathComponent.ValueRW.CurrentWaypointIndex = i + 1;
                     continue;
                 }

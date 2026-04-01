@@ -14,7 +14,7 @@ namespace Units.Worker
     {
         private const float CONSTRUCTION_PROGRESS_PER_SECOND = 1f;
 
-        private const float CONSTRUCTION_DISTANCE_THRESHOLD  = 8.0f;
+        private const float CONSTRUCTION_DISTANCE_THRESHOLD = 8.0f;
 
         private ComponentLookup<BuildingConstructionProgressComponent> _constructionProgressLookup;
 
@@ -35,24 +35,25 @@ namespace Units.Worker
             float deltaTime = SystemAPI.Time.DeltaTime;
             EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            foreach ((RefRW<LocalTransform>               workerTransform,
-                      RefRO<WorkerConstructionTagComponent> constructionTag,
-                      Entity                               workerEntity)
+            foreach ((RefRW<LocalTransform> workerTransform,
+                         RefRO<WorkerConstructionTagComponent> constructionTag,
+                         Entity workerEntity)
                      in SystemAPI.Query<RefRW<LocalTransform>,
-                                        RefRO<WorkerConstructionTagComponent>>()
+                             RefRO<WorkerConstructionTagComponent>>()
                          .WithAll<Simulate, UnitTagComponent>()
                          .WithEntityAccess())
             {
                 ProcessConstruction(ref workerTransform.ValueRW, constructionTag.ValueRO,
-                                  workerEntity, deltaTime, ref ecb);
+                    workerEntity, deltaTime, ref ecb);
             }
 
             ecb.Playback(EntityManager);
             ecb.Dispose();
         }
 
-        private void ProcessConstruction(ref LocalTransform workerTransform, WorkerConstructionTagComponent constructionTag,
-                                        Entity workerEntity, float deltaTime, ref EntityCommandBuffer ecb)
+        private void ProcessConstruction(ref LocalTransform workerTransform,
+            WorkerConstructionTagComponent constructionTag,
+            Entity workerEntity, float deltaTime, ref EntityCommandBuffer ecb)
         {
             Entity buildingEntity = constructionTag.BuildingEntity;
 
@@ -62,7 +63,8 @@ namespace Units.Worker
                 return;
             }
 
-            if (!_constructionProgressLookup.TryGetComponent(buildingEntity, out BuildingConstructionProgressComponent constructionProgress))
+            if (!_constructionProgressLookup.TryGetComponent(buildingEntity,
+                    out BuildingConstructionProgressComponent constructionProgress))
             {
                 ecb.RemoveComponent<WorkerConstructionTagComponent>(workerEntity);
                 return;

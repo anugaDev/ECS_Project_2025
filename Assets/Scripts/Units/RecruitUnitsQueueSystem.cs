@@ -18,25 +18,30 @@ namespace Units
     [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ThinClientSimulation)]
     public partial class RecruitUnitsQueueSystem : SystemBase
     {
-        private BuildingFactoryActionsFactory _buildingActionsFactory;
-
-        private Dictionary<UnitType, UnitScriptableObject> _unitsConfiguration;
-        
         private List<RecruitmentEntity> _recruitmentList;
-        
+
         private List<RecruitmentEntity> _recuritmentQueue;
 
         private List<RecruitmentEntity> _endRecruitmentUnits;
-        
+
         private EntityCommandBuffer _entityCommandBuffer;
-        
+
         private ElementResourceCostPolicy _elementResourceCostPolicy;
 
+        private BuildingFactoryActionsFactory _buildingActionsFactory;
+
+        private Dictionary<UnitType, UnitScriptableObject> _unitsConfiguration;
+
         private int _pendingWoodCost;
+
         private int _pendingFoodCost;
-        private int _pendingPopulationCost;
+
         private int _previousServerWood;
+
         private int _previousServerFood;
+
+        private int _pendingPopulationCost;
+
         private int _previousServerPopulation;
 
         protected override void OnCreate()
@@ -50,14 +55,16 @@ namespace Units
 
         protected override void OnStartRunning()
         {
-            _unitsConfiguration = SystemAPI.ManagedAPI.GetSingleton<UnitsConfigurationComponent>().Configuration.GetUnitsDictionary();
+            _unitsConfiguration = SystemAPI.ManagedAPI.GetSingleton<UnitsConfigurationComponent>().Configuration
+                .GetUnitsDictionary();
             _recruitmentList = new List<RecruitmentEntity>();
             _recuritmentQueue = new List<RecruitmentEntity>();
             _endRecruitmentUnits = new List<RecruitmentEntity>();
             Entity playerEntity = SystemAPI.GetSingletonEntity<PlayerTagComponent>();
             _previousServerWood = SystemAPI.GetComponent<CurrentWoodComponent>(playerEntity).Value;
             _previousServerFood = SystemAPI.GetComponent<CurrentFoodComponent>(playerEntity).Value;
-            _previousServerPopulation = SystemAPI.GetComponent<CurrentPopulationComponent>(playerEntity).CurrentPopulation;
+            _previousServerPopulation =
+                SystemAPI.GetComponent<CurrentPopulationComponent>(playerEntity).CurrentPopulation;
             base.OnStartRunning();
         }
 
@@ -72,21 +79,35 @@ namespace Units
             _entityCommandBuffer.Dispose();
         }
 
-        private void UpdatePolicy(Entity playerEntity)
+        private void UpdateResourcePolicy(Entity playerEntity)
         {
             int serverWood = SystemAPI.GetComponent<CurrentWoodComponent>(playerEntity).Value;
             int serverFood = SystemAPI.GetComponent<CurrentFoodComponent>(playerEntity).Value;
-            CurrentPopulationComponent populationComponent = SystemAPI.GetComponent<CurrentPopulationComponent>(playerEntity);
-            int serverPopulation = populationComponent.CurrentPopulation;
-            int maxPopulation = populationComponent.MaxPopulation;
             int serverWoodDrop = _previousServerWood - serverWood;
+            if (serverWoodDrop > 0)
+            {
+                _pendingWoodCost = math.max(0, _pendingWoodCost - serverWoodDrop);
+            }
+
             int serverFoodDrop = _previousServerFood - serverFood;
-            int serverPopGain  = serverPopulation - _previousServerPopulation;
-            if (serverWoodDrop > 0) _pendingWoodCost = math.max(0, _pendingWoodCost       - serverWoodDrop);
-            if (serverFoodDrop > 0) _pendingFoodCost = math.max(0, _pendingFoodCost       - serverFoodDrop);
-            if (serverPopGain  > 0) _pendingPopulationCost = math.max(0, _pendingPopulationCost - serverPopGain);
+            if (serverFoodDrop > 0)
+            {
+                _pendingFoodCost = math.max(0, _pendingFoodCost - serverFoodDrop);
+            }
+
+            
+            CurrentPopulationComponent populationComponent =
+                SystemAPI.GetComponent<CurrentPopulationComponent>(playerEntity);
+            int maxPopulation = populationComponent.MaxPopulation;
+            int serverPopulation = populationComponent.CurrentPopulation;
+            int serverPopGain = serverPopulation - _previousServerPopulation;
+            if (serverPopGain > 0)
+            {
+                _pendingPopulationCost = math.max(0, _pendingPopulationCost - serverPopGain);
+            }
+            
             _previousServerWood = serverWood;
-            _previousServerFood  = serverFood;
+            _previousServerFood = serverFood;
             _previousServerPopulation = serverPopulation;
             int effectiveWood = math.max(0, serverWood - _pendingWoodCost);
             int effectiveFood = math.max(0, serverFood - _pendingFoodCost);
@@ -129,14 +150,15 @@ namespace Units
 
         private void CheckRecruitmentActions()
         {
-            foreach ((SetPlayerUIActionComponent actionComponent, Entity entity) in SystemAPI.Query<SetPlayerUIActionComponent>().WithEntityAccess())
+            foreach ((SetPlayerUIActionComponent actionComponent, Entity entity) in SystemAPI
+                         .Query<SetPlayerUIActionComponent>().WithEntityAccess())
             {
                 if (actionComponent.Action != PlayerUIActionType.Recruit)
                 {
                     continue;
                 }
 
-                UpdatePolicy(entity);
+                UpdateResourcePolicy(entity);
                 StartRecruitment(actionComponent);
                 _entityCommandBuffer.RemoveComponent<SetPlayerUIActionComponent>(entity);
             }
@@ -144,7 +166,7 @@ namespace Units
 
         private void StartRecruitment(SetPlayerUIActionComponent actionComponent)
         {
-            UnitType unitType = (UnitType) actionComponent.PayloadID;
+            UnitType unitType = (UnitType)actionComponent.PayloadID;
             if (!IsRecruitmentAvailable(unitType))
             {
                 return;
@@ -179,17 +201,18 @@ namespace Units
 
         private void RecruitUnit(UnitType unitType)
         {
-            foreach ((BuildingTypeComponent buildingTypeComponent, ElementSelectionComponent selectionComponent, Entity entity) in
+            foreach ((BuildingTypeComponent buildingTypeComponent, ElementSelectionComponent selectionComponent,
+                         Entity entity) in
                      SystemAPI.Query<BuildingTypeComponent, ElementSelectionComponent>().WithEntityAccess())
             {
                 if (!selectionComponent.IsSelected)
                 {
                     continue;
                 }
-                
+
                 _buildingActionsFactory.Set(buildingTypeComponent.Type);
 
-                if(_buildingActionsFactory.GetPayload(PlayerUIActionType.Build).Contains((int)unitType))
+                if (_buildingActionsFactory.GetPayload(PlayerUIActionType.Build).Contains((int)unitType))
                 {
                     RecruitUnitAtBuilding(unitType, entity);
                     return;
@@ -226,7 +249,7 @@ namespace Units
                 _recuritmentQueue.Add(recruitmentEntity);
             }
             else
-            { 
+            {
                 _recruitmentList.Add(recruitmentEntity);
             }
         }
@@ -248,9 +271,11 @@ namespace Units
                 CheckQueue(endRecruitmentUnit);
             }
         }
+
         private void CheckQueue(RecruitmentEntity doneEntity)
         {
-            RecruitmentEntity queuedEntity = _recuritmentQueue.FirstOrDefault(recruit => recruit.IsSameEntity(doneEntity.Entity));
+            RecruitmentEntity queuedEntity =
+                _recuritmentQueue.FirstOrDefault(recruit => recruit.IsSameEntity(doneEntity.Entity));
 
             if (queuedEntity == null)
             {
@@ -322,7 +347,8 @@ namespace Units
 
         public void SetBuildingUpdateUI(Entity entity)
         {
-            ElementSelectionComponent elementSelectionComponent = EntityManager.GetComponentData<ElementSelectionComponent>(entity);
+            ElementSelectionComponent elementSelectionComponent =
+                EntityManager.GetComponentData<ElementSelectionComponent>(entity);
             elementSelectionComponent.MustUpdateGroup = true;
             EntityManager.SetComponentData(entity, elementSelectionComponent);
         }

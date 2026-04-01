@@ -4,7 +4,6 @@ using Units;
 using Units.Worker;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Physics;
 using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine.Rendering;

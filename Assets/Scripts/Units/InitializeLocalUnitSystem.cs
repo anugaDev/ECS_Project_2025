@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using ElementCommons;
-using PlayerInputs;
 using ScriptableObjects;
 using Types;
 using Units.Worker;
@@ -9,7 +8,6 @@ using Unity.Entities;
 using Unity.NetCode;
 using Unity.Transforms;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Units
 {

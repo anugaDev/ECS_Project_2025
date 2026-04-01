@@ -1,5 +1,4 @@
 using Units.Worker;
-using Combat;
 using Unity.Burst;
 using Unity.Entities;
 using Unity.NetCode;
@@ -21,13 +20,9 @@ namespace Units.MovementSystems
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            foreach ((RefRO<PathComponent>    path,
-                      RefRW<UnitStateComponent> unitState,
-                      Entity                     entity)
-                     in SystemAPI.Query<RefRO<PathComponent>,
-                                        RefRW<UnitStateComponent>>()
-                         .WithAll<UnitTagComponent, Simulate>()
-                         .WithEntityAccess())
+            foreach ((RefRO<PathComponent> path, RefRW<UnitStateComponent> unitState, Entity entity)
+                     in SystemAPI.Query<RefRO<PathComponent>, RefRW<UnitStateComponent>>()
+                         .WithAll<UnitTagComponent, Simulate>().WithEntityAccess())
             {
                 if (path.ValueRO.HasPath)
                 {
@@ -36,8 +31,8 @@ namespace Units.MovementSystems
                 }
 
                 bool hasWorkerTag =
-                    SystemAPI.HasComponent<WorkerGatheringTagComponent>(entity)  ||
-                    SystemAPI.HasComponent<WorkerStoringTagComponent>(entity)     ||
+                    SystemAPI.HasComponent<WorkerGatheringTagComponent>(entity) ||
+                    SystemAPI.HasComponent<WorkerStoringTagComponent>(entity) ||
                     SystemAPI.HasComponent<WorkerConstructionTagComponent>(entity) ||
                     SystemAPI.HasComponent<UnitAttackingTagComponent>(entity);
 

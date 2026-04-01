@@ -43,7 +43,7 @@ namespace Units.MovementSystems
         }
 
         [BurstCompile]
-        private static void MoveUnit(
+        private void MoveUnit(
             RefRW<LocalTransform> transform,
             RefRO<UnitWaypointsInputComponent> waypointsInput,
             RefRW<PathComponent> pathComponent,

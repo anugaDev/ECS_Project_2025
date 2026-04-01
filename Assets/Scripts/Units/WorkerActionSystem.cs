@@ -31,14 +31,13 @@ namespace Units
         {
             _resourceTypeLookup = GetComponentLookup<ResourceTypeComponent>(true);
             _constructionProgressLookup = GetComponentLookup<BuildingConstructionProgressComponent>(true);
-            _hpLookup   = GetComponentLookup<CurrentHitPointsComponent>(true);
+            _hpLookup = GetComponentLookup<CurrentHitPointsComponent>(true);
             _teamLookup = GetComponentLookup<ElementTeamComponent>(true);
             RequireForUpdate<UnitTagComponent>();
         }
 
         protected override void OnUpdate()
         {
-
             _resourceTypeLookup.Update(this);
             _constructionProgressLookup.Update(this);
             _hpLookup.Update(this);
@@ -46,13 +45,13 @@ namespace Units
 
             EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            foreach ((RefRO<UnitTypeComponent>            unitType,
-                      RefRO<SetInputStateTargetComponent> inputTarget,
-                      RefRW<SetServerStateTargetComponent> serverTarget,
-                      Entity                              entity)
+            foreach ((RefRO<UnitTypeComponent> unitType,
+                         RefRO<SetInputStateTargetComponent> inputTarget,
+                         RefRW<SetServerStateTargetComponent> serverTarget,
+                         Entity entity)
                      in SystemAPI.Query<RefRO<UnitTypeComponent>,
-                                       RefRO<SetInputStateTargetComponent>,
-                                       RefRW<SetServerStateTargetComponent>>()
+                             RefRO<SetInputStateTargetComponent>,
+                             RefRW<SetServerStateTargetComponent>>()
                          .WithAll<UnitTagComponent, Simulate>()
                          .WithEntityAccess())
             {
@@ -67,17 +66,17 @@ namespace Units
                 serverTarget.ValueRW.TargetVersion = inputTarget.ValueRO.TargetVersion;
             }
 
-foreach ((RefRO<UnitTypeComponent>            unitType,
-                      RefRO<UnitStateComponent>           unitState,
-                      RefRW<SetInputStateTargetComponent> inputTarget,
-                      Entity                              entity)
+            foreach ((RefRO<UnitTypeComponent> unitType,
+                         RefRO<UnitStateComponent> unitState,
+                         RefRW<SetInputStateTargetComponent> inputTarget,
+                         Entity entity)
                      in SystemAPI.Query<RefRO<UnitTypeComponent>,
-                                       RefRO<UnitStateComponent>,
-                                       RefRW<SetInputStateTargetComponent>>()
+                             RefRO<UnitStateComponent>,
+                             RefRW<SetInputStateTargetComponent>>()
                          .WithAll<UnitTagComponent, Simulate>()
                          .WithNone<WorkerGatheringTagComponent,
-                                   WorkerStoringTagComponent,
-                                   WorkerConstructionTagComponent>()
+                             WorkerStoringTagComponent,
+                             WorkerConstructionTagComponent>()
                          .WithEntityAccess())
             {
                 if (unitType.ValueRO.Type != UnitType.Worker)
@@ -88,14 +87,17 @@ foreach ((RefRO<UnitTypeComponent>            unitType,
 
                 Entity targetEntity = inputTarget.ValueRO.TargetEntity;
 
-                if (inputTarget.ValueRO.IsFollowingTarget && (targetEntity == Entity.Null || !EntityManager.Exists(targetEntity)))
+                if (inputTarget.ValueRO.IsFollowingTarget &&
+                    (targetEntity == Entity.Null || !EntityManager.Exists(targetEntity)))
                 {
                     float3 targetPos = inputTarget.ValueRO.TargetPosition;
                     float closestDistSq = float.MaxValue;
                     Entity closestTarget = Entity.Null;
 
-                    foreach ((RefRO<Unity.Transforms.LocalTransform> resTransform, RefRO<ResourceTypeComponent> resType, Entity resEntity) 
-                        in SystemAPI.Query<RefRO<Unity.Transforms.LocalTransform>, RefRO<ResourceTypeComponent>>().WithEntityAccess())
+                    foreach ((RefRO<LocalTransform> resTransform, RefRO<ResourceTypeComponent> resType,
+                                 Entity resEntity)
+                             in SystemAPI.Query<RefRO<LocalTransform>, RefRO<ResourceTypeComponent>>()
+                                 .WithEntityAccess())
                     {
                         float distSq = Unity.Mathematics.math.distancesq(targetPos, resTransform.ValueRO.Position);
                         if (distSq < closestDistSq)
@@ -105,8 +107,10 @@ foreach ((RefRO<UnitTypeComponent>            unitType,
                         }
                     }
 
-                    foreach ((RefRO<Unity.Transforms.LocalTransform> bTransform, RefRO<BuildingConstructionProgressComponent> bProgress, Entity bEntity) 
-                        in SystemAPI.Query<RefRO<Unity.Transforms.LocalTransform>, RefRO<BuildingConstructionProgressComponent>>().WithEntityAccess())
+                    foreach ((RefRO<LocalTransform> bTransform, RefRO<BuildingConstructionProgressComponent> bProgress,
+                                 Entity bEntity)
+                             in SystemAPI.Query<RefRO<LocalTransform>, RefRO<BuildingConstructionProgressComponent>>()
+                                 .WithEntityAccess())
                     {
                         if (bProgress.ValueRO.Value >= bProgress.ValueRO.ConstructionTime)
                             continue;
@@ -131,7 +135,8 @@ foreach ((RefRO<UnitTypeComponent>            unitType,
                     continue;
                 }
 
-                if (_constructionProgressLookup.TryGetComponent(targetEntity, out BuildingConstructionProgressComponent progress) 
+                if (_constructionProgressLookup.TryGetComponent(targetEntity,
+                        out BuildingConstructionProgressComponent progress)
                     && progress.Value < progress.ConstructionTime)
                 {
                     ecb.AddComponent(entity, new WorkerConstructionTagComponent
@@ -164,7 +169,7 @@ foreach ((RefRO<UnitTypeComponent>            unitType,
                     continue;
                 }
 
-ecb.AddComponent(entity, new WorkerGatheringTagComponent
+                ecb.AddComponent(entity, new WorkerGatheringTagComponent
                 {
                     ResourceEntity = targetEntity
                 });
@@ -173,21 +178,21 @@ ecb.AddComponent(entity, new WorkerGatheringTagComponent
                 inputTarget.ValueRW.IsFollowingTarget = false;
             }
 
-            foreach ((RefRO<UnitTypeComponent>                       unitType,
-                      RefRO<UnitStateComponent>                      unitState,
-                      RefRO<LocalTransform>                          workerTransform,
-                      RefRO<CurrentWorkerResourceQuantityComponent>   workerResource,
-                      RefRO<ElementTeamComponent>                    workerTeam,
-                      Entity                                         entity)
+            foreach ((RefRO<UnitTypeComponent> unitType,
+                         RefRO<UnitStateComponent> unitState,
+                         RefRO<LocalTransform> workerTransform,
+                         RefRO<CurrentWorkerResourceQuantityComponent> workerResource,
+                         RefRO<ElementTeamComponent> workerTeam,
+                         Entity entity)
                      in SystemAPI.Query<RefRO<UnitTypeComponent>,
-                                       RefRO<UnitStateComponent>,
-                                       RefRO<LocalTransform>,
-                                       RefRO<CurrentWorkerResourceQuantityComponent>,
-                                       RefRO<ElementTeamComponent>>()
+                             RefRO<UnitStateComponent>,
+                             RefRO<LocalTransform>,
+                             RefRO<CurrentWorkerResourceQuantityComponent>,
+                             RefRO<ElementTeamComponent>>()
                          .WithAll<UnitTagComponent, Simulate>()
                          .WithNone<WorkerGatheringTagComponent,
-                                   WorkerStoringTagComponent,
-                                   WorkerConstructionTagComponent>()
+                             WorkerStoringTagComponent,
+                             WorkerConstructionTagComponent>()
                          .WithEntityAccess())
             {
                 if (unitType.ValueRO.Type != UnitType.Worker)
@@ -203,12 +208,12 @@ ecb.AddComponent(entity, new WorkerGatheringTagComponent
                 float closestDistSq = float.MaxValue;
 
                 foreach ((RefRO<BuildingTypeComponent> buildingType,
-                          RefRO<ElementTeamComponent>  buildingTeam,
-                          RefRO<LocalTransform>        buildingTransform,
-                          Entity                       buildingEntity)
+                             RefRO<ElementTeamComponent> buildingTeam,
+                             RefRO<LocalTransform> buildingTransform,
+                             Entity buildingEntity)
                          in SystemAPI.Query<RefRO<BuildingTypeComponent>,
-                                            RefRO<ElementTeamComponent>,
-                                            RefRO<LocalTransform>>()
+                                 RefRO<ElementTeamComponent>,
+                                 RefRO<LocalTransform>>()
                              .WithAll<BuildingComponents>()
                              .WithEntityAccess())
                 {
@@ -216,11 +221,13 @@ ecb.AddComponent(entity, new WorkerGatheringTagComponent
                         buildingTeam.ValueRO.Team != workerTeam.ValueRO.Team)
                         continue;
 
-                    if (_constructionProgressLookup.TryGetComponent(buildingEntity, out BuildingConstructionProgressComponent progress)
+                    if (_constructionProgressLookup.TryGetComponent(buildingEntity,
+                            out BuildingConstructionProgressComponent progress)
                         && (progress.ConstructionTime <= 0 || progress.Value < progress.ConstructionTime))
                         continue;
 
-                    float distSq = math.distancesq(workerTransform.ValueRO.Position, buildingTransform.ValueRO.Position);
+                    float distSq = math.distancesq(workerTransform.ValueRO.Position,
+                        buildingTransform.ValueRO.Position);
                     if (distSq < closestDistSq)
                     {
                         closestDistSq = distSq;

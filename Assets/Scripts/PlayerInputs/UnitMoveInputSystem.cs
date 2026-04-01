@@ -267,7 +267,7 @@ namespace PlayerInputs
                    EntityManager.HasComponent<SelectableElementTypeComponent>(targetEntity);
         }
 
-        private static SetInputStateTargetComponent GetInputTargetComponent(Entity targetEntity, bool hasTarget, float3 targetPosition, float stoppingDistance, int currentVersion)
+        private SetInputStateTargetComponent GetInputTargetComponent(Entity targetEntity, bool hasTarget, float3 targetPosition, float stoppingDistance, int currentVersion)
         {
             return new SetInputStateTargetComponent
             {

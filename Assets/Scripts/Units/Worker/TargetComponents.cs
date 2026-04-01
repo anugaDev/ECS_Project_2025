@@ -44,18 +44,5 @@ namespace Units.Worker
         [GhostField]
         public int TargetVersion;
     }
-
-    public struct CurrentTargetComponent : IComponentData
-    {
-        public Entity TargetEntity;
-
-        public float3 TargetPosition;
-
-        public bool IsFollowingTarget;
-
-        public float StoppingDistance;
-
-        public bool IsTargetReached;
-    }
 }
 

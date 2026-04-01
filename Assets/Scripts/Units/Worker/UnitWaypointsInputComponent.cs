@@ -7,7 +7,8 @@ namespace Units.Worker
     [GhostComponent(PrefabType = GhostPrefabType.AllPredicted)]
     public struct UnitWaypointsInputComponent : IInputComponentData
     {
-        [GhostField] public int WaypointCount;        [GhostField] public float3 W0;
+        [GhostField] public int WaypointCount;        
+        [GhostField] public float3 W0;
         [GhostField] public float3 W1;
         [GhostField] public float3 W2;
         [GhostField] public float3 W3;

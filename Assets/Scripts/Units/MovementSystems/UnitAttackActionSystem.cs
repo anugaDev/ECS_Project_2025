@@ -18,15 +18,15 @@ namespace Units.MovementSystems
         private const float DEFAULT_ATTACK_RANGE = 4.0f;
 
         private ComponentLookup<CurrentHitPointsComponent> _hpLookup;
-        private ComponentLookup<ElementTeamComponent>      _teamLookup;
-        private ComponentLookup<LocalTransform>            _transformLookup;
-        private ComponentLookup<UnitAttackRange>           _attackRangeLookup;
+        private ComponentLookup<ElementTeamComponent> _teamLookup;
+        private ComponentLookup<LocalTransform> _transformLookup;
+        private ComponentLookup<UnitAttackRange> _attackRangeLookup;
 
         protected override void OnCreate()
         {
-            _hpLookup          = GetComponentLookup<CurrentHitPointsComponent>(true);
-            _teamLookup        = GetComponentLookup<ElementTeamComponent>(true);
-            _transformLookup   = GetComponentLookup<LocalTransform>(true);
+            _hpLookup = GetComponentLookup<CurrentHitPointsComponent>(true);
+            _teamLookup = GetComponentLookup<ElementTeamComponent>(true);
+            _transformLookup = GetComponentLookup<LocalTransform>(true);
             _attackRangeLookup = GetComponentLookup<UnitAttackRange>(true);
             RequireForUpdate<UnitTagComponent>();
         }
@@ -40,10 +40,10 @@ namespace Units.MovementSystems
 
             EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            foreach ((RefRO<SetInputStateTargetComponent>  inputTarget,
-                      RefRW<SetServerStateTargetComponent> serverTarget,
-                      Entity entity) in SystemAPI.Query<RefRO<SetInputStateTargetComponent>,
-                                                        RefRW<SetServerStateTargetComponent>>()
+            foreach ((RefRO<SetInputStateTargetComponent> inputTarget,
+                         RefRW<SetServerStateTargetComponent> serverTarget,
+                         Entity entity) in SystemAPI.Query<RefRO<SetInputStateTargetComponent>,
+                             RefRW<SetServerStateTargetComponent>>()
                          .WithAll<UnitTagComponent, Simulate, UnitAttackingTagComponent>().WithEntityAccess())
             {
                 if (inputTarget.ValueRO.TargetVersion <= serverTarget.ValueRO.TargetVersion)
@@ -52,16 +52,16 @@ namespace Units.MovementSystems
                 ecb.RemoveComponent<UnitAttackingTagComponent>(entity);
             }
 
-            foreach ((RefRO<UnitStateComponent>            unitState,
-                      RefRO<SetInputStateTargetComponent>  inputTarget,
-                      RefRW<SetServerStateTargetComponent> serverTarget,
-                      RefRO<ElementTeamComponent>          unitTeam,
-                      RefRO<LocalTransform>                unitTransform,
-                      Entity entity) in SystemAPI.Query<RefRO<UnitStateComponent>,
-                                                       RefRO<SetInputStateTargetComponent>,
-                                                       RefRW<SetServerStateTargetComponent>,
-                                                       RefRO<ElementTeamComponent>,
-                                                       RefRO<LocalTransform>>()
+            foreach ((RefRO<UnitStateComponent> unitState,
+                         RefRO<SetInputStateTargetComponent> inputTarget,
+                         RefRW<SetServerStateTargetComponent> serverTarget,
+                         RefRO<ElementTeamComponent> unitTeam,
+                         RefRO<LocalTransform> unitTransform,
+                         Entity entity) in SystemAPI.Query<RefRO<UnitStateComponent>,
+                             RefRO<SetInputStateTargetComponent>,
+                             RefRW<SetServerStateTargetComponent>,
+                             RefRO<ElementTeamComponent>,
+                             RefRO<LocalTransform>>()
                          .WithAll<UnitTagComponent, Simulate>()
                          .WithNone<UnitAttackingTagComponent>()
                          .WithEntityAccess())
@@ -94,9 +94,10 @@ namespace Units.MovementSystems
                 if (_transformLookup.TryGetComponent(target, out LocalTransform targetTransform))
                 {
                     float attackRange = _attackRangeLookup.TryGetComponent(entity, out UnitAttackRange rangeComp)
-                        ? rangeComp.Value : DEFAULT_ATTACK_RANGE;
+                        ? rangeComp.Value
+                        : DEFAULT_ATTACK_RANGE;
 
-                    float3 toTarget  = targetTransform.Position - unitTransform.ValueRO.Position;
+                    float3 toTarget = targetTransform.Position - unitTransform.ValueRO.Position;
                     toTarget.y = 0f;
                     targetInRange = math.lengthsq(toTarget) <= attackRange * attackRange;
                 }
@@ -110,10 +111,10 @@ namespace Units.MovementSystems
                 {
                     ecb.SetComponent(entity, new PathComponent
                     {
-                        HasPath              = false,
+                        HasPath = false,
                         CurrentWaypointIndex = 0,
-                        LastTargetPosition   = float3.zero,
-                        LastTargetEntity     = Entity.Null
+                        LastTargetPosition = float3.zero,
+                        LastTargetEntity = Entity.Null
                     });
                 }
 

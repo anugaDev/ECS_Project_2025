@@ -68,7 +68,12 @@ namespace Units
 
             InstantiateUnit(command, playerTeam, networkId, state);
 
-            lastProcessedCommand.ValueRW = new LastProcessedUnitCommand()
+            lastProcessedCommand.ValueRW = GetLastProcessedUnitCommand(command);
+        }
+
+        private LastProcessedUnitCommand GetLastProcessedUnitCommand(SpawnUnitCommand command)
+        {
+            return new LastProcessedUnitCommand()
             {
                 CommandId = command.CommandId
             };
@@ -99,7 +104,6 @@ namespace Units
             float randomXPosition = math.cos(angle) * distance;
             float randomZPosition = math.sin(angle) * distance;
             float3 offset = new float3(randomXPosition, 0f, randomZPosition);
-
             return buildingPosition + offset;
         }
 

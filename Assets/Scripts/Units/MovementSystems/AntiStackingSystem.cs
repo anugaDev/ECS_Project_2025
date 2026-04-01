@@ -16,12 +16,16 @@ namespace Units.MovementSystems
     [UpdateBefore(typeof(Navigation.NavMeshPathfindingSystem))]
     public partial class AntiStackingSystem : SystemBase
     {
-        private const float STACKING_THRESHOLD    = 1.5f;
-        private const float PUSH_DISTANCE         = 2.5f;
-        private const int   SPIRAL_STEPS          = 8;
         private const float NAVMESH_SAMPLE_RADIUS = 4.0f;
-        private const float MIN_PUSH_DISTANCE     = 0.5f;
-
+        
+        private const float STACKING_THRESHOLD = 1.5f;
+        
+        private const float MIN_PUSH_DISTANCE = 0.5f;
+        
+        private const float PUSH_DISTANCE = 2.5f;
+        
+        private const int SPIRAL_STEPS = 8;
+        
         private int _walkableMask;
 
         protected override void OnCreate()
@@ -32,27 +36,20 @@ namespace Units.MovementSystems
 
         protected override void OnUpdate()
         {
-            NativeList<Entity> idleEntities  = new NativeList<Entity>(Allocator.Temp);
+            NativeList<Entity> idleEntities = new NativeList<Entity>(Allocator.Temp);
             NativeList<float3> idlePositions = new NativeList<float3>(Allocator.Temp);
-            NativeList<int>    idleTeams     = new NativeList<int>(Allocator.Temp);
+            NativeList<int> idleTeams = new NativeList<int>(Allocator.Temp);
 
-            foreach ((RefRO<LocalTransform>               transform,
-                      RefRO<PathComponent>                path,
-                      RefRO<SetInputStateTargetComponent> input,
-                      RefRO<ElementTeamComponent>         team,
-                      Entity                              entity)
-                     in SystemAPI.Query<RefRO<LocalTransform>,
-                                        RefRO<PathComponent>,
-                                        RefRO<SetInputStateTargetComponent>,
-                                        RefRO<ElementTeamComponent>>()
-                         .WithAll<UnitTagComponent>()
-                         .WithNone<WorkerGatheringTagComponent,
-                                   WorkerStoringTagComponent,
-                                   WorkerConstructionTagComponent>()
+            foreach ((RefRO<LocalTransform> transform, RefRO<PathComponent> path, RefRO<SetInputStateTargetComponent> input,
+                         RefRO<ElementTeamComponent> team, Entity entity)
+                     in SystemAPI.Query<RefRO<LocalTransform>, RefRO<PathComponent>, RefRO<SetInputStateTargetComponent>, RefRO<ElementTeamComponent>>()
+                         .WithAll<UnitTagComponent>().WithNone<WorkerGatheringTagComponent,WorkerStoringTagComponent,WorkerConstructionTagComponent>()
                          .WithEntityAccess())
             {
                 if (path.ValueRO.HasPath || input.ValueRO.HasNewTarget)
+                {
                     continue;
+                }
 
                 idleEntities.Add(entity);
                 idlePositions.Add(transform.ValueRO.Position);
@@ -86,11 +83,11 @@ namespace Units.MovementSystems
                         {
                             SetInputStateTargetComponent target =
                                 EntityManager.GetComponentData<SetInputStateTargetComponent>(idleEntities[j]);
-                            target.TargetPosition    = freePos;
-                            target.TargetEntity      = Unity.Entities.Entity.Null;
+                            target.TargetPosition = freePos;
+                            target.TargetEntity = Entity.Null;
                             target.IsFollowingTarget = false;
-                            target.StoppingDistance  = 0.1f;
-                            target.HasNewTarget      = true;
+                            target.StoppingDistance = 0.1f;
+                            target.HasNewTarget = true;
                             EntityManager.SetComponentData(idleEntities[j], target);
 
                             pushed.Add(j);
@@ -111,10 +108,10 @@ namespace Units.MovementSystems
 
             for (int attempt = 0; attempt < SPIRAL_STEPS; attempt++)
             {
-                float angle  = math.radians(angleStep * attempt);
+                float angle = math.radians(angleStep * attempt);
                 float3 probe = origin + new float3(math.cos(angle) * PUSH_DISTANCE,
-                                                   0f,
-                                                   math.sin(angle) * PUSH_DISTANCE);
+                    0f,
+                    math.sin(angle) * PUSH_DISTANCE);
 
                 if (!NavMesh.SamplePosition(probe, out NavMeshHit hit, NAVMESH_SAMPLE_RADIUS, _walkableMask))
                     continue;
@@ -126,17 +123,22 @@ namespace Units.MovementSystems
             }
 
             float fallbackAngle = math.radians(UnityEngine.Random.Range(0f, 360f));
-            float3 fallbackProbe = origin + new float3(math.cos(fallbackAngle) * PUSH_DISTANCE,
-                                                       0f,
-                                                       math.sin(fallbackAngle) * PUSH_DISTANCE);
+            float3 fallbackProbe = origin + GetFallbackProbe(fallbackAngle);
 
             if (NavMesh.SamplePosition(fallbackProbe, out NavMeshHit fb, NAVMESH_SAMPLE_RADIUS, _walkableMask))
+            {
                 return fb.position;
+            }
 
             return fallbackProbe;
         }
 
-        private static bool IsOccupied(float3 position, NativeList<float3> positions, int skipIndex)
+        private float3 GetFallbackProbe(float fallbackAngle)
+        {
+            return new float3(math.cos(fallbackAngle) * PUSH_DISTANCE, 0f, math.sin(fallbackAngle) * PUSH_DISTANCE);
+        }
+
+        private bool IsOccupied(float3 position, NativeList<float3> positions, int skipIndex)
         {
             float threshSq = STACKING_THRESHOLD * STACKING_THRESHOLD;
             for (int i = 0; i < positions.Length; i++)
@@ -145,6 +147,7 @@ namespace Units.MovementSystems
                 if (math.distancesq(position, positions[i]) < threshSq)
                     return true;
             }
+
             return false;
         }
     }

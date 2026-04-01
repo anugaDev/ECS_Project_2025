@@ -12,8 +12,7 @@ namespace Units
             EntityCommandBuffer ecb = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
 
             foreach (var (unitTag, entity) in SystemAPI.Query<RefRO<UnitTagComponent>>()
-                .WithNone<PathComponent>()
-                .WithEntityAccess())
+                .WithNone<PathComponent>().WithEntityAccess())
             {
                 ecb.AddComponent<PathComponent>(entity);
                 ecb.AddBuffer<PathWaypointBuffer>(entity);
