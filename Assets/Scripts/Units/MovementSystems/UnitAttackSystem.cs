@@ -1,3 +1,4 @@
+using Audio;
 using Combat;
 using Unity.Collections;
 using Unity.Entities;
@@ -31,6 +32,8 @@ namespace Units.MovementSystems
 
         private ComponentLookup<LocalTransform> _transformLookup;
         
+        private AttackAudioSourceFactory attackAttackAudioSourceFactory;
+
         protected override void OnCreate()
         {
             _hpLookup = GetComponentLookup<CurrentHitPointsComponent>(true);
@@ -39,13 +42,13 @@ namespace Units.MovementSystems
             _attackRangeLookup = GetComponentLookup<UnitAttackRange>(true);
             _moveSpeedLookup = GetComponentLookup<UnitMoveSpeedComponent>(true);
             _damageBufferLookup = GetBufferLookup<DamageBufferElement>(false);
+            attackAttackAudioSourceFactory = new AttackAudioSourceFactory();
             RequireForUpdate<UnitTagComponent>();
         }
 
         protected override void OnUpdate()
         {
             CompleteDependency();
-
             _hpLookup.Update(this);
             _transformLookup.Update(this);
             _attackPropsLookup.Update(this);
@@ -124,9 +127,28 @@ namespace Units.MovementSystems
             }
 
             int tickDamage = Mathf.RoundToInt(damage * deltaTime);
-            if (tickDamage <= 0) tickDamage = 1;
+            
+            if (tickDamage <= 0)
+            {
+                tickDamage = 1;
+            }
 
             _damageBufferLookup[target].Add(new DamageBufferElement { Value = tickDamage });
+            Entity audioEntity = SystemAPI.ManagedAPI.GetSingletonEntity<AudioManagerReferenceComponent>();
+
+            EntityManager.SetComponentData(audioEntity, GetAudioRequestComponent(unitEntity));
+        }
+
+        private AudioRequestComponent GetAudioRequestComponent(Entity unitEntity)
+        {
+            UnitTypeComponent unitTypeComponent = EntityManager.GetComponentData<UnitTypeComponent>(unitEntity);
+            _transformLookup.TryGetComponent(unitEntity, out LocalTransform localTransform);
+            return new AudioRequestComponent
+            {
+                AudioId = attackAttackAudioSourceFactory.Get(unitTypeComponent.Type),
+                Position = localTransform.Position,
+                Is3D = true,
+            };
         }
 
         private void SetMovementStep(ref LocalTransform unitTransform, float attackRange, float moveSpeed,

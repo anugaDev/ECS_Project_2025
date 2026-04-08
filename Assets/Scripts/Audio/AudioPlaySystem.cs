@@ -7,7 +7,7 @@ namespace Audio
     {
         protected override void OnUpdate()
         {
-            if (!SystemAPI.ManagedAPI.TryGetSingleton<AudioManagerReferenceComponent>(out AudioManagerReferenceComponent managerComp))
+            if (!SystemAPI.ManagedAPI.TryGetSingleton(out AudioManagerReferenceComponent managerComp))
             {
                 return; 
             }

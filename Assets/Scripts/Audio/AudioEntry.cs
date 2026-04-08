@@ -7,6 +7,7 @@ namespace Audio
     public struct AudioEntry
     {
         public AudioSourceEnum Id;
+
         public AudioClip Clip;
     }
 }
