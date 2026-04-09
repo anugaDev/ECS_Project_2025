@@ -173,14 +173,7 @@ namespace PlayerInputs
 
             if (_inputTargetComponent.IsFollowingTarget)
             {
-                Entity targetEntity = _inputTargetComponent.TargetEntity;
-                LocalTransform targetTransform = EntityManager.GetComponentData<LocalTransform>(targetEntity);
-                float3 position = targetTransform.Position;
-                spawnPosition = position;
-                spawnPosition.y = 0;
-
-                float3 targetSize = CalculateTargetSize(targetEntity, targetTransform);
-                _moveIndicator.SetTargetScale(targetSize);
+                spawnPosition = SetTargetPositionIndicator();
             }
             else
             {
@@ -189,6 +182,19 @@ namespace PlayerInputs
 
             _moveIndicator.Set(spawnPosition);
             _anySelected = false;
+        }
+
+        private float3 SetTargetPositionIndicator()
+        {
+            Entity targetEntity = _inputTargetComponent.TargetEntity;
+            LocalTransform targetTransform = EntityManager.GetComponentData<LocalTransform>(targetEntity);
+            float3 position = targetTransform.Position;
+            float3 spawnPosition = position;
+            spawnPosition.y = 0;
+
+            float3 targetSize = CalculateTargetSize(targetEntity, targetTransform);
+            _moveIndicator.SetTargetScale(targetSize);
+            return spawnPosition;
         }
 
         private float3 CalculateTargetSize(Entity targetEntity, LocalTransform targetTransform)

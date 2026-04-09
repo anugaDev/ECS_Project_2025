@@ -132,18 +132,29 @@ namespace PlayerInputs
             NormalizeSelectionClick();
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
             TeamType clientTeam = GetClientTeam();
+            SetSelectedUnitPositionComponents(clientTeam, entityCommandBuffer);
+            entityCommandBuffer.Playback(EntityManager);
+            entityCommandBuffer.Dispose();
+        }
 
+        private void SetSelectedUnitPositionComponents(TeamType clientTeam, EntityCommandBuffer entityCommandBuffer)
+        {
             foreach ((RefRO<SelectableElementTypeComponent> _, ElementTeamComponent elementTeam, Entity entity) in
                      SystemAPI.Query<RefRO<SelectableElementTypeComponent>, ElementTeamComponent>().WithEntityAccess())
             {
-                if (elementTeam.Team == clientTeam)
-                {
-                    entityCommandBuffer.AddComponent(entity, GetUnitPositionComponent());
-                }
+                SetSelectedUnitPositionComponent(elementTeam, clientTeam, entityCommandBuffer, entity);
+            }
+        }
+
+        private void SetSelectedUnitPositionComponent(ElementTeamComponent elementTeam, TeamType clientTeam,
+            EntityCommandBuffer entityCommandBuffer, Entity entity)
+        {
+            if (elementTeam.Team != clientTeam)
+            {
+                return;
             }
 
-            entityCommandBuffer.Playback(EntityManager);
-            entityCommandBuffer.Dispose();
+            entityCommandBuffer.AddComponent(entity, GetUnitPositionComponent());
         }
 
         private TeamType GetClientTeam()
